@@ -1,7 +1,7 @@
 import { projectStore } from './src/state/projectStore';
 import { sceneStore } from './src/state/sceneStore';
 import { projectStorage } from './src/storage/indexedDBStorage';
-import { build3BHKFloorPlanProject } from './src/data/floorplan3bhkLayout';
+import { THREE_BHK_ROOMS, THREE_BHK_FURNITURE, THREE_BHK_DOORS, THREE_BHK_WINDOWS, THREE_BHK_GATES } from './src/data/floorplan3bhkSampleLayout';
 
 async function main() {
   console.log('================================================================');
@@ -12,7 +12,7 @@ async function main() {
 
   // Load / Create the 3BHK Floor Plan project
   console.log('1. Loading 3BHK Floor Plan Architectural Project...');
-  const proj = await projectStore.load3BHKFloorPlanProject();
+  const proj = await projectStore.load3BHKSampleProject();
 
   console.log(`   Project Name: "${proj.metadata.name}"`);
   console.log(`   Project ID: "${proj.metadata.id}"`);
