@@ -9,9 +9,11 @@ import {
   SetTransformLockInput,
   SetFurnitureDimensionsInput,
   FitFurnitureToWallInput,
-  AutoFitRoomFurnitureInput
+  AutoFitRoomFurnitureInput,
+  GetFurnitureCatalogInput
 } from '../../types/webmcp';
 import { isPointInRoom } from '../../geometry/roomGeometry';
+import { CATALOG_ITEMS } from '../../data/catalogData';
 
 export const objectTools = {
   add_furniture: {
@@ -25,7 +27,59 @@ export const objectTools = {
       properties: {
         type: {
           type: 'string',
-          description: 'Catalog object type identifier (e.g. sofa_sectional, sofa_3seater, armchair_lounge, bed_king, bed_queen, dining_table_6s, kitchen_island, pooja_mandir, etc.)'
+          enum: [
+            // Seating
+            'sofa_4seater',
+            'sofa_3seater_lounger',
+            'armchair_accent',
+            'sofa_sectional',
+            // Tables
+            'dining_table_6s',
+            'coffee_table_center',
+            'table_drinks_round',
+            'nightstand_modern',
+            // Bedroom
+            'bed_double',
+            'bed_guest_double',
+            // Storage & Media
+            'wardrobe_sliding',
+            'consol_low_ht',
+            'study_table_desk',
+            'storage_low_ht',
+            'shoe_unit_foyer',
+            'dumb_waiter_counter',
+            'tv_unit_grand',
+            'tv_console_bedroom',
+            'store_pantry_rack',
+            // Kitchen & Appliances
+            'kitchen_counter_hob',
+            'kitchen_counter_sink',
+            'refrigerator_french_door',
+            'utility_washing_machine',
+            'utility_counter_sink',
+            // Spiritual
+            'pooja_mandir_sanctuary',
+            // Bathroom
+            'bathroom_wc_commode',
+            'bathroom_vanity_basin',
+            'bathroom_shower_cubicle',
+            // Greenery & Outdoor
+            'planter_garden_strip',
+            'planter_balcony_pots',
+            // Lighting
+            'chandelier_modern',
+            'lamp_floor',
+            // Supported Aliases & Common Shorthands
+            'bed_king',
+            'bed_queen',
+            'armchair_lounge',
+            'table_dining',
+            'table_coffee',
+            'kitchen_counter',
+            'bathroom_vanity',
+            'outdoor_table'
+          ],
+          description: 'Catalog furniture identifier. Choose from the 32 architectural catalog items or standard aliases.'
         },
         roomId: { type: 'string', description: 'Enclosing room ID' },
         name: { type: 'string', description: 'Custom display label' },
@@ -324,5 +378,56 @@ export const objectTools = {
         items: results
       };
     }
+  },
+
+  get_furniture_catalog: {
+    name: 'get_furniture_catalog',
+    title: 'Get Furniture Catalog',
+    category: 'Objects' as const,
+    description: 'Returns the full catalog of 32 architectural furniture items, fixtures, appliances, lighting, and decor pieces with types, default dimensions in feet, materials, and categories.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        category: {
+          type: 'string',
+          enum: ['all', 'seating', 'bedroom', 'tables', 'kitchen', 'storage', 'office', 'bathroom', 'lighting', 'outdoor', 'decor', 'spiritual'],
+          description: 'Optional category filter matching the human designer catalog'
+        },
+        searchQuery: {
+          type: 'string',
+          description: 'Optional search keyword to filter by name, description, or tags'
+        }
+      }
+    },
+    execute: async (input: GetFurnitureCatalogInput = {}) => {
+      let items = [...CATALOG_ITEMS];
+      if (input.category && input.category !== 'all') {
+        items = items.filter(i => i.category === input.category);
+      }
+      if (input.searchQuery?.trim()) {
+        const q = input.searchQuery.toLowerCase();
+        items = items.filter(i =>
+          i.name.toLowerCase().includes(q) ||
+          i.description.toLowerCase().includes(q) ||
+          i.tags.some(t => t.toLowerCase().includes(q))
+        );
+      }
+      return {
+        success: true,
+        totalCount: items.length,
+        items: items.map(i => ({
+          type: i.type,
+          name: i.name,
+          category: i.category,
+          description: i.description,
+          defaultDimensions: i.defaultDimensions,
+          defaultMaterial: i.defaultMaterial,
+          defaultColor: i.defaultColor,
+          tags: i.tags
+        }))
+      };
+    }
   }
 };
+

@@ -38,18 +38,19 @@ Open [http://localhost:4173/](http://localhost:4173/) (or the port Vite prints).
 
 ---
 
-## WebMCP Tools (35 Tools Total)
+## WebMCP Tools (44 Tools Total)
 
-Thirty-five tools cover the full design surface, grouped by what they touch:
+Forty-four tools cover the full design surface, grouped by what they touch. For complete schema definitions, parameter tables, and usage examples, see the detailed [WEBMCP_TOOLS.md](file:///e:/HomeSpace.ai/WEBMCP_TOOLS.md) reference.
 
 | Category | Tools |
 | :--- | :--- |
-| **Rooms** | `create_room`, `rename_room`, `move_room`, `set_room_dimensions`, `delete_room`, `connect_rooms` |
-| **Structure** | `add_wall`, `set_wall_dimensions`, `place_door`, `place_window`, `change_ceiling_height`, `build_3d_from_cad` |
-| **Objects** | `add_furniture`, `move_object`, `rotate_object`, `scale_object`, `set_furniture_dimensions`, `fit_furniture_to_wall`, `auto_fit_room_furniture`, `delete_object`, `set_transform_lock` |
-| **Materials** | `apply_material`, `change_texture` |
-| **Scene / View** | `generate_floor_plan`, `switch_view`, `take_screenshot`, `get_scene_state` |
-| **Workflow** | `undo`, `redo`, `export_model`, `set_confirmation_policy`, `create_project`, `open_project`, `list_projects`, `delete_project` |
+| **Rooms (9)** | `create_room`, `add_connected_room`, `fit_room_into_notch`, `rename_room`, `move_room`, `set_room_dimensions`, `delete_room`, `connect_rooms`, `disconnect_rooms` |
+| **Structure (5)** | `add_wall`, `set_wall_dimensions`, `place_door`, `place_window`, `change_ceiling_height` |
+| **Objects (10)** | `add_furniture`, `move_object`, `rotate_object`, `scale_object`, `delete_object`, `set_transform_lock`, `set_furniture_dimensions`, `fit_furniture_to_wall`, `auto_fit_room_furniture`, `get_furniture_catalog` |
+| **Materials (2)** | `apply_material`, `change_texture` |
+| **Scene / View (6)** | `generate_floor_plan`, `switch_view`, `take_screenshot`, `get_scene_state`, `select_item`, `set_grid_snap` |
+| **Workflow (11)** | `undo`, `redo`, `export_model`, `set_confirmation_policy`, `create_project`, `open_project`, `list_projects`, `delete_project`, `duplicate_project`, `load_sample_project`, `clear_scene` |
+| **CAD Synthesis (1)** | `build_3d_from_cad` |
 
 All schemas use stable object/room IDs, **feet** as the canonical unit (converted to metres internally for Three.js), explicit `{x, y, z}` vectors, enum-constrained fields for materials and views, and confirmation flags on structural edits and exports. `get_scene_state` returns the full source of truth — rooms, objects, connection gates, and measurements — so an agent can always ground its next call in current reality instead of assuming.
 

@@ -217,6 +217,11 @@ export interface AutoFitRoomFurnitureInput {
   category?: 'storage' | 'bedroom' | 'seating' | 'tables' | 'all';
 }
 
+export interface GetFurnitureCatalogInput {
+  category?: string;
+  searchQuery?: string;
+}
+
 // Materials
 export interface ApplyMaterialInput {
   targetId: string;
