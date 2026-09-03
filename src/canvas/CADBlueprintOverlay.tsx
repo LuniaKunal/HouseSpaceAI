@@ -15,7 +15,6 @@ import {
   Compass,
   Lock,
   Unlock,
-  ShieldAlert,
   Info,
   Upload
 } from 'lucide-react';
@@ -303,14 +302,6 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
 
         {/* Right Toolbar Cluster */}
         <div className="flex items-center gap-2 flex-wrap pointer-events-auto">
-          {/* Verification Status Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs shadow-xl backdrop-blur-md font-mono tabular-nums">
-            <ShieldAlert size={13} className="text-emerald-400" />
-            <span className="font-semibold">
-              {((sceneData.validation?.confidence ?? 0.96) * 100).toFixed(0)}% Verified
-            </span>
-          </div>
-
           {/* Zoom & Pan Tools */}
           <div className="flex items-center gap-0.5 glass-toolbar px-2 py-1 rounded-2xl shadow-xl text-slate-300">
             <button
