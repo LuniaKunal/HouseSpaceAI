@@ -33,7 +33,7 @@ export const LeftSidebar: React.FC = () => {
     { id: 'catalog', label: 'Catalog', icon: Armchair },
     { id: 'spaces', label: 'Spaces', icon: Home },
     { id: 'materials', label: 'Materials', icon: Palette },
-    { id: 'copilot', label: 'AI Co-Designer', icon: Sparkles, badge: 'Agent' }
+    { id: 'copilot', label: 'AI Co-Designer (Coming Soon)', icon: Sparkles, badge: 'Soon' }
   ];
 
   return (
@@ -58,7 +58,9 @@ export const LeftSidebar: React.FC = () => {
               >
                 <Icon size={18} />
                 {tab.badge && (
-                  <span className="absolute top-1 right-1 size-2 bg-emerald-400 rounded-full border border-studio-canvas animate-pulse" />
+                  <span className="absolute -top-1 -right-1 px-1 py-0.5 rounded text-[8px] font-bold font-mono uppercase bg-amber-500/30 text-amber-300 border border-amber-500/40 leading-none shadow-sm">
+                    {tab.badge}
+                  </span>
                 )}
               </button>
             );

@@ -26,6 +26,7 @@ export interface UIState {
   showWallCutaways: boolean;
   isAgentBridgeModalOpen: boolean;
   confirmationRequest: ConfirmationRequest | null;
+  walkTargetPosition: { x: number; z: number } | null;
   toasts: ToastMessage[];
   lastAgentAction: {
     toolName: string;
@@ -52,6 +53,7 @@ class UIStore {
     showWallCutaways: true,
     isAgentBridgeModalOpen: false,
     confirmationRequest: null,
+    walkTargetPosition: null,
     toasts: [],
     lastAgentAction: null
   };
@@ -94,6 +96,26 @@ class UIStore {
       cameraAngle: angle
     };
     this.notify();
+  }
+
+  public teleportWalk(x: number, z: number, roomId?: string) {
+    this.state = {
+      ...this.state,
+      cameraMode: 'walk',
+      walkTargetPosition: { x, z },
+      ...(roomId ? { selectedId: roomId, selectedType: 'room' as const } : {})
+    };
+    this.notify();
+  }
+
+  public clearWalkTarget() {
+    if (this.state.walkTargetPosition) {
+      this.state = {
+        ...this.state,
+        walkTargetPosition: null
+      };
+      this.notify();
+    }
   }
 
   public setActiveSidebarTab(tab: ActiveSidebarTab) {

@@ -97,7 +97,7 @@ export const AgentBridgeModal: React.FC<AgentBridgeModalProps> = ({ isOpen, onCl
     }
   };
 
-  const starterPrompt = `You are HouseSpace's AI Co-Designer agent. You share the exact same 3D room canvas and state as the human designer.
+  const starterPrompt = `You are HouseSpace's WebMCP architectural design agent. You share the exact same 3D room canvas and state as the human designer.
 You have access to ${TOOL_LIST.length} WebMCP tools to inspect, create, modify, and style rooms, furniture, and structure.
 Canonical unit: FEET. All positions are {x, y, z} in feet.
 Always start by calling \`get_scene_state({ includeFurniture: true })\` to inspect the layout before making changes.

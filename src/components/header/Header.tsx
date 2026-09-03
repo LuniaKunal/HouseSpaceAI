@@ -417,7 +417,7 @@ export const Header: React.FC = () => {
               uiState.activeSidebarTab === 'copilot' ? 'catalog' : 'copilot'
             )
           }
-          aria-label="Toggle AI Co-Designer panel"
+          aria-label="Toggle AI Co-Designer panel (Coming Soon)"
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 ${
             uiState.activeSidebarTab === 'copilot'
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-glow-blue'
@@ -426,6 +426,9 @@ export const Header: React.FC = () => {
         >
           <Sparkles size={13} />
           <span>AI Co-Designer</span>
+          <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono tracking-wider border border-amber-500/30 ml-0.5">
+            Soon
+          </span>
         </button>
       </div>
 

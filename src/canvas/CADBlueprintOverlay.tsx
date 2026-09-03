@@ -13,6 +13,7 @@ import {
   Layers,
   Sparkles,
   Compass,
+  Footprints,
   Lock,
   Unlock,
   Info,
@@ -112,6 +113,34 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
     setIsPanning(false);
     setDraggedId(null);
     setDragStart(null);
+  };
+
+  // Double click anywhere on CAD map to enter 1st Person Walk view at that coordinate
+  const handleSvgDoubleClick = (e: React.MouseEvent) => {
+    if (!svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const rawX = (e.clientX - rect.left - pan.x) / zoom;
+    const rawY = (e.clientY - rect.top - pan.y) / zoom;
+    const ftX = toFeetX(rawX);
+    const ftZ = toFeetZ(rawY);
+
+    const targetRoom = sceneData.rooms.find(r => {
+      const halfW = (r.width || 10) / 2;
+      const halfD = (r.depth || 10) / 2;
+      return (
+        ftX >= r.position.x - halfW &&
+        ftX <= r.position.x + halfW &&
+        ftZ >= r.position.z - halfD &&
+        ftZ <= r.position.z + halfD
+      );
+    });
+
+    uiStore.teleportWalk(ftX, ftZ, targetRoom?.id);
+    uiStore.showToast(
+      '1st Person Walk',
+      `Walk mode entered at ${targetRoom ? targetRoom.name : `${ftX.toFixed(1)}ft, ${ftZ.toFixed(1)}ft`}`,
+      'success'
+    );
   };
 
   // Furniture Click / Drag Start handler
@@ -406,6 +435,36 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
         </div>
       )}
 
+      {/* Selected Room Quick 1st-Person Walk Action Banner */}
+      {(() => {
+        const selectedRoom = uiState.selectedType === 'room' ? sceneData.rooms.find(r => r.id === uiState.selectedId) : null;
+        if (!selectedRoom) return null;
+        return (
+          <div className="absolute top-16 right-6 z-30 bg-slate-900/90 backdrop-blur-md border border-emerald-500/40 px-3.5 py-2 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-emerald-400 font-mono uppercase tracking-wider">Selected Room</span>
+              <span className="text-xs font-bold text-white">{selectedRoom.name}</span>
+            </div>
+            <button
+              onClick={() => uiStore.teleportWalk(selectedRoom.position.x, selectedRoom.position.z, selectedRoom.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-glow-emerald transition active:scale-95"
+              title="Teleport into this room in 1st Person Walk view"
+            >
+              <Footprints size={13} />
+              <span>Walk Inside</span>
+            </button>
+          </div>
+        );
+      })()}
+
+      {/* Double-click map hint */}
+      <div className="absolute bottom-4 right-4 z-20 pointer-events-none">
+        <div className="bg-slate-900/80 backdrop-blur-md border border-white/[0.08] text-slate-300 text-[11px] px-3 py-1.5 rounded-full shadow-lg flex items-center gap-2">
+          <Footprints size={13} className="text-emerald-400" />
+          <span>Double-click anywhere on map to walk in 1st Person</span>
+        </div>
+      </div>
+
       {/* Interactive Vector SVG Canvas with Drag & Drop Blueprint */}
       <svg
         ref={svgRef}
@@ -416,6 +475,7 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onDoubleClick={handleSvgDoubleClick}
       >
         <defs>
           {/* Herringbone pattern for Master/Son bedrooms */}
@@ -485,6 +545,10 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
                     strokeWidth={isSelected ? 2.5 : 1.2}
                     className="cursor-pointer"
                     onClick={() => uiStore.setSelected(room.id, 'room')}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      uiStore.teleportWalk(room.polygon[0]?.x || 0, room.polygon[0]?.y || 0, room.id);
+                    }}
                   />
                 );
               })
@@ -520,6 +584,10 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
                         strokeWidth={isSelected ? 2 : 1}
                         className="cursor-pointer"
                         onClick={() => uiStore.setSelected(room.id, 'room')}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          uiStore.teleportWalk(room.position.x, room.position.z, room.id);
+                        }}
                       />
                     ) : (
                       <rect
@@ -533,6 +601,10 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
                         strokeWidth={isSelected ? 2 : 1}
                         className="cursor-pointer"
                         onClick={() => uiStore.setSelected(room.id, 'room')}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          uiStore.teleportWalk(room.position.x, room.position.z, room.id);
+                        }}
                       />
                     )}
 

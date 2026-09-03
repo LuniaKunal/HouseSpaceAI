@@ -43,7 +43,7 @@ Open [http://localhost:4173/](http://localhost:4173/) (or the port Vite outputs 
 - **Select & Move** — Click any object on the 3D floor or in the catalog, drag it across the room, or edit precise X/Y/Z coordinates in the Inspector. Edit Width/Height/Depth to resize in real time. Every edit is backed by a bidirectional undo/redo history stack (`Ctrl+Z` / `Ctrl+Y`).
 - **Rectangular & L-Shaped Rooms** — Select a room, choose `Above` / `Right` / `Below` / `Left` next to the room `+` button to add an interconnected room with automatic shared-wall gateway cuts. Create non-rectangular spaces by configuring corner notches (NW, NE, SW, SE) and custom alcoves in the Spaces or Inspector panels.
 - **CAD Blueprint Overlay & Alignment** — Toggle an interactive blueprint overlay directly above the 3D canvas. Calibrate image scale to real-world feet, adjust transparency via the opacity slider, fine-tune alignment offsets, and switch between 3 view modes (`Combined`, `Geometry Only`, `Blueprint Only`).
-- **Autonomous AI Co-Designer** — Open the Agent Copilot drawer to launch 1-click autonomous design goals (such as *"Furnish Master Bedroom"*, *"Redesign Guest Suite"*, *"Add Attached Bath"*, or *"Optimize Living/Dining Flow"*). Watch real-time execution in the **Agent Action Feed** toast notification system.
+- **Autonomous AI Co-Designer (Coming Soon)** — Dedicated copilot drawer previewing upcoming multimodal spatial reasoning, generative room layouts, and natural language interior workflows.
 - **Furniture Catalog & Wall Snapping** — Place procedural PBR furniture into active rooms. Use automated wall clearance snapping (`fit_furniture_to_wall`) and room-wide intelligent layout solvers (`auto_fit_room_furniture`).
 - **Multi-Angle Camera Modes** — Seamlessly toggle between:
   - **3D Orbit** — Freely rotate, tilt, and zoom around the entire residence.
@@ -198,7 +198,7 @@ Exports run strictly after human approval in the confirmation modal.
 - **IndexedDB Storage Layer** (`src/storage/indexedDBStorage.ts`) — Reliable browser-local persistence for multiple projects, thumbnails, and custom blueprint assets.
 - **Deterministic Geometry Engine** (`src/geometry/`) — Pure algorithmic modules for polygon footprints, notch cuts, topological validation, and wall join synthesis.
 - **WebMCP Tool Registry** (`src/webmcp/registry.ts`, `src/webmcp/bridge.ts`) — Single source of truth exposing 45 validated tools to `document.modelContext`, global window hooks, and custom events.
-- **Autonomous AI Co-Designer & Action Feed** — Interactive copilot drawer with preset architectural goals, natural language intent parser, and real-time toast feedback.
+- **Autonomous AI Co-Designer (Coming Soon)** — Dedicated copilot preview drawer for upcoming multimodal spatial reasoning, generative room layouts, and natural language design workflows.
 
 ---
 

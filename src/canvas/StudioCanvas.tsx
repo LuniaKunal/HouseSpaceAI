@@ -10,6 +10,7 @@ import { reconstruct3DFromFloorPlan } from '../geometry/deterministicReconstruct
 import { getRoomFootprint } from '../geometry/roomGeometry';
 import { FT_TO_M, M_TO_FT, Room, FurnitureObject } from '../types/scene';
 import { CADBlueprintOverlay } from './CADBlueprintOverlay';
+import { WalkMiniMap } from './WalkMiniMap';
 import {
   Layers,
   Eye,
@@ -84,6 +85,8 @@ export const StudioCanvas: React.FC = () => {
   const [isWalkPointerLocked, setIsWalkPointerLocked] = useState(false);
   const [isWalkDragging, setIsWalkDragging] = useState(false);
   const [walkSprint, setWalkSprint] = useState(false);
+  const [walkSpeedMultiplier, setWalkSpeedMultiplier] = useState(1);
+  const [isWalkUnrestricted, setIsWalkUnrestricted] = useState(false);
   const [walkEyeLevel, setWalkEyeLevel] = useState<number>(1.7); // 1.7m = 5.5 ft
   const [walkWallMode, setWalkWallMode] = useState<'cutaway' | 'full'>('cutaway');
   const [isWalkEditingUnlocked, setIsWalkEditingUnlocked] = useState(false); // Locked by default in walk mode
@@ -93,17 +96,32 @@ export const StudioCanvas: React.FC = () => {
   const cameraModeRef = useRef(uiState.cameraMode);
   cameraModeRef.current = uiState.cameraMode;
 
+  const prevCameraModeRef = useRef(uiState.cameraMode);
+
   const sceneDataRef = useRef(sceneData);
   sceneDataRef.current = sceneData;
 
   const walkSprintRef = useRef(walkSprint);
   walkSprintRef.current = walkSprint;
 
+  const walkSpeedMultiplierRef = useRef(walkSpeedMultiplier);
+  walkSpeedMultiplierRef.current = walkSpeedMultiplier;
+
+  const isWalkUnrestrictedRef = useRef(isWalkUnrestricted);
+  isWalkUnrestrictedRef.current = isWalkUnrestricted;
+
   const walkEyeLevelRef = useRef(walkEyeLevel);
   walkEyeLevelRef.current = walkEyeLevel;
 
   const isWalkEditingUnlockedRef = useRef(isWalkEditingUnlocked);
   isWalkEditingUnlockedRef.current = isWalkEditingUnlocked;
+
+  const dynamicBoundsRef = useRef({
+    minX: -60 * FT_TO_M,
+    maxX: 60 * FT_TO_M,
+    minZ: -50 * FT_TO_M,
+    maxZ: 50 * FT_TO_M
+  });
 
   const walkStateRef = useRef({
     isLocked: false,
@@ -115,6 +133,55 @@ export const StudioCanvas: React.FC = () => {
     yaw: 0,
     pitch: 0
   });
+
+  // Calculate dynamic bounding envelope around all rooms, walls, and furniture + 35ft buffer
+  useEffect(() => {
+    if (!sceneData.rooms || sceneData.rooms.length === 0) {
+      dynamicBoundsRef.current = {
+        minX: -120 * FT_TO_M,
+        maxX: 120 * FT_TO_M,
+        minZ: -120 * FT_TO_M,
+        maxZ: 120 * FT_TO_M
+      };
+      return;
+    }
+
+    let minFtX = Infinity;
+    let maxFtX = -Infinity;
+    let minFtZ = Infinity;
+    let maxFtZ = -Infinity;
+
+    sceneData.rooms.forEach(r => {
+      const halfW = (r.width || 12) / 2;
+      const halfD = (r.depth || 12) / 2;
+      minFtX = Math.min(minFtX, r.position.x - halfW);
+      maxFtX = Math.max(maxFtX, r.position.x + halfW);
+      minFtZ = Math.min(minFtZ, r.position.z - halfD);
+      maxFtZ = Math.max(maxFtZ, r.position.z + halfD);
+    });
+
+    sceneData.furniture?.forEach(f => {
+      minFtX = Math.min(minFtX, f.position.x - 5);
+      maxFtX = Math.max(maxFtX, f.position.x + 5);
+      minFtZ = Math.min(minFtZ, f.position.z - 5);
+      maxFtZ = Math.max(maxFtZ, f.position.z + 5);
+    });
+
+    sceneData.customWalls?.forEach(w => {
+      minFtX = Math.min(minFtX, w.start.x, w.end.x);
+      maxFtX = Math.max(maxFtX, w.start.x, w.end.x);
+      minFtZ = Math.min(minFtZ, w.start.z, w.end.z);
+      maxFtZ = Math.max(maxFtZ, w.start.z, w.end.z);
+    });
+
+    const buffer = 35; // Generous 35 ft buffer around all structure edges
+    dynamicBoundsRef.current = {
+      minX: (minFtX - buffer) * FT_TO_M,
+      maxX: (maxFtX + buffer) * FT_TO_M,
+      minZ: (minFtZ - buffer) * FT_TO_M,
+      maxZ: (maxFtZ + buffer) * FT_TO_M
+    };
+  }, [sceneData]);
 
   // Subscribe to stores
   useEffect(() => {
@@ -285,7 +352,8 @@ export const StudioCanvas: React.FC = () => {
         if (activeMode === 'walk') {
           const { keys, position, yaw, pitch } = walkStateRef.current;
           const isSprinting = keys.sprint || walkSprintRef.current;
-          const speed = (isSprinting ? 11.0 : 5.5) * delta;
+          const speedMultiplier = (walkSpeedMultiplierRef.current || 1.0) * (isSprinting ? 2.0 : 1.0);
+          const speed = 5.5 * speedMultiplier * delta;
 
           const forwardVector = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
           const sideVector = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
@@ -295,9 +363,12 @@ export const StudioCanvas: React.FC = () => {
           if (keys.left) position.addScaledVector(sideVector, -speed);
           if (keys.right) position.addScaledVector(sideVector, speed);
 
-          // Clamping bounds to stay within apartment envelope
-          position.x = Math.max(-28 * FT_TO_M, Math.min(29 * FT_TO_M, position.x));
-          position.z = Math.max(-19 * FT_TO_M, Math.min(20 * FT_TO_M, position.z));
+          // Clamping bounds: Dynamic scene enclosure or Free Roam
+          if (!isWalkUnrestrictedRef.current) {
+            const bounds = dynamicBoundsRef.current;
+            position.x = Math.max(bounds.minX, Math.min(bounds.maxX, position.x));
+            position.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, position.z));
+          }
           position.y = walkEyeLevelRef.current;
 
           camera.position.copy(position);
@@ -438,38 +509,111 @@ export const StudioCanvas: React.FC = () => {
       camera.fov = 72;
       camera.updateProjectionMatrix();
 
-      const room = sceneData.rooms.find(r => r.id === uiState.selectedId) || sceneData.rooms[0];
-      if (room) {
-        // Smart spawn point: near room corner looking diagonally across room
-        const spawnX = (room.position.x - room.width * 0.22) * FT_TO_M;
-        const spawnZ = (room.position.z + room.depth * 0.25) * FT_TO_M;
+      const isEnteringWalk = prevCameraModeRef.current !== 'walk';
+      if (isEnteringWalk) {
+        const room = sceneData.rooms.find(r => r.id === uiState.selectedId) || sceneData.rooms[0];
+        if (room) {
+          // Smart spawn point: near room corner looking diagonally across room
+          const spawnX = (room.position.x - room.width * 0.22) * FT_TO_M;
+          const spawnZ = (room.position.z + room.depth * 0.25) * FT_TO_M;
 
-        walkStateRef.current.position.set(spawnX, walkEyeLevel, spawnZ);
+          walkStateRef.current.position.set(spawnX, walkEyeLevel, spawnZ);
 
-        const centerX = room.position.x * FT_TO_M;
-        const centerZ = room.position.z * FT_TO_M;
-        const dirX = centerX - spawnX;
-        const dirZ = centerZ - spawnZ;
-        const targetYaw = Math.atan2(-dirX, -dirZ);
+          const centerX = room.position.x * FT_TO_M;
+          const centerZ = room.position.z * FT_TO_M;
+          const dirX = centerX - spawnX;
+          const dirZ = centerZ - spawnZ;
+          const targetYaw = Math.atan2(-dirX, -dirZ);
 
-        walkStateRef.current.yaw = targetYaw;
-        walkStateRef.current.pitch = -0.05;
+          walkStateRef.current.yaw = targetYaw;
+          walkStateRef.current.pitch = -0.05;
 
-        camera.position.copy(walkStateRef.current.position);
-        const lookDir = new THREE.Vector3(
-          -Math.sin(targetYaw) * Math.cos(-0.05),
-          -0.05,
-          -Math.cos(targetYaw) * Math.cos(-0.05)
-        );
-        camera.lookAt(walkStateRef.current.position.clone().add(lookDir));
-        setCurrentWalkRoom(room.name);
+          camera.position.copy(walkStateRef.current.position);
+          const lookDir = new THREE.Vector3(
+            -Math.sin(targetYaw) * Math.cos(-0.05),
+            -0.05,
+            -Math.cos(targetYaw) * Math.cos(-0.05)
+          );
+          camera.lookAt(walkStateRef.current.position.clone().add(lookDir));
+          setCurrentWalkRoom(room.name);
+        }
+      } else {
+        // Preserving player X and Z coordinates when adjusting stance / eye-level
+        walkStateRef.current.position.y = walkEyeLevel;
+        camera.position.y = walkEyeLevel;
       }
     }
+
+    prevCameraModeRef.current = uiState.cameraMode;
 
     if (uiState.cameraMode !== '2d' || uiState.cameraAngle !== 'top') {
       orbit.maxPolarAngle = Math.PI / 2 - 0.05;
     }
   }, [uiState.cameraMode, uiState.cameraAngle, walkEyeLevel]);
+
+  // Handle walk target teleportation requests from UIStore or 2D Map
+  useEffect(() => {
+    if (uiState.walkTargetPosition && cameraRef.current) {
+      const { x, z } = uiState.walkTargetPosition;
+      const targetMetersX = x * FT_TO_M;
+      const targetMetersZ = z * FT_TO_M;
+
+      walkStateRef.current.position.set(targetMetersX, walkEyeLevelRef.current, targetMetersZ);
+      cameraRef.current.position.copy(walkStateRef.current.position);
+
+      const targetRoom = sceneData.rooms.find(r => {
+        const halfW = (r.width || 10) / 2;
+        const halfD = (r.depth || 10) / 2;
+        return (
+          x >= r.position.x - halfW &&
+          x <= r.position.x + halfW &&
+          z >= r.position.z - halfD &&
+          z <= r.position.z + halfD
+        );
+      });
+
+      if (targetRoom) {
+        const centerX = targetRoom.position.x * FT_TO_M;
+        const centerZ = targetRoom.position.z * FT_TO_M;
+        const dirX = centerX - targetMetersX;
+        const dirZ = centerZ - targetMetersZ;
+        if (Math.abs(dirX) > 0.1 || Math.abs(dirZ) > 0.1) {
+          const targetYaw = Math.atan2(-dirX, -dirZ);
+          walkStateRef.current.yaw = targetYaw;
+        }
+        setCurrentWalkRoom(targetRoom.name);
+      }
+
+      uiStore.clearWalkTarget();
+    }
+  }, [uiState.walkTargetPosition, sceneData.rooms]);
+
+  const handleMiniMapTeleport = (ftX: number, ftZ: number, roomId?: string) => {
+    const targetMetersX = ftX * FT_TO_M;
+    const targetMetersZ = ftZ * FT_TO_M;
+
+    walkStateRef.current.position.set(targetMetersX, walkEyeLevelRef.current, targetMetersZ);
+    if (cameraRef.current) {
+      cameraRef.current.position.copy(walkStateRef.current.position);
+    }
+
+    if (roomId) {
+      const room = sceneData.rooms.find(r => r.id === roomId);
+      if (room) setCurrentWalkRoom(room.name);
+    } else {
+      const found = sceneData.rooms.find(r => {
+        const halfW = (r.width || 10) / 2;
+        const halfD = (r.depth || 10) / 2;
+        return (
+          ftX >= r.position.x - halfW &&
+          ftX <= r.position.x + halfW &&
+          ftZ >= r.position.z - halfD &&
+          ftZ <= r.position.z + halfD
+        );
+      });
+      if (found) setCurrentWalkRoom(found.name);
+    }
+  };
 
   // Re-render Scene Graph Objects (Rooms, Walls, Furniture)
   useEffect(() => {
@@ -1070,6 +1214,20 @@ export const StudioCanvas: React.FC = () => {
               {isWalkPointerLocked ? 'Pointer Locked (ESC)' : 'Lock Pointer'}
             </button>
 
+            {/* Free Roam / Unrestricted Map Toggle */}
+            <button
+              onClick={() => setIsWalkUnrestricted(!isWalkUnrestricted)}
+              className={`px-3 py-2 rounded-full border text-xs font-semibold flex items-center gap-1.5 shadow-xl transition backdrop-blur-md ${
+                isWalkUnrestricted
+                  ? 'bg-purple-950/80 border-purple-500/60 text-purple-300 hover:bg-purple-900'
+                  : 'bg-slate-900/90 border-slate-700 text-slate-300 hover:text-white'
+              }`}
+              title={isWalkUnrestricted ? 'Unrestricted Free Roam (No boundary walls)' : 'Bounded by dynamic floor plan enclosure'}
+            >
+              <Compass size={13} className={isWalkUnrestricted ? 'text-purple-400' : 'text-slate-400'} />
+              <span>{isWalkUnrestricted ? 'Free Roam Map' : 'Bounded Map'}</span>
+            </button>
+
             {/* Exit Walk Button */}
             <button
               onClick={() => uiStore.setCameraMode('3d', 'perspective')}
@@ -1142,6 +1300,20 @@ export const StudioCanvas: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Bottom-Right Interactive Architectural Radar Mini-Map */}
+          <div className="absolute bottom-6 right-6 z-30 pointer-events-auto">
+            <WalkMiniMap
+              sceneData={sceneData}
+              walkStateRef={walkStateRef}
+              currentRoomName={currentWalkRoom}
+              isUnrestricted={isWalkUnrestricted}
+              onToggleUnrestricted={() => setIsWalkUnrestricted(!isWalkUnrestricted)}
+              walkSpeedMultiplier={walkSpeedMultiplier}
+              onChangeSpeedMultiplier={setWalkSpeedMultiplier}
+              onTeleport={handleMiniMapTeleport}
+            />
           </div>
         </div>
       )}

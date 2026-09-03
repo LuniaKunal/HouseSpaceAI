@@ -43,7 +43,7 @@ HouseSpace is built from the ground up to support collaborative spatial design w
    Destructive or irreversible tools require explicit human approval via the in-app confirmation modal (`requiresConfirmation: true`). Agents cannot delete entire rooms, wipe scenes, or trigger external BIM downloads without the designer pressing "Approve".
 
 4. **Bi-directional Discovery & Telemetry:**  
-   Tools can be discovered dynamically using standard `document.modelContext.getTools()` and listen to the `toolchange` EventTarget event. Every call is logged in the `AgentCopilotPanel` and agent history audit trail.
+   Tools can be discovered dynamically using standard `document.modelContext.getTools()` and listen to the `toolchange` EventTarget event. Every call is logged in the studio telemetry and agent history audit trail.
 
 ---
 

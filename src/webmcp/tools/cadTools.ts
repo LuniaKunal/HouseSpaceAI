@@ -127,7 +127,7 @@ export const cadTools = {
       if (firstRoomId) {
         uiStore.setSelected(firstRoomId, 'room');
       }
-      uiStore.setActiveSidebarTab('copilot');
+      uiStore.setActiveSidebarTab('spaces');
 
       const totalAreaSqFt = floorPlan.rooms.reduce((acc, r) => acc + (r.width || 12) * (r.depth || 12), 0);
 
