@@ -32,6 +32,11 @@ const TEST_SUITES: TestSuite[] = [
     description: 'Verifies set_furniture_dimensions, fit_furniture_to_wall, and wall clearance snapping'
   },
   {
+    name: 'Window Rotation & WebMCP Structure Tool',
+    file: 'test_window_rotation.ts',
+    description: 'Verifies place_window rotation, rotate_window WebMCP tool, and polymorphic rotate_object'
+  },
+  {
     name: 'WebMCP Architecture & Bridge Audit',
     file: 'test_webmcp_audit.ts',
     description: 'Verifies WebMCP schema validation, tool execution, and window/navigator modelContext bridge'

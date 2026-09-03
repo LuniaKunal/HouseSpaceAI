@@ -171,27 +171,32 @@ export const objectTools = {
     name: 'rotate_object',
     title: 'Rotate Object',
     category: 'Objects' as const,
-    description: 'Rotates an object in degrees around the {x, y, z} axes (primarily Y-axis yaw in architectural floor plans).',
+    description: 'Rotates an object (furniture item, window opening, or door) in degrees around the {x, y, z} axes (primarily Y-axis yaw in architectural floor plans).',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
       properties: {
-        objectId: { type: 'string', description: 'Stable ID of the object' },
+        objectId: { type: 'string', description: 'Stable ID of the object, window, or opening' },
         rotation: {
           type: 'object',
           properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } },
-          required: ['x', 'y', 'z'],
-          description: 'Rotation angles in degrees {x, y, z}'
+          required: ['y'],
+          description: 'Rotation angles in degrees {x, y, z} (yaw on Y is standard for architectural plans)'
         }
       },
       required: ['objectId', 'rotation']
     },
     execute: async (input: RotateObjectInput) => {
-      const ok = sceneStore.rotateObject(input.objectId, input.rotation);
-      if (!ok) throw new Error(`Could not rotate object "${input.objectId}".`);
+      const rot = {
+        x: input.rotation?.x || 0,
+        y: input.rotation?.y || 0,
+        z: input.rotation?.z || 0
+      };
+      const ok = sceneStore.rotateObject(input.objectId, rot);
+      if (!ok) throw new Error(`Could not rotate object "${input.objectId}". Object ID not found.`);
       sceneStore.highlightObject(input.objectId, 1500);
-      uiStore.recordAgentAction('rotate_object', `Rotated object (Y: ${input.rotation.y}°)`, input.objectId);
-      return { success: true, objectId: input.objectId, rotation: input.rotation };
+      uiStore.recordAgentAction('rotate_object', `Rotated object (Y: ${rot.y}°)`, input.objectId);
+      return { success: true, objectId: input.objectId, rotation: rot };
     }
   },
 

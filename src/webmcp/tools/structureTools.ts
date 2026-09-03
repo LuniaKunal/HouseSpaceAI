@@ -5,6 +5,7 @@ import {
   SetWallDimensionsInput,
   PlaceDoorInput,
   PlaceWindowInput,
+  RotateWindowInput,
   ChangeCeilingHeightInput
 } from '../../types/webmcp';
 
@@ -123,7 +124,7 @@ export const structureTools = {
     name: 'place_window',
     title: 'Place Window',
     category: 'Structure' as const,
-    description: 'Places a glass window opening on a room exterior or partition wall with elevation.',
+    description: 'Places a glass window opening on a room exterior or partition wall with elevation and orientation.',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
@@ -138,14 +139,15 @@ export const structureTools = {
         },
         width: { type: 'number', description: 'Window width in feet (default 4.5)' },
         height: { type: 'number', description: 'Window height in feet (default 4.5)' },
-        elevation: { type: 'number', description: 'Sill height above floor in feet (default 3.0)' }
+        elevation: { type: 'number', description: 'Sill height above floor in feet (default 3.0)' },
+        rotation: { type: 'number', description: 'Rotation angle in degrees (0 for North/South walls, 90 for East/West walls)' }
       },
       required: ['roomId', 'position']
     },
     execute: async (input: PlaceWindowInput) => {
       const win = sceneStore.placeWindow(input);
       uiStore.setSelected(win.id, 'window');
-      uiStore.recordAgentAction('place_window', `Placed window (${win.width}x${win.height} ft)`, win.id);
+      uiStore.recordAgentAction('place_window', `Placed window (${win.width}x${win.height} ft, ${win.rotation}°)`, win.id);
       return {
         success: true,
         windowId: win.id,
@@ -153,7 +155,51 @@ export const structureTools = {
         position: win.position,
         width: win.width,
         height: win.height,
-        elevation: win.elevation
+        elevation: win.elevation,
+        rotation: win.rotation
+      };
+    }
+  },
+
+  rotate_window: {
+    name: 'rotate_window',
+    title: 'Rotate Window',
+    category: 'Structure' as const,
+    description: 'Rotates a window opening in degrees (yaw angle) to align with room exterior or interior partition walls.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        windowId: { type: 'string', description: 'ID of the window opening to rotate' },
+        rotation: {
+          oneOf: [
+            { type: 'number', description: 'Rotation angle in degrees (e.g. 0, 90, 180, 270)' },
+            {
+              type: 'object',
+              properties: {
+                y: { type: 'number', description: 'Yaw rotation in degrees' }
+              },
+              required: ['y']
+            }
+          ],
+          description: 'Rotation angle in degrees (or { y: degrees })'
+        }
+      },
+      required: ['windowId', 'rotation']
+    },
+    execute: async (input: RotateWindowInput) => {
+      const yaw = typeof input.rotation === 'number'
+        ? input.rotation
+        : ((input.rotation as any).y ?? (input.rotation as any).x ?? 0);
+      const normalizedYaw = ((yaw % 360) + 360) % 360;
+      const ok = sceneStore.rotateWindow(input.windowId, normalizedYaw);
+      if (!ok) throw new Error(`Could not rotate window "${input.windowId}". Window ID not found.`);
+      uiStore.setSelected(input.windowId, 'window');
+      uiStore.recordAgentAction('rotate_window', `Rotated window to ${normalizedYaw}°`, input.windowId);
+      return {
+        success: true,
+        windowId: input.windowId,
+        rotation: normalizedYaw
       };
     }
   },

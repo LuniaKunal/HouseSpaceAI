@@ -714,24 +714,109 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
             );
           })}
 
-          {/* 5. WINDOWS (Double-line Architectural Symbols) */}
+          {/* 5. WINDOWS (Double-line Architectural Symbols with Interactive Selection & Rotation) */}
           {sceneData.windows.map(win => {
             const wx = toSvgX(win.position.x);
             const wy = toSvgY(win.position.z);
             const wLen = win.width * scaleFt;
-            const isVert = win.rotation === 90 || win.rotation === 270;
+            const isSelected = uiState.selectedId === win.id;
+            const strokeColor = isSelected ? '#38bdf8' : (isDark ? '#38bdf8' : '#0284c7');
+            const fillColor = isSelected
+              ? (isDark ? '#0369a1' : '#bae6fd')
+              : (isDark ? '#0f172a' : '#ffffff');
 
             return (
-              <g key={win.id} transform={`translate(${wx}, ${wy})`} pointerEvents="none">
-                {isVert ? (
-                  <g>
-                    <rect x={-4} y={-wLen / 2} width={8} height={wLen} fill={isDark ? '#0f172a' : '#ffffff'} stroke="#38bdf8" strokeWidth={1.5} />
-                    <line x1={0} y1={-wLen / 2} x2={0} y2={wLen / 2} stroke="#38bdf8" strokeWidth={1} />
-                  </g>
-                ) : (
-                  <g>
-                    <rect x={-wLen / 2} y={-4} width={wLen} height={8} fill={isDark ? '#0f172a' : '#ffffff'} stroke="#38bdf8" strokeWidth={1.5} />
-                    <line x1={-wLen / 2} y1={0} x2={wLen / 2} y2={0} stroke="#38bdf8" strokeWidth={1} />
+              <g
+                key={win.id}
+                transform={`translate(${wx}, ${wy}) rotate(${win.rotation || 0})`}
+                pointerEvents="auto"
+                className="cursor-pointer group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  uiStore.setSelected(win.id, 'window');
+                }}
+              >
+                {/* Transparent hit area for easy selection */}
+                <rect
+                  x={-wLen / 2 - 6}
+                  y={-12}
+                  width={wLen + 12}
+                  height={24}
+                  fill="transparent"
+                  className="hover:fill-sky-500/15 transition-colors"
+                />
+
+                {/* Selection bounding box / glow */}
+                {isSelected && (
+                  <rect
+                    x={-wLen / 2 - 4}
+                    y={-8}
+                    width={wLen + 8}
+                    height={16}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 2"
+                    rx={2}
+                  />
+                )}
+
+                {/* Window Frame / Sill */}
+                <rect
+                  x={-wLen / 2}
+                  y={-4}
+                  width={wLen}
+                  height={8}
+                  fill={fillColor}
+                  stroke={strokeColor}
+                  strokeWidth={isSelected ? 2.5 : 1.5}
+                  rx={1}
+                />
+
+                {/* Double Glazing Glass Lines */}
+                <line
+                  x1={-wLen / 2 + 2}
+                  y1={-1.2}
+                  x2={wLen / 2 - 2}
+                  y2={-1.2}
+                  stroke={isSelected ? '#ffffff' : strokeColor}
+                  strokeWidth={1}
+                />
+                <line
+                  x1={-wLen / 2 + 2}
+                  y1={1.2}
+                  x2={wLen / 2 - 2}
+                  y2={1.2}
+                  stroke={isSelected ? '#ffffff' : strokeColor}
+                  strokeWidth={1}
+                />
+
+                {/* On-Canvas Rotation Handle Button (+90°) when selected */}
+                {isSelected && (
+                  <g
+                    transform={`translate(${wLen / 2 + 14}, 0)`}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const nextYaw = ((win.rotation || 0) + 90) % 360;
+                      sceneStore.rotateWindow(win.id, nextYaw);
+                      uiStore.addToast('Window Rotated', `Rotated window to ${nextYaw}°`, 'info');
+                    }}
+                  >
+                    <circle
+                      r={9}
+                      fill="#0284c7"
+                      stroke="#ffffff"
+                      strokeWidth={1.5}
+                      className="hover:fill-sky-400 transition"
+                    />
+                    <path
+                      d="M -3 -3 L 3 -3 L 3 3 M 3 -3 A 4.5 4.5 0 1 1 -3 0"
+                      fill="none"
+                      stroke="#ffffff"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                    />
                   </g>
                 )}
               </g>

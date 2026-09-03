@@ -8,7 +8,7 @@ import { createFurnitureMeshGroup } from './furnitureMeshes';
 import { getFloorMaterial, createRoomWallsGroup } from './roomAndWallHelpers';
 import { reconstruct3DFromFloorPlan } from '../geometry/deterministicReconstruction';
 import { getRoomFootprint } from '../geometry/roomGeometry';
-import { FT_TO_M, M_TO_FT, Room, FurnitureObject } from '../types/scene';
+import { FT_TO_M, M_TO_FT, Room, FurnitureObject, WindowOpening } from '../types/scene';
 import { CADBlueprintOverlay } from './CADBlueprintOverlay';
 import { WalkMiniMap } from './WalkMiniMap';
 import {
@@ -35,6 +35,119 @@ import {
   Lock,
   Unlock
 } from 'lucide-react';
+
+/**
+ * Creates rich procedural 3D architectural window frames, exterior sills, and glazed glass panes.
+ */
+function createWindowMeshGroup(
+  win: WindowOpening,
+  isSelected: boolean
+): THREE.Group {
+  const group = new THREE.Group();
+  group.name = `Window_${win.id}`;
+
+  const wM = win.width * FT_TO_M;
+  const hM = win.height * FT_TO_M;
+  const tM = 0.48 * FT_TO_M;
+  const frameThick = 0.04; // 4cm architectural frame profile
+
+  // Dark architectural anodized aluminum frame material
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    roughness: 0.35,
+    metalness: 0.8
+  });
+
+  // Exterior architectural sill material
+  const sillMat = new THREE.MeshStandardMaterial({
+    color: 0x64748b,
+    roughness: 0.7,
+    metalness: 0.1
+  });
+
+  // Architectural glass material with subtle sheen & transparency
+  const glassMat = new THREE.MeshStandardMaterial({
+    color: 0xbae6fd,
+    roughness: 0.05,
+    metalness: 0.15,
+    transparent: true,
+    opacity: 0.38
+  });
+
+  // Top header rail
+  const topRail = new THREE.Mesh(new THREE.BoxGeometry(wM, frameThick, tM), frameMat);
+  topRail.position.set(0, hM / 2 - frameThick / 2, 0);
+  group.add(topRail);
+
+  // Bottom sill rail
+  const bottomRail = new THREE.Mesh(new THREE.BoxGeometry(wM, frameThick, tM), frameMat);
+  bottomRail.position.set(0, -hM / 2 + frameThick / 2, 0);
+  group.add(bottomRail);
+
+  // Left jamb
+  const leftJamb = new THREE.Mesh(new THREE.BoxGeometry(frameThick, hM - frameThick * 2, tM), frameMat);
+  leftJamb.position.set(-wM / 2 + frameThick / 2, 0, 0);
+  group.add(leftJamb);
+
+  // Right jamb
+  const rightJamb = new THREE.Mesh(new THREE.BoxGeometry(frameThick, hM - frameThick * 2, tM), frameMat);
+  rightJamb.position.set(wM / 2 - frameThick / 2, 0, 0);
+  group.add(rightJamb);
+
+  // Exterior sill projection
+  const sill = new THREE.Mesh(new THREE.BoxGeometry(wM + 0.06, 0.035, tM + 0.06), sillMat);
+  sill.position.set(0, -hM / 2 - 0.018, 0.015);
+  group.add(sill);
+
+  // Central mullion for wide windows (> 3.8ft)
+  if (win.width > 3.8) {
+    const mullion = new THREE.Mesh(new THREE.BoxGeometry(frameThick * 0.8, hM - frameThick * 2, tM * 0.9), frameMat);
+    mullion.position.set(0, 0, 0);
+    group.add(mullion);
+  }
+
+  // Glazed glass panes
+  const glassW = Math.max(0.1, (wM - frameThick * 2) * (win.width > 3.8 ? 0.49 : 0.98));
+  const glassH = Math.max(0.1, hM - frameThick * 2);
+
+  if (win.width > 3.8) {
+    const glassLeft = new THREE.Mesh(new THREE.BoxGeometry(glassW, glassH, 0.012), glassMat);
+    glassLeft.position.set(-wM / 4, 0, 0);
+    group.add(glassLeft);
+
+    const glassRight = new THREE.Mesh(new THREE.BoxGeometry(glassW, glassH, 0.012), glassMat);
+    glassRight.position.set(wM / 4, 0, 0);
+    group.add(glassRight);
+  } else {
+    const glassSingle = new THREE.Mesh(new THREE.BoxGeometry(glassW, glassH, 0.012), glassMat);
+    glassSingle.position.set(0, 0, 0);
+    group.add(glassSingle);
+  }
+
+  // Selection wireframe highlight
+  if (isSelected) {
+    const selBoxGeo = new THREE.BoxGeometry(wM + 0.04, hM + 0.04, tM + 0.06);
+    const selEdges = new THREE.EdgesGeometry(selBoxGeo);
+    const selLine = new THREE.LineSegments(
+      selEdges,
+      new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 })
+    );
+    selLine.name = `Selection_${win.id}`;
+    group.add(selLine);
+  }
+
+  // Attach metadata for raycasting & inspector selection
+  group.userData = { id: win.id, type: 'window' };
+  group.traverse(child => {
+    child.userData = { id: win.id, type: 'window' };
+    if (child instanceof THREE.Mesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+    }
+  });
+
+  return group;
+}
 
 export const StudioCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -771,6 +884,20 @@ export const StudioCanvas: React.FC = () => {
 
       scene.add(meshGroup);
     });
+
+    // 3. Render Windows (3D Architectural Frames, Sills & Glazing)
+    sceneData.windows.forEach(win => {
+      const isSelected = uiState.selectedId === win.id;
+      const winGroup = createWindowMeshGroup(win, isSelected);
+      const elevationM = ((win.elevation !== undefined ? win.elevation : 3.0) + win.height / 2) * FT_TO_M;
+      winGroup.position.set(
+        win.position.x * FT_TO_M,
+        elevationM,
+        win.position.z * FT_TO_M
+      );
+      winGroup.rotation.y = THREE.MathUtils.degToRad(win.rotation || 0);
+      scene.add(winGroup);
+    });
   }, [sceneData, uiState.selectedId, uiState.cameraMode, uiState.showWallCutaways, walkWallMode, shadowQuality]);
 
   // Pointer Interaction
@@ -791,17 +918,28 @@ export const StudioCanvas: React.FC = () => {
         const intersects = raycasterRef.current.intersectObjects(sceneRef.current.children, true);
         for (const hit of intersects) {
           const data = hit.object.userData;
-          if (data && data.type === 'furniture') {
-            uiStore.setSelected(data.id, 'furniture');
+          if (data && (data.type === 'furniture' || data.type === 'window')) {
+            uiStore.setSelected(data.id, data.type);
             isDraggingRef.current = true;
             draggedItemIdRef.current = data.id;
-            const item = sceneData.furniture.find(f => f.id === data.id);
-            if (item) {
-              dragOffsetRef.current.set(
-                hit.point.x - item.position.x * FT_TO_M,
-                0,
-                hit.point.z - item.position.z * FT_TO_M
-              );
+            if (data.type === 'furniture') {
+              const item = sceneData.furniture.find(f => f.id === data.id);
+              if (item) {
+                dragOffsetRef.current.set(
+                  hit.point.x - item.position.x * FT_TO_M,
+                  0,
+                  hit.point.z - item.position.z * FT_TO_M
+                );
+              }
+            } else if (data.type === 'window') {
+              const win = sceneData.windows.find(w => w.id === data.id);
+              if (win) {
+                dragOffsetRef.current.set(
+                  hit.point.x - win.position.x * FT_TO_M,
+                  0,
+                  hit.point.z - win.position.z * FT_TO_M
+                );
+              }
             }
             break;
           }
@@ -839,6 +977,20 @@ export const StudioCanvas: React.FC = () => {
               hitPoint.x - item.position.x * FT_TO_M,
               0,
               hitPoint.z - item.position.z * FT_TO_M
+            );
+          }
+        } else if (data.type === 'window') {
+          isDraggingRef.current = true;
+          draggedItemIdRef.current = data.id;
+          if (orbitControlsRef.current) orbitControlsRef.current.enabled = false;
+
+          const win = sceneData.windows.find(w => w.id === data.id);
+          if (win) {
+            const hitPoint = hit.point;
+            dragOffsetRef.current.set(
+              hitPoint.x - win.position.x * FT_TO_M,
+              0,
+              hitPoint.z - win.position.z * FT_TO_M
             );
           }
         }

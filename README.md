@@ -58,14 +58,14 @@ Open [http://localhost:4173/](http://localhost:4173/) in your browser.
 
 ---
 
-## WebMCP Tools (49 Tools)
+## WebMCP Tools (50 Tools)
 
-HouseSpace exposes 49 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
+HouseSpace exposes 50 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
 
 | Category | Count | Example Tools |
 | :--- | :---: | :--- |
 | **Rooms** | 11 | `create_room`, `add_connected_room`, `set_room_notch`, `fit_room_into_notch`, `add_wall_alcove`, `delete_room` |
-| **Structure** | 5 | `add_wall`, `place_door`, `place_window`, `change_ceiling_height` |
+| **Structure** | 6 | `add_wall`, `place_door`, `place_window`, `rotate_window`, `change_ceiling_height` |
 | **Objects** | 12 | `add_furniture`, `move_object`, `rotate_object`, `fit_furniture_to_wall`, `auto_fit_room_furniture`, `autofit_human_circulation`, `autofit_room_for_humans` |
 | **Materials** | 2 | `apply_material`, `change_texture` |
 | **Scene / View** | 7 | `switch_view`, `autofit_view`, `take_screenshot`, `get_scene_state`, `set_grid_snap` |
@@ -90,12 +90,13 @@ Run the complete test suite with `npm run test:all`:
 | **2** | `test_l_shaped_rooms.ts` | Non-rectangular polygon footprints & corner notches |
 | **3** | `test_alcoves_and_alignment.ts` | 8-vertex wall alcoves & outward wings |
 | **4** | `test_furniture_dimension_tools.ts` | Furniture resizing & wall clearance snapping |
-| **5** | `test_webmcp_audit.ts` | WebMCP protocol, tool registry (49 tools), JSON schema |
-| **6** | `test_project_system.ts` | Multi-project IndexedDB persistence & lifecycle |
-| **7** | `test_delete_project.ts` | Project deletion safety & confirmation gates |
-| **8** | `test_cad_to_3d.ts` | Deterministic 2D blueprint to 3D space generation |
-| **9** | `test_floorplan_accuracy.ts` | Dimensional accuracy & constraint solving |
-| **10** | `validate_layout.ts` | End-to-end autonomous suite & interior layout validation |
+| **5** | `test_window_rotation.ts` | Window rotation, WebMCP structure tools, and polymorphic rotation |
+| **6** | `test_webmcp_audit.ts` | WebMCP protocol, tool registry (50 tools), JSON schema |
+| **7** | `test_project_system.ts` | Multi-project IndexedDB persistence & lifecycle |
+| **8** | `test_delete_project.ts` | Project deletion safety & confirmation gates |
+| **9** | `test_cad_to_3d.ts` | Deterministic 2D blueprint to 3D space generation |
+| **10** | `test_floorplan_accuracy.ts` | Dimensional accuracy & constraint solving |
+| **11** | `validate_layout.ts` | End-to-end autonomous suite & interior layout validation |
 
 ---
 

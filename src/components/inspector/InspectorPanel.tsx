@@ -55,6 +55,7 @@ export const InspectorPanel: React.FC = () => {
 
   const selectedFurniture = sceneData.furniture.find(f => f.id === uiState.selectedId);
   const selectedRoom = sceneData.rooms.find(r => r.id === uiState.selectedId);
+  const selectedWindow = sceneData.windows.find(w => w.id === uiState.selectedId);
 
   // Position change
   const handlePositionChange = (axis: 'x' | 'y' | 'z', value: number) => {
@@ -68,6 +69,11 @@ export const InspectorPanel: React.FC = () => {
         ...selectedRoom.position,
         [axis]: value
       });
+    } else if (selectedWindow) {
+      sceneStore.moveWindow(selectedWindow.id, {
+        ...selectedWindow.position,
+        [axis]: value
+      });
     }
   };
 
@@ -78,7 +84,43 @@ export const InspectorPanel: React.FC = () => {
         ...selectedFurniture.rotation,
         [axis]: value
       });
+    } else if (selectedWindow && axis === 'y') {
+      sceneStore.rotateWindow(selectedWindow.id, value);
     }
+  };
+
+  // Window dimension change
+  const handleWindowDimensionChange = (prop: 'width' | 'height' | 'elevation', val: number) => {
+    if (!selectedWindow) return;
+    sceneStore.setWindowDimensions(selectedWindow.id, {
+      [prop]: Math.max(0.5, val)
+    });
+  };
+
+  const handleStepWindowDimension = (prop: 'width' | 'height' | 'elevation', delta: number) => {
+    if (!selectedWindow) return;
+    const current = selectedWindow[prop];
+    handleWindowDimensionChange(prop, current + delta);
+  };
+
+  // Window duplicate
+  const handleDuplicateWindow = () => {
+    if (!selectedWindow) return;
+    const dup = sceneStore.placeWindow({
+      roomId: selectedWindow.roomId,
+      wallId: selectedWindow.wallId,
+      position: {
+        x: selectedWindow.position.x + 2,
+        y: selectedWindow.position.y,
+        z: selectedWindow.position.z
+      },
+      width: selectedWindow.width,
+      height: selectedWindow.height,
+      elevation: selectedWindow.elevation,
+      rotation: selectedWindow.rotation
+    });
+    uiStore.setSelected(dup.id, 'window');
+    uiStore.addToast('Window Duplicated', `Placed duplicate window at (${dup.position.x.toFixed(1)}, ${dup.position.z.toFixed(1)})`, 'success');
   };
 
   // Dimensions change
@@ -327,6 +369,10 @@ export const InspectorPanel: React.FC = () => {
       await executeWebMCPTool('delete_object', { objectId: selectedFurniture.id }, 'user');
     } else if (selectedRoom) {
       await executeWebMCPTool('delete_room', { roomId: selectedRoom.id }, 'user');
+    } else if (selectedWindow) {
+      sceneStore.deleteWindow(selectedWindow.id);
+      uiStore.setSelected(null);
+      uiStore.addToast('Window Removed', 'Window opening removed from scene', 'info');
     }
   };
 
@@ -1227,6 +1273,195 @@ export const InspectorPanel: React.FC = () => {
               >
                 <Trash2 size={13} />
                 Delete Space
+              </button>
+            </div>
+          </div>
+        ) : selectedWindow ? (
+          /* Window Opening Precision Inspector */
+          <div className="space-y-4">
+            {/* Title & Type */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/25">
+                  Architectural Opening
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono tabular-nums">ID: {selectedWindow.id}</span>
+              </div>
+              <h3 className="text-xs font-semibold text-white">Window Opening</h3>
+              <p className="text-[11px] text-slate-400">
+                In Space:{' '}
+                <strong className="text-slate-200">
+                  {sceneData.rooms.find(r => r.id === selectedWindow.roomId)?.name || 'Exterior Wall'}
+                </strong>
+              </p>
+            </div>
+
+            {/* Position Coordinates (X, Y, Z in feet) */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                <Move size={12} className="text-blue-400" /> Center Coordinates (ft)
+              </label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(['x', 'y', 'z'] as const).map(axis => {
+                  const badgeStyle =
+                    axis === 'x'
+                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                      : axis === 'y'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                  return (
+                    <div key={axis} className="bg-studio-surface border border-white/[0.08] rounded-xl p-2 focus-within:border-blue-500/80 focus-within:shadow-glow-blue transition">
+                      <span className={`size-4 rounded flex items-center justify-center text-[9px] font-bold font-mono uppercase mb-1 border ${badgeStyle}`}>
+                        {axis}
+                      </span>
+                      <input
+                        type="number"
+                        step={0.5}
+                        value={Number((selectedWindow.position[axis] || 0).toFixed(2))}
+                        onChange={e => handlePositionChange(axis, parseFloat(e.target.value) || 0)}
+                        aria-label={`Position ${axis.toUpperCase()}`}
+                        className="w-full bg-transparent text-xs text-white font-mono tabular-nums focus:outline-none"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dimensions: Width, Height, Sill Elevation */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Maximize2 size={12} className="text-emerald-400" /> Opening Size & Sill (ft)
+                </label>
+                <span className="text-[10px] text-slate-500 font-mono tabular-nums">0.5ft step</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { id: 'width', label: 'Width', val: selectedWindow.width },
+                  { id: 'height', label: 'Height', val: selectedWindow.height },
+                  { id: 'elevation', label: 'Sill Elev', val: selectedWindow.elevation }
+                ].map(item => (
+                  <div key={item.id} className="bg-studio-surface border border-white/[0.08] rounded-xl p-2 focus-within:border-blue-500/80 transition">
+                    <span className="text-[10px] text-slate-400 font-medium block mb-1">{item.label}</span>
+                    <input
+                      type="number"
+                      step={0.5}
+                      min={0.5}
+                      value={Number(item.val.toFixed(2))}
+                      onChange={e => handleWindowDimensionChange(item.id as any, parseFloat(e.target.value) || 1)}
+                      className="w-full bg-transparent text-xs text-white font-mono tabular-nums focus:outline-none mb-1.5"
+                    />
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleStepWindowDimension(item.id as any, -0.5)}
+                        className="flex-1 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] flex items-center justify-center transition"
+                      >
+                        <Minus size={10} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStepWindowDimension(item.id as any, 0.5)}
+                        className="flex-1 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] flex items-center justify-center transition"
+                      >
+                        <Plus size={10} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ROTATION SECTION: Yaw Slider, Direct Degree Input, +90°, Cardinal Presets */}
+            <div className="space-y-2 p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <RotateCcw size={12} className="text-amber-400" /> Wall Alignment Rotation
+                </label>
+                <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                  <input
+                    type="number"
+                    min={0}
+                    max={360}
+                    value={selectedWindow.rotation || 0}
+                    onChange={e => sceneStore.rotateWindow(selectedWindow.id, parseFloat(e.target.value) || 0)}
+                    className="w-10 bg-transparent text-xs text-white font-mono text-right focus:outline-none"
+                  />
+                  <span className="text-[10px] font-mono text-slate-400">°</span>
+                </div>
+              </div>
+
+              {/* Slider + +90° Quick Turn Button */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min={0}
+                  max={360}
+                  step={15}
+                  value={((selectedWindow.rotation % 360) + 360) % 360}
+                  onChange={e => sceneStore.rotateWindow(selectedWindow.id, Number(e.target.value))}
+                  className="flex-1 accent-sky-500 cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => sceneStore.rotateWindow(selectedWindow.id, ((selectedWindow.rotation || 0) + 90) % 360)}
+                  className="px-2 py-1 bg-sky-600/30 hover:bg-sky-600/50 border border-sky-500/40 text-[10px] font-mono text-sky-300 rounded transition"
+                  title="Rotate clockwise by 90 degrees"
+                >
+                  +90°
+                </button>
+              </div>
+
+              {/* Cardinal Wall Alignment Quick Presets */}
+              <div className="space-y-1 pt-1">
+                <span className="text-[10px] text-slate-400 font-mono">Snap to Wall Orientation:</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[
+                    { label: '0° North/South', deg: 0 },
+                    { label: '90° East/West', deg: 90 },
+                    { label: '180° South Face', deg: 180 },
+                    { label: '270° West Face', deg: 270 }
+                  ].map(preset => {
+                    const isCurrent = ((selectedWindow.rotation % 360) + 360) % 360 === preset.deg;
+                    return (
+                      <button
+                        key={preset.deg}
+                        type="button"
+                        onClick={() => sceneStore.rotateWindow(selectedWindow.id, preset.deg)}
+                        className={`py-1 px-2 text-[10px] font-mono rounded border transition flex items-center justify-between ${
+                          isCurrent
+                            ? 'bg-sky-500/20 border-sky-400 text-sky-300 font-semibold'
+                            : 'bg-slate-800/80 border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                        }`}
+                      >
+                        <span>{preset.label}</span>
+                        {isCurrent && <Check size={10} className="text-sky-400" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions: Duplicate, Delete */}
+            <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handleDuplicateWindow}
+                className="py-1.5 px-3 bg-[#181c28] hover:bg-slate-800 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 flex items-center justify-center gap-1.5 transition"
+              >
+                <Copy size={13} />
+                Duplicate
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="py-1.5 px-3 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/60 rounded-lg text-xs font-medium text-rose-300 flex items-center justify-center gap-1.5 transition"
+              >
+                <Trash2 size={13} />
+                Delete
               </button>
             </div>
           </div>

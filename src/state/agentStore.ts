@@ -32,6 +32,7 @@ class AgentStore {
       'set_wall_dimensions',
       'place_door',
       'place_window',
+      'rotate_window',
       'change_ceiling_height',
       'create_room',
       'set_transform_lock',

@@ -779,43 +779,78 @@ class SceneStore {
 
   public moveObject(objectId: string, position: Vector3D): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
-    if (!item || item.locked) return false;
-    this.saveSnapshot();
+    if (item) {
+      if (item.locked) return false;
+      this.saveSnapshot();
 
-    // Auto-detect enclosing room if position moved
-    let assignedRoomId = item.roomId;
-    for (const r of this.data.rooms) {
-      const minX = r.position.x - r.width / 2;
-      const maxX = r.position.x + r.width / 2;
-      const minZ = r.position.z - r.depth / 2;
-      const maxZ = r.position.z + r.depth / 2;
-      if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
-        assignedRoomId = r.id;
-        break;
+      // Auto-detect enclosing room if position moved
+      let assignedRoomId = item.roomId;
+      for (const r of this.data.rooms) {
+        const minX = r.position.x - r.width / 2;
+        const maxX = r.position.x + r.width / 2;
+        const minZ = r.position.z - r.depth / 2;
+        const maxZ = r.position.z + r.depth / 2;
+        if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
+          assignedRoomId = r.id;
+          break;
+        }
       }
+
+      this.data = {
+        ...this.data,
+        furniture: this.data.furniture.map(f =>
+          f.id === objectId ? { ...f, position, roomId: assignedRoomId } : f
+        )
+      };
+      this.notify();
+      return true;
     }
 
-    this.data = {
-      ...this.data,
-      furniture: this.data.furniture.map(f =>
-        f.id === objectId ? { ...f, position, roomId: assignedRoomId } : f
-      )
-    };
-    this.notify();
-    return true;
+    const win = this.data.windows.find(w => w.id === objectId);
+    if (win) {
+      return this.moveWindow(objectId, position);
+    }
+
+    return false;
   }
 
-  public rotateObject(objectId: string, rotation: Vector3D): boolean {
+  public rotateObject(objectId: string, rotation: Vector3D | number | { y?: number }): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
-    if (!item || item.locked) return false;
-    this.saveSnapshot();
+    if (item) {
+      if (item.locked) return false;
+      this.saveSnapshot();
+      const rotVec: Vector3D = typeof rotation === 'number'
+        ? { x: 0, y: rotation, z: 0 }
+        : { x: (rotation as any).x || 0, y: (rotation as any).y || 0, z: (rotation as any).z || 0 };
 
-    this.data = {
-      ...this.data,
-      furniture: this.data.furniture.map(f => (f.id === objectId ? { ...f, rotation } : f))
-    };
-    this.notify();
-    return true;
+      this.data = {
+        ...this.data,
+        furniture: this.data.furniture.map(f => (f.id === objectId ? { ...f, rotation: rotVec } : f))
+      };
+      this.notify();
+      return true;
+    }
+
+    const win = this.data.windows.find(w => w.id === objectId);
+    if (win) {
+      const yaw = typeof rotation === 'number' ? rotation : ((rotation as any).y ?? (rotation as any).x ?? 0);
+      return this.rotateWindow(objectId, yaw);
+    }
+
+    const door = this.data.doors.find(d => d.id === objectId);
+    if (door) {
+      this.saveSnapshot();
+      const yaw = typeof rotation === 'number' ? rotation : ((rotation as any).y ?? (rotation as any).x ?? 0);
+      const normalizedYaw = ((yaw % 360) + 360) % 360;
+      this.data = {
+        ...this.data,
+        doors: this.data.doors.map(d => (d.id === objectId ? { ...d, rotation: normalizedYaw } : d))
+      };
+      this.notify();
+      return true;
+    }
+
+    return false;
   }
 
   public scaleObject(objectId: string, scale: Vector3D): boolean {
@@ -1582,15 +1617,33 @@ class SceneStore {
 
   public deleteObject(objectId: string): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
-    if (!item) return false;
-    this.saveSnapshot();
+    if (item) {
+      this.saveSnapshot();
+      this.data = {
+        ...this.data,
+        furniture: this.data.furniture.filter(f => f.id !== objectId)
+      };
+      this.notify();
+      return true;
+    }
 
-    this.data = {
-      ...this.data,
-      furniture: this.data.furniture.filter(f => f.id !== objectId)
-    };
-    this.notify();
-    return true;
+    const win = this.data.windows.find(w => w.id === objectId);
+    if (win) {
+      return this.deleteWindow(objectId);
+    }
+
+    const door = this.data.doors.find(d => d.id === objectId);
+    if (door) {
+      this.saveSnapshot();
+      this.data = {
+        ...this.data,
+        doors: this.data.doors.filter(d => d.id !== objectId)
+      };
+      this.notify();
+      return true;
+    }
+
+    return false;
   }
 
   public setTransformLock(targetId: string, locked: boolean): boolean {
@@ -1713,9 +1766,11 @@ class SceneStore {
     width?: number;
     height?: number;
     elevation?: number;
+    rotation?: number;
   }): WindowOpening {
     this.saveSnapshot();
     const id = `win-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`;
+    const rotation = input.rotation !== undefined ? ((input.rotation % 360) + 360) % 360 : 0;
     const newWin: WindowOpening = {
       id,
       roomId: input.roomId,
@@ -1723,8 +1778,8 @@ class SceneStore {
       position: input.position,
       width: input.width || 4.5,
       height: input.height || 4.5,
-      elevation: input.elevation || 3.0,
-      rotation: 0
+      elevation: input.elevation !== undefined ? input.elevation : 3.0,
+      rotation
     };
     this.data = {
       ...this.data,
@@ -1732,6 +1787,86 @@ class SceneStore {
     };
     this.notify();
     return newWin;
+  }
+
+  public rotateWindow(windowId: string, rotation: number): boolean {
+    const win = this.data.windows.find(w => w.id === windowId);
+    if (!win) return false;
+    this.saveSnapshot();
+    const normalizedYaw = ((rotation % 360) + 360) % 360;
+    this.data = {
+      ...this.data,
+      windows: this.data.windows.map(w => (w.id === windowId ? { ...w, rotation: normalizedYaw } : w))
+    };
+    this.notify();
+    return true;
+  }
+
+  public moveWindow(windowId: string, position: Vector3D): boolean {
+    const win = this.data.windows.find(w => w.id === windowId);
+    if (!win) return false;
+    this.saveSnapshot();
+
+    // Auto-detect enclosing room if position moved
+    let assignedRoomId = win.roomId;
+    for (const r of this.data.rooms) {
+      const minX = r.position.x - r.width / 2;
+      const maxX = r.position.x + r.width / 2;
+      const minZ = r.position.z - r.depth / 2;
+      const maxZ = r.position.z + r.depth / 2;
+      if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
+        assignedRoomId = r.id;
+        break;
+      }
+    }
+
+    this.data = {
+      ...this.data,
+      windows: this.data.windows.map(w =>
+        w.id === windowId ? { ...w, position, roomId: assignedRoomId } : w
+      )
+    };
+    this.notify();
+    return true;
+  }
+
+  public setWindowDimensions(
+    windowId: string,
+    dims: { width?: number; height?: number; elevation?: number; rotation?: number }
+  ): boolean {
+    const win = this.data.windows.find(w => w.id === windowId);
+    if (!win) return false;
+    this.saveSnapshot();
+
+    const rotation = dims.rotation !== undefined ? ((dims.rotation % 360) + 360) % 360 : win.rotation;
+    this.data = {
+      ...this.data,
+      windows: this.data.windows.map(w =>
+        w.id === windowId
+          ? {
+              ...w,
+              width: dims.width !== undefined && dims.width > 0 ? dims.width : w.width,
+              height: dims.height !== undefined && dims.height > 0 ? dims.height : w.height,
+              elevation: dims.elevation !== undefined && dims.elevation >= 0 ? dims.elevation : w.elevation,
+              rotation
+            }
+          : w
+      )
+    };
+    this.notify();
+    return true;
+  }
+
+  public deleteWindow(windowId: string): boolean {
+    const win = this.data.windows.find(w => w.id === windowId);
+    if (!win) return false;
+    this.saveSnapshot();
+    this.data = {
+      ...this.data,
+      windows: this.data.windows.filter(w => w.id !== windowId)
+    };
+    this.notify();
+    return true;
   }
 
   public changeCeilingHeight(height: number, roomId?: string): boolean {

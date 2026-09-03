@@ -1,7 +1,7 @@
 # HouseSpace WebMCP Tools Reference Guide
 
 > **W3C WebMCP Specification & Agent Interoperability Guide**  
-> **Total Available Tools:** 49 Executable Tools  
+> **Total Available Tools:** 50 Executable Tools  
 > **Categories:** 7 (Rooms, Structure, Objects, Materials, Scene / View, Workflow, CAD Synthesis)  
 > **Canonical Spatial Units:** Feet (Imperial) for dimensions and coordinates; degrees for Euler rotation; Three.js converts to SI metres internally ($1\text{ ft} = 0.3048\text{ m}$).
 
@@ -22,7 +22,7 @@ HouseSpace is built from the ground up to support collaborative spatial design w
                └───────────────────┼───────────────────┘
                                    ▼
                     WebMCP Central Tool Registry
-                     (49 Schema-Validated Tools)
+                     (50 Schema-Validated Tools)
                                    │
                ┌───────────────────┴───────────────────┐
                ▼                                       ▼
@@ -101,7 +101,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-## 3. Master WebMCP Tool Catalog Summary (49 Tools)
+## 3. Master WebMCP Tool Catalog Summary (50 Tools)
 
 | # | Category | Tool Name | Human Confirmation | Description Summary |
 |---|:---|:---|:---:|:---|
@@ -119,41 +119,42 @@ window.addEventListener('housespace:agent-result', (event) => {
 | 12 | **Structure** | `add_wall` | No | Creates interior partition wall segment {start, end} |
 | 13 | **Structure** | `set_wall_dimensions` | No | Adjusts wall thickness, length, or height |
 | 14 | **Structure** | `place_door` | No | Places standard, sliding, double, pocket, or arch door |
-| 15 | **Structure** | `place_window` | No | Places glazed exterior/interior window with sill elevation |
-| 16 | **Structure** | `change_ceiling_height` | No | Adjusts ceiling height globally or for a specific room |
-| 17 | **Objects** | `add_furniture` | No | Places 3D furniture item at coordinates with validation |
-| 18 | **Objects** | `move_object` | No | Translates furniture piece in scene feet |
-| 19 | **Objects** | `rotate_object` | No | Rotates furniture piece (Euler degrees, yaw on Y) |
-| 20 | **Objects** | `scale_object` | No | Scales object along {x, y, z} axes |
-| 21 | **Objects** | `delete_object` | No | Deletes specific furniture item from scene |
-| 22 | **Objects** | `set_transform_lock` | No | Locks/unlocks room or furniture against accidental edits |
-| 23 | **Objects** | `set_furniture_dimensions` | No | Sets precise width, height, and depth dimensions in feet |
-| 24 | **Objects** | `fit_furniture_to_wall` | No | Resizes/snaps oversized furniture flush against adjacent wall |
-| 25 | **Objects** | `auto_fit_room_furniture` | No | Batch detects & auto-resizes oversized furniture in a room |
-| 26 | **Objects** | `autofit_human_circulation` | No | Solves doorway corridors, walkways, and human circulation clearances |
-| 27 | **Objects** | `autofit_room_for_humans` | No | Comprehensive one-shot human spatial and ergonomic room solver |
-| 28 | **Objects** | `get_furniture_catalog` | No | Discovers all 32 human catalog items, dimensions, and materials |
-| 29 | **Materials** | `apply_material` | No | Applies architectural material/color to floor, wall, or object |
-| 30 | **Materials** | `change_texture` | No | Updates PBR texture mapping (roughness, scale, metalness) |
-| 31 | **Scene / View** | `generate_floor_plan` | No | Switches to 2D CAD blueprint view with dimensions |
-| 32 | **Scene / View** | `switch_view` | No | Switches viewport camera between 3D, 2D, and Walk modes |
-| 33 | **Scene / View** | `autofit_view` | No | Auto-frames viewport for human eyes (scene, room, or selection) |
-| 34 | **Scene / View** | `take_screenshot` | No | Captures viewport canvas as high-res PNG or JPEG |
-| 35 | **Scene / View** | `get_scene_state` | No | Grounding query returning all rooms, objects, and metrics |
-| 36 | **Scene / View** | `select_item` | No | Selects item in viewport and opens property inspector |
-| 37 | **Scene / View** | `set_grid_snap` | No | Configures grid snapping state and increment in feet |
-| 38 | **Workflow** | `undo` | No | Reverts last design modification |
-| 39 | **Workflow** | `redo` | No | Re-applies undone design modification |
-| 40 | **Workflow** | `export_model` | ⚠️ **Required** | Exports scene to GLB, OBJ, IFC4 (BIM), or JSON format |
-| 41 | **Workflow** | `set_confirmation_policy` | No | Configures human-in-the-loop trust boundary & whitelists |
-| 42 | **Workflow** | `create_project` | No | Creates new blank project workspace |
-| 43 | **Workflow** | `open_project` | No | Loads existing project workspace by ID |
-| 44 | **Workflow** | `list_projects` | No | Lists all saved user projects with metadata |
-| 45 | **Workflow** | `delete_project` | ⚠️ **Required** | Permanently deletes project workspace |
-| 46 | **Workflow** | `duplicate_project` | No | Clones current project into duplicate copy |
-| 47 | **Workflow** | `load_sample_project` | No | Loads pre-built '3BHK_Sample' or '4BHK_Sample' |
-| 48 | **Workflow** | `clear_scene` | ⚠️ **Required** | Clears all rooms, walls, and furniture from canvas |
-| 49 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from benchmark CAD blueprint (Upload coming soon) |
+| 15 | **Structure** | `place_window` | No | Places glazed exterior/interior window with sill elevation & rotation |
+| 16 | **Structure** | `rotate_window` | No | Rotates window opening in degrees (yaw angle) to align with walls |
+| 17 | **Structure** | `change_ceiling_height` | No | Adjusts ceiling height globally or for a specific room |
+| 18 | **Objects** | `add_furniture` | No | Places 3D furniture item at coordinates with validation |
+| 19 | **Objects** | `move_object` | No | Translates furniture piece in scene feet |
+| 20 | **Objects** | `rotate_object` | No | Rotates object, furniture, or window (Euler degrees, yaw on Y) |
+| 21 | **Objects** | `scale_object` | No | Scales object along {x, y, z} axes |
+| 22 | **Objects** | `delete_object` | No | Deletes specific furniture item or opening from scene |
+| 23 | **Objects** | `set_transform_lock` | No | Locks/unlocks room or furniture against accidental edits |
+| 24 | **Objects** | `set_furniture_dimensions` | No | Sets precise width, height, and depth dimensions in feet |
+| 25 | **Objects** | `fit_furniture_to_wall` | No | Resizes/snaps oversized furniture flush against adjacent wall |
+| 26 | **Objects** | `auto_fit_room_furniture` | No | Batch detects & auto-resizes oversized furniture in a room |
+| 27 | **Objects** | `autofit_human_circulation` | No | Solves doorway corridors, walkways, and human circulation clearances |
+| 28 | **Objects** | `autofit_room_for_humans` | No | Comprehensive one-shot human spatial and ergonomic room solver |
+| 29 | **Objects** | `get_furniture_catalog` | No | Discovers all 32 human catalog items, dimensions, and materials |
+| 30 | **Materials** | `apply_material` | No | Applies architectural material/color to floor, wall, or object |
+| 31 | **Materials** | `change_texture` | No | Updates PBR texture mapping (roughness, scale, metalness) |
+| 32 | **Scene / View** | `generate_floor_plan` | No | Switches to 2D CAD blueprint view with dimensions |
+| 33 | **Scene / View** | `switch_view` | No | Switches viewport camera between 3D, 2D, and Walk modes |
+| 34 | **Scene / View** | `autofit_view` | No | Auto-frames viewport for human eyes (scene, room, or selection) |
+| 35 | **Scene / View** | `take_screenshot` | No | Captures viewport canvas as high-res PNG or JPEG |
+| 36 | **Scene / View** | `get_scene_state` | No | Grounding query returning all rooms, objects, and metrics |
+| 37 | **Scene / View** | `select_item` | No | Selects item in viewport and opens property inspector |
+| 38 | **Scene / View** | `set_grid_snap` | No | Configures grid snapping state and increment in feet |
+| 39 | **Workflow** | `undo` | No | Reverts last design modification |
+| 40 | **Workflow** | `redo` | No | Re-applies undone design modification |
+| 41 | **Workflow** | `export_model` | ⚠️ **Required** | Exports scene to GLB, OBJ, IFC4 (BIM), or JSON format |
+| 42 | **Workflow** | `set_confirmation_policy` | No | Configures human-in-the-loop trust boundary & whitelists |
+| 43 | **Workflow** | `create_project` | No | Creates new blank project workspace |
+| 44 | **Workflow** | `open_project` | No | Loads existing project workspace by ID |
+| 45 | **Workflow** | `list_projects` | No | Lists all saved user projects with metadata |
+| 46 | **Workflow** | `delete_project` | ⚠️ **Required** | Permanently deletes project workspace |
+| 47 | **Workflow** | `duplicate_project` | No | Clones current project into duplicate copy |
+| 48 | **Workflow** | `load_sample_project` | No | Loads pre-built '3BHK_Sample' or '4BHK_Sample' |
+| 49 | **Workflow** | `clear_scene` | ⚠️ **Required** | Clears all rooms, walls, and furniture from canvas |
+| 50 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from benchmark CAD blueprint (Upload coming soon) |
 
 ---
 
@@ -414,7 +415,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 #### `place_window`
 * **Title:** Place Window
 * **Requires Confirmation:** `false`
-* **Description:** Places a glass window opening on a room exterior or partition wall with configurable sill elevation.
+* **Description:** Places a glass window opening on a room exterior or partition wall with configurable sill elevation and orientation.
 * **Input Schema:**
   | Property | Type | Required | Default | Description |
   |---|---|:---:|---|---|
@@ -424,7 +425,21 @@ window.addEventListener('housespace:agent-result', (event) => {
   | `width` | `number` | No | `4.5` | Window opening width in feet |
   | `height` | `number` | No | `4.5` | Window opening height in feet |
   | `elevation` | `number` | No | `3.0` | Sill height above floor in feet |
-* **Output:** `{ success: true, windowId, roomId, position, width, height, elevation }`
+  | `rotation` | `number` | No | `0` | Rotation angle in degrees (e.g. `0` for North/South, `90` for East/West) |
+* **Output:** `{ success: true, windowId, roomId, position, width, height, elevation, rotation }`
+
+---
+
+#### `rotate_window`
+* **Title:** Rotate Window
+* **Requires Confirmation:** `false`
+* **Description:** Rotates a window opening in degrees (yaw angle) to align with exterior or partition walls. Also accessible via direct human click on the 2D CAD blueprint rotation handle or the Precision Inspector panel.
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `windowId` | `string` | Yes | — | Stable ID of the window opening |
+  | `rotation` | `number` \| `object` `{ y }` | Yes | — | Rotation angle in degrees (e.g. `0`, `90`, `180`, `270`) or `{ y: number }` |
+* **Output:** `{ success: true, windowId, rotation }`
 
 ---
 

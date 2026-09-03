@@ -179,6 +179,12 @@ export interface PlaceWindowInput {
   width?: number;
   height?: number;
   elevation?: number;
+  rotation?: number;
+}
+
+export interface RotateWindowInput {
+  windowId: string;
+  rotation: number | { y: number } | Vector3D;
 }
 
 export interface ChangeCeilingHeightInput {
