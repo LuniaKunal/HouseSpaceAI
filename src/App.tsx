@@ -27,7 +27,7 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col w-screen h-screen overflow-hidden bg-[#0f1117] text-slate-100 font-sans">
+    <div className="flex flex-col w-full h-dvh overflow-hidden bg-studio-canvas text-slate-100 font-sans">
       {uiState.activeView === 'dashboard' ? (
         /* Workspace Projects Dashboard */
         <ProjectsDashboard />

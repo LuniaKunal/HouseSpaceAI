@@ -98,24 +98,24 @@ export const AgentBridgeModal: React.FC<AgentBridgeModalProps> = ({ isOpen, onCl
   };
 
   const starterPrompt = `You are HouseSpace's AI Co-Designer agent. You share the exact same 3D room canvas and state as the human designer.
-You have access to 38 WebMCP tools to inspect, create, modify, and style rooms, furniture, and structure.
+You have access to ${TOOL_LIST.length} WebMCP tools to inspect, create, modify, and style rooms, furniture, and structure.
 Canonical unit: FEET. All positions are {x, y, z} in feet.
 Always start by calling \`get_scene_state({ includeFurniture: true })\` to inspect the layout before making changes.
 When placing furniture, respect room boundaries and existing objects.`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="relative w-full max-w-4xl max-h-[90vh] bg-[#141721] border border-slate-700/70 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+      <div className="relative w-full max-w-4xl max-h-[90vh] glass-popover rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in-scale">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/60 bg-[#181c28]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-studio-surface/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-              <Bot size={22} />
+            <div className="size-10 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-glow-blue shrink-0">
+              <Bot size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-white">WebMCP Agent Bridge & Studio Telemetry</h2>
-                <span className="bg-emerald-500/20 text-emerald-300 text-[11px] px-2 py-0.5 rounded-full border border-emerald-500/30 font-mono">
+                <span className="bg-emerald-500/15 text-emerald-300 text-[11px] px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-mono tabular-nums">
                   Connected &bull; {TOOL_LIST.length} Tools
                 </span>
               </div>
@@ -126,14 +126,15 @@ When placing furniture, respect room boundaries and existing objects.`;
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            aria-label="Close modal"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-studio-surface transition"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-800 bg-[#12141d]">
+        <div className="flex items-center gap-2 px-6 pt-3 border-b border-white/[0.08] bg-studio-canvas">
           {[
             { id: 'tools', label: `Registered Tools (${TOOL_LIST.length})`, icon: Layers },
             { id: 'playground', label: 'Live Tool Runner', icon: Terminal },
@@ -146,9 +147,9 @@ When placing furniture, respect room boundaries and existing objects.`;
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition ${
+                className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition active:scale-95 ${
                   isActive
-                    ? 'border-blue-500 text-blue-400 bg-blue-500/10 rounded-t'
+                    ? 'border-blue-500 text-blue-400 bg-blue-500/10 rounded-t-xl'
                     : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -165,15 +166,15 @@ When placing furniture, respect room boundaries and existing objects.`;
           {activeTab === 'tools' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>All {TOOL_LIST.length} tools are registered natively on <code className="text-blue-400">document.modelContext</code> & <code className="text-blue-400">window.housespaceAgent</code></span>
-                <span className="font-mono text-emerald-400">{TOOL_LIST.length} tools active</span>
+                <span>All {TOOL_LIST.length} tools are registered natively on <code className="text-blue-400 font-mono">document.modelContext</code> & <code className="text-blue-400 font-mono">window.housespaceAgent</code></span>
+                <span className="font-mono tabular-nums text-emerald-400">{TOOL_LIST.length} tools active</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {TOOL_LIST.map(tool => (
                   <div
                     key={tool.name}
-                    className="p-3 bg-[#1a1e2b] border border-slate-700/60 rounded-lg hover:border-blue-500/50 transition cursor-pointer"
+                    className="p-3 bg-studio-surface border border-white/[0.08] rounded-xl hover:border-blue-500/50 transition cursor-pointer group active:scale-[0.99]"
                     onClick={() => {
                       handleSelectTool(tool.name);
                       setActiveTab('playground');
@@ -181,14 +182,14 @@ When placing furniture, respect room boundaries and existing objects.`;
                   >
                     <div className="flex items-center justify-between mb-1">
                       <div>
-                        <div className="text-xs font-semibold text-white">{tool.title}</div>
+                        <div className="text-xs font-semibold text-white group-hover:text-blue-300 transition">{tool.title}</div>
                         <code className="text-[10px] font-mono text-blue-400">{tool.name}</code>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-studio-card text-slate-400 border border-white/[0.08]">
                         {tool.category}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 line-clamp-2">{tool.description}</p>
+                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed text-pretty">{tool.description}</p>
                     {tool.requiresConfirmation && (
                       <span className="inline-flex items-center gap-1 mt-2 text-[10px] text-amber-400">
                         <ShieldCheck size={11} /> Human confirmation required
@@ -209,7 +210,7 @@ When placing furniture, respect room boundaries and existing objects.`;
                   <select
                     value={selectedToolName}
                     onChange={e => handleSelectTool(e.target.value)}
-                    className="w-full bg-[#1c202d] border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"
+                    className="w-full bg-studio-canvas border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:border-blue-500/80 focus-ring transition"
                   >
                     {TOOL_LIST.map(t => (
                       <option key={t.name} value={t.name}>
@@ -225,14 +226,14 @@ When placing furniture, respect room boundaries and existing objects.`;
                     rows={8}
                     value={toolInputJson}
                     onChange={e => setToolInputJson(e.target.value)}
-                    className="w-full bg-[#11131a] border border-slate-700 rounded-lg p-3 text-xs font-mono text-emerald-400 focus:outline-none focus:border-blue-500 leading-relaxed"
+                    className="w-full bg-studio-canvas border border-white/[0.08] rounded-xl p-3 text-xs font-mono tabular-nums text-emerald-400 focus:border-blue-500/80 focus-ring leading-relaxed transition"
                   />
                 </div>
 
                 <button
                   onClick={handleExecuteTool}
                   disabled={isExecuting}
-                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-glow-blue active:scale-[0.98]"
                 >
                   {isExecuting ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} />}
                   Execute Tool on Shared Canvas
@@ -241,7 +242,7 @@ When placing furniture, respect room boundaries and existing objects.`;
 
               <div className="space-y-3 flex flex-col">
                 <label className="block text-xs font-medium text-slate-300">Tool Execution Result</label>
-                <div className="flex-1 min-h-[220px] bg-[#11131a] border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-y-auto">
+                <div className="flex-1 min-h-[220px] bg-studio-canvas border border-white/[0.08] rounded-xl p-3 font-mono tabular-nums text-xs text-slate-300 overflow-y-auto">
                   {executionResult ? (
                     <pre className="text-[11px] text-blue-300 whitespace-pre-wrap">{executionResult}</pre>
                   ) : (

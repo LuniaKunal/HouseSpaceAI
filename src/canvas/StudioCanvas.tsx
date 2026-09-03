@@ -856,28 +856,28 @@ export const StudioCanvas: React.FC = () => {
 
       {/* 3. FLOATING VIEW SWITCHER IN 2D MODE (CAD Blueprint vs 3D Top-Down View) */}
       {uiState.cameraMode === '2d' && (
-        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-xl">
+        <div className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 glass-toolbar p-1 rounded-2xl shadow-xl">
           <button
             onClick={() => setViewMode2DType('cad_blueprint')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95 ${
               viewMode2DType === 'cad_blueprint'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-glow-blue'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Layers size={14} />
-            CAD Blueprint
+            <span>CAD Blueprint</span>
           </button>
           <button
             onClick={() => setViewMode2DType('threejs_top')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition active:scale-95 ${
               viewMode2DType === 'threejs_top'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-glow-blue'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
             <Eye size={14} />
-            3D Orthographic
+            <span>3D Orthographic</span>
           </button>
         </div>
       )}
@@ -888,21 +888,22 @@ export const StudioCanvas: React.FC = () => {
           {/* Main WebGPU Status Pill */}
           <button
             onClick={() => setIsGpuSettingsOpen(!isGpuSettingsOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-xs shadow-xl hover:border-blue-500/50 transition group"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-2xl glass-toolbar text-xs shadow-xl hover:border-blue-500/50 transition group active:scale-95"
             title="Click to toggle WebGPU Graphics & Performance Settings"
+            aria-label="Toggle WebGPU Graphics and Performance Settings"
           >
             <div className="flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex size-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
               </span>
               <Zap size={13} className="text-amber-400 group-hover:scale-110 transition" />
               <span className="font-semibold text-slate-200">WebGPU 60+ FPS</span>
             </div>
 
-            <div className="h-3 w-[1px] bg-slate-700 mx-0.5" />
+            <div className="h-3 w-[1px] bg-white/[0.12] mx-0.5" />
 
-            <div className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 font-bold">
+            <div className="flex items-center gap-1 text-[11px] font-mono tabular-nums text-emerald-400 font-bold">
               <span>{perfStats.fps} FPS</span>
               <span className="text-[10px] text-slate-400 font-normal">({perfStats.frameTimeMs}ms)</span>
             </div>
@@ -912,10 +913,10 @@ export const StudioCanvas: React.FC = () => {
 
           {/* WebGPU Performance & Graphics Settings Panel */}
           {isGpuSettingsOpen && (
-            <div className="w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/90 rounded-2xl p-4 shadow-2xl text-xs space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+            <div className="w-72 glass-popover rounded-2xl p-4 shadow-2xl text-xs space-y-3.5 animate-in-scale">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <div className="size-7 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/25 flex items-center justify-center">
                     <Zap size={14} />
                   </div>
                   <div>
@@ -923,12 +924,12 @@ export const StudioCanvas: React.FC = () => {
                     <p className="text-[10px] text-slate-400">DirectCompute & WGSL</p>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold uppercase font-mono">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold uppercase font-mono">
                   ACTIVE
                 </span>
               </div>
 
-              <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5 space-y-1">
+              <div className="bg-studio-canvas border border-white/[0.08] rounded-xl p-2.5 space-y-1">
                 <div className="text-[10px] text-slate-400 font-medium">GPU Hardware Adapter</div>
                 <div className="text-[11px] text-slate-200 font-semibold truncate flex items-center gap-1.5">
                   <Cpu size={13} className="text-blue-400 shrink-0" />
@@ -940,14 +941,14 @@ export const StudioCanvas: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2 text-center">
-                  <div className="text-[10px] text-slate-400 font-medium">Draw Calls</div>
-                  <div className="text-sm font-bold font-mono text-cyan-400">{perfStats.drawCalls}</div>
+              <div className="grid grid-cols-2 gap-2 font-mono tabular-nums">
+                <div className="bg-studio-canvas border border-white/[0.08] rounded-xl p-2 text-center">
+                  <div className="text-[10px] text-slate-400 font-sans font-medium">Draw Calls</div>
+                  <div className="text-sm font-bold text-cyan-400">{perfStats.drawCalls}</div>
                 </div>
-                <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2 text-center">
-                  <div className="text-[10px] text-slate-400 font-medium">Polygons (Tris)</div>
-                  <div className="text-sm font-bold font-mono text-purple-400">
+                <div className="bg-studio-canvas border border-white/[0.08] rounded-xl p-2 text-center">
+                  <div className="text-[10px] text-slate-400 font-sans font-medium">Polygons (Tris)</div>
+                  <div className="text-sm font-bold text-purple-400">
                     {(perfStats.triangles / 1000).toFixed(1)}k
                   </div>
                 </div>
@@ -956,14 +957,14 @@ export const StudioCanvas: React.FC = () => {
               <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-slate-300 font-medium">Shadow Precision</span>
-                  <div className="flex bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+                  <div className="flex bg-studio-canvas rounded-xl p-0.5 border border-white/[0.08]">
                     {(['ultra', 'balanced', 'low'] as const).map(q => (
                       <button
                         key={q}
                         onClick={() => setShadowQuality(q)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase capitalize transition ${
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase capitalize transition ${
                           shadowQuality === q
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-white shadow-glow-blue'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
@@ -975,14 +976,14 @@ export const StudioCanvas: React.FC = () => {
 
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-slate-300 font-medium">DPI Retina Scale</span>
-                  <div className="flex bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+                  <div className="flex bg-studio-canvas rounded-xl p-0.5 border border-white/[0.08]">
                     {[1.0, 1.5, 2.0].map(s => (
                       <button
                         key={s}
                         onClick={() => setResolutionScale(s)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold transition ${
+                        className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold transition ${
                           resolutionScale === s
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-white shadow-glow-blue'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >

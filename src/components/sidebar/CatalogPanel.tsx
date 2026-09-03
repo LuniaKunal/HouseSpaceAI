@@ -83,22 +83,22 @@ export const CatalogPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Search Input */}
-      <div className="p-3 border-b border-slate-800">
+    <div className="flex flex-col h-full overflow-hidden bg-studio-panel">
+      {/* Search Input & Category Pills */}
+      <div className="p-3 border-b border-white/[0.08] bg-studio-surface/60 space-y-2.5">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-2.5 text-slate-400" />
+          <Search size={14} className="absolute left-3 top-3 text-slate-400" />
           <input
             type="text"
             placeholder="Search 3D furniture & decor..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#11131a] border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            className="w-full bg-studio-canvas border border-white/[0.08] rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:border-blue-500/80 focus-ring transition"
           />
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-2.5 pb-0.5 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
           {categories.map(cat => {
             const Icon = cat.icon;
             const isSelected = selectedCategory === cat.id;
@@ -106,14 +106,15 @@ export const CatalogPanel: React.FC = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition ${
+                aria-label={cat.label}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition active:scale-95 ${
                   isSelected
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-[#181c28] text-slate-400 hover:text-slate-200 border border-slate-800'
+                    ? 'bg-blue-600 text-white shadow-glow-blue border border-blue-400/40'
+                    : 'bg-studio-surface text-slate-400 hover:text-slate-200 border border-white/[0.08] hover:border-white/[0.16]'
                 }`}
               >
                 <Icon size={12} />
-                {cat.label}
+                <span>{cat.label}</span>
               </button>
             );
           })}
@@ -121,32 +122,33 @@ export const CatalogPanel: React.FC = () => {
       </div>
 
       {/* Item Grid */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-        <div className="grid grid-cols-1 gap-2.5">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="grid grid-cols-1 gap-2">
           {filteredItems.map(item => (
             <div
               key={item.id}
-              className="p-3 bg-[#181c28] border border-slate-800 hover:border-slate-700 rounded-xl transition flex items-center justify-between group"
+              className="p-3 glass-card bg-studio-surface border-white/[0.08] hover:border-white/[0.16] rounded-xl transition flex items-center justify-between group"
             >
               <div className="space-y-1 pr-2">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-white group-hover:text-blue-400 transition">
                     {item.name}
                   </h4>
-                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-studio-card text-slate-400 font-mono">
                     {item.category}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 line-clamp-1">{item.description}</p>
-                <div className="text-[10px] text-slate-500 font-mono">
+                <p className="text-[11px] text-slate-400 line-clamp-1 text-pretty">{item.description}</p>
+                <div className="text-[10px] text-slate-500 font-mono tabular-nums">
                   Dim: {item.defaultDimensions.x} &times; {item.defaultDimensions.z} &times; {item.defaultDimensions.y} ft
                 </div>
               </div>
 
               <button
                 onClick={() => handleAddItem(item)}
-                title="Place in selected room"
-                className="w-8 h-8 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 flex items-center justify-center transition shrink-0"
+                title={`Place ${item.name} in selected space`}
+                aria-label={`Place ${item.name} in selected space`}
+                className="size-8 rounded-xl bg-blue-600/15 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 flex items-center justify-center transition shrink-0 active:scale-95 shadow-sm"
               >
                 <Plus size={16} />
               </button>

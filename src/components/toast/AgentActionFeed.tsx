@@ -22,25 +22,25 @@ export const AgentActionFeed: React.FC = () => {
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto p-3 rounded-xl border shadow-xl backdrop-blur-md flex items-start gap-3 transition-all animate-in slide-in-from-bottom-2 ${
+            className={`pointer-events-auto p-3 rounded-2xl border shadow-2xl backdrop-blur-xl flex items-start gap-3 transition-all animate-in-scale ${
               isAgent
-                ? 'bg-[#181c28]/95 border-blue-500/40 text-blue-200'
+                ? 'bg-studio-surface/95 border-blue-500/50 shadow-glow-blue text-blue-200'
                 : isSuccess
-                ? 'bg-[#14211a]/95 border-emerald-500/40 text-emerald-200'
+                ? 'bg-studio-surface/95 border-emerald-500/50 shadow-glow-emerald text-emerald-200'
                 : isError
-                ? 'bg-[#241618]/95 border-rose-500/40 text-rose-200'
-                : 'bg-[#181c28]/95 border-slate-700 text-slate-200'
+                ? 'bg-studio-surface/95 border-rose-500/50 shadow-lg shadow-rose-600/20 text-rose-200'
+                : 'bg-studio-surface/95 border-white/[0.12] text-slate-200'
             }`}
           >
             <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+              className={`size-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                 isAgent
-                  ? 'bg-blue-600/20 text-blue-400'
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
                   : isSuccess
-                  ? 'bg-emerald-600/20 text-emerald-400'
+                  ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                   : isError
-                  ? 'bg-rose-600/20 text-rose-400'
-                  : 'bg-slate-700 text-slate-300'
+                  ? 'bg-rose-600/20 text-rose-400 border border-rose-500/30'
+                  : 'bg-studio-card text-slate-300 border border-white/[0.08]'
               }`}
             >
               {isAgent ? (
@@ -56,17 +56,18 @@ export const AgentActionFeed: React.FC = () => {
 
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold flex items-center justify-between">
-                <span>{toast.title}</span>
-                <span className="text-[10px] opacity-60 font-mono">Just now</span>
+                <span className="text-white">{toast.title}</span>
+                <span className="text-[10px] opacity-60 font-mono tabular-nums">Just now</span>
               </div>
-              <p className="text-[11px] opacity-80 mt-0.5 line-clamp-2 leading-relaxed">
+              <p className="text-[11px] opacity-80 mt-0.5 line-clamp-2 leading-relaxed text-pretty">
                 {toast.description}
               </p>
             </div>
 
             <button
               onClick={() => uiStore.removeToast(toast.id)}
-              className="p-1 opacity-50 hover:opacity-100 transition shrink-0"
+              aria-label="Dismiss notification"
+              className="p-1 opacity-50 hover:opacity-100 transition shrink-0 rounded-lg hover:bg-studio-card"
             >
               <X size={13} />
             </button>

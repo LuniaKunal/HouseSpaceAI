@@ -80,20 +80,21 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-14 bg-[#131620] border-b border-slate-800/80 px-4 flex items-center justify-between select-none z-30 relative">
+    <header className="h-14 glass-toolbar border-b border-white/[0.08] px-4 flex items-center justify-between select-none z-30 relative">
       {/* Left: Branding, Workspace Switcher, Project Title & Undo/Redo */}
       <div className="flex items-center gap-3">
         {/* Return to Projects Dashboard Button */}
         <button
           onClick={() => uiStore.setActiveView('dashboard')}
+          aria-label="Return to Projects Dashboard"
           title="Return to Projects Dashboard"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#181c28] hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white text-xs font-medium transition shadow-sm group"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-300 hover:text-white text-xs font-medium transition shadow-sm group active:scale-95"
         >
           <LayoutGrid size={14} className="text-blue-400 group-hover:scale-110 transition-transform" />
           <span className="hidden sm:inline">Projects</span>
         </button>
 
-        <div className="h-5 w-[1px] bg-slate-800 mx-0.5" />
+        <div className="h-4 w-[1px] bg-white/[0.08] mx-0.5" />
 
         {/* Active Project Title with Inline Rename, Dropdown & Delete Option */}
         <div className="flex items-center gap-1.5 relative">
@@ -108,7 +109,7 @@ export const Header: React.FC = () => {
                 else if (e.key === 'Escape') setIsEditingName(false);
               }}
               autoFocus
-              className="px-2 py-0.5 bg-[#0e111a] border border-blue-500 rounded text-xs text-white focus:outline-none"
+              className="px-2 py-0.5 bg-studio-surface border border-blue-500 rounded-lg text-xs text-white focus:outline-none"
             />
           ) : (
             <button
@@ -117,9 +118,10 @@ export const Header: React.FC = () => {
                 setIsEditingName(true);
               }}
               title="Click to rename project"
+              aria-label="Rename active project"
               className="flex items-center gap-1 text-xs font-semibold text-white hover:text-blue-400 transition group"
             >
-              <span className="max-w-[150px] truncate">
+              <span className="max-w-[160px] truncate">
                 {projectState.activeProject?.metadata.name || 'Untitled Project'}
               </span>
               <Edit2 size={11} className="opacity-0 group-hover:opacity-100 text-slate-400 transition" />
@@ -130,8 +132,9 @@ export const Header: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setIsProjectMenuOpen(!isProjectMenuOpen)}
+              aria-label="Project actions"
               title="Project actions"
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-studio-surface transition"
             >
               <MoreHorizontal size={13} />
             </button>
@@ -139,7 +142,7 @@ export const Header: React.FC = () => {
             {isProjectMenuOpen && (
               <div
                 onMouseLeave={() => setIsProjectMenuOpen(false)}
-                className="absolute left-0 top-full mt-1 w-44 bg-[#161a26] border border-slate-700/80 rounded-xl shadow-2xl py-1 z-50 text-xs animate-in fade-in"
+                className="absolute left-0 top-full mt-1.5 w-48 glass-popover rounded-xl py-1 z-50 text-xs animate-in-scale shadow-2xl"
               >
                 <button
                   onClick={() => {
@@ -147,7 +150,7 @@ export const Header: React.FC = () => {
                     setTempProjectName(projectState.activeProject?.metadata.name || 'Untitled');
                     setIsEditingName(true);
                   }}
-                  className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-400 flex items-center gap-2 transition"
+                  className="w-full px-3 py-2 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 flex items-center gap-2 transition"
                 >
                   <Edit2 size={12} />
                   Rename Project
@@ -159,7 +162,7 @@ export const Header: React.FC = () => {
                       projectStore.duplicateProject(projectState.activeProject.metadata.id);
                     }
                   }}
-                  className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-400 flex items-center gap-2 transition"
+                  className="w-full px-3 py-2 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 flex items-center gap-2 transition"
                 >
                   <Copy size={12} />
                   Duplicate Copy
@@ -171,18 +174,18 @@ export const Header: React.FC = () => {
                       projectStore.exportProject(projectState.activeProject.metadata.id);
                     }
                   }}
-                  className="w-full px-3 py-1.5 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-400 flex items-center gap-2 transition"
+                  className="w-full px-3 py-2 text-left text-slate-200 hover:bg-blue-600/20 hover:text-blue-300 flex items-center gap-2 transition"
                 >
                   <Download size={12} />
                   Export (.housespace.json)
                 </button>
-                <div className="h-[1px] bg-slate-800 my-1" />
+                <div className="h-[1px] bg-white/[0.08] my-1" />
                 <button
                   onClick={() => {
                     setIsProjectMenuOpen(false);
                     setIsDeleteModalOpen(true);
                   }}
-                  className="w-full px-3 py-1.5 text-left text-rose-400 hover:bg-rose-600/20 flex items-center gap-2 transition font-medium"
+                  className="w-full px-3 py-2 text-left text-rose-400 hover:bg-rose-600/20 flex items-center gap-2 transition font-medium"
                 >
                   <Trash2 size={12} />
                   Delete Project
@@ -191,69 +194,63 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          {/* Quick Delete Project Button */}
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            title="Delete current project"
-            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 transition"
-          >
-            <Trash2 size={13} />
-          </button>
-
           {/* Autosave Status Pill */}
-          <div className="flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#181c28] border border-slate-800">
+          <div className="flex items-center gap-1.5 text-[10px] font-mono tabular-nums px-2.5 py-0.5 rounded-full bg-studio-surface border border-white/[0.08]">
             {projectState.autosaveStatus === 'saving' ? (
-              <span className="flex items-center gap-1 text-amber-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <span className="size-1.5 rounded-full bg-amber-400 animate-ping" />
                 Saving...
               </span>
             ) : projectState.autosaveStatus === 'error' ? (
               <span className="text-rose-400 font-semibold">Save Error</span>
             ) : (
-              <span className="flex items-center gap-1 text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <span className="size-1.5 rounded-full bg-emerald-400" />
                 Saved
               </span>
             )}
           </div>
         </div>
 
-        <div className="h-5 w-[1px] bg-slate-800 mx-0.5" />
+        <div className="h-4 w-[1px] bg-white/[0.08] mx-0.5" />
 
         {/* Undo / Redo */}
-        <div className="flex items-center gap-1 bg-[#181c28] p-0.5 rounded-lg border border-slate-800">
+        <div className="flex items-center gap-0.5 bg-studio-surface p-0.5 rounded-xl border border-white/[0.08]">
           <button
             onClick={() => sceneStore.undo()}
             disabled={!canUndo}
+            aria-label="Undo action"
             title="Undo (Ctrl+Z)"
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:hover:bg-transparent transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-studio-card disabled:opacity-25 disabled:hover:bg-transparent transition active:scale-95"
           >
-            <Undo2 size={15} />
+            <Undo2 size={14} />
           </button>
           <button
             onClick={() => sceneStore.redo()}
             disabled={!canRedo}
+            aria-label="Redo action"
             title="Redo (Ctrl+Y)"
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700/50 disabled:opacity-30 disabled:hover:bg-transparent transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-studio-card disabled:opacity-25 disabled:hover:bg-transparent transition active:scale-95"
           >
-            <Redo2 size={15} />
+            <Redo2 size={14} />
           </button>
         </div>
       </div>
 
-      {/* Middle: Camera View Modes & Angles */}
+      {/* Middle: Segmented Camera View Modes & Angles */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center bg-[#181c28] p-1 rounded-lg border border-slate-800 text-xs">
+        <div className="flex items-center bg-studio-surface p-1 rounded-xl border border-white/[0.08] text-xs">
           <button
             onClick={() => handleModeChange('3d')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition ${
+            aria-label="3D Orbit View Mode"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
               uiState.cameraMode === '3d'
-                ? 'bg-blue-600 text-white shadow-sm'
+                ? 'bg-blue-600 text-white shadow-glow-blue'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Eye size={13} />
-            3D Orbit
+            <span>3D Orbit</span>
           </button>
 
           <div className="relative">
@@ -265,19 +262,20 @@ export const Header: React.FC = () => {
                   handleModeChange('2d');
                 }
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition ${
+              aria-label="2D Plan View Mode"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
                 uiState.cameraMode === '2d'
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-glow-blue'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <Compass size={13} />
-              2D Plan ({uiState.cameraAngle.toUpperCase()})
+              <span>2D Plan ({uiState.cameraAngle.toUpperCase()})</span>
               <ChevronDown size={11} className="ml-0.5 opacity-70" />
             </button>
 
             {isViewAngleMenuOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-40 bg-[#1a1e2b] border border-slate-700 rounded-lg shadow-xl py-1 z-50 animate-in fade-in">
+              <div className="absolute top-full left-0 mt-1.5 w-44 glass-popover rounded-xl py-1 z-50 animate-in-scale shadow-2xl">
                 {[
                   { id: 'top', label: 'Top (Floor Plan)' },
                   { id: 'north', label: 'North Elevation' },
@@ -300,24 +298,26 @@ export const Header: React.FC = () => {
 
           <button
             onClick={() => handleModeChange('walk')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition ${
+            aria-label="Walk 1st Person Mode"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition ${
               uiState.cameraMode === 'walk'
-                ? 'bg-emerald-600 text-white shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-glow-emerald'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Footprints size={13} />
-            Walk (1st Person)
+            <span>Walk (1st Person)</span>
           </button>
         </div>
 
         {/* View toggles */}
-        <div className="flex items-center gap-1 bg-[#181c28] p-1 rounded-lg border border-slate-800">
+        <div className="flex items-center gap-0.5 bg-studio-surface p-1 rounded-xl border border-white/[0.08]">
           <button
             onClick={() => uiStore.setGridSnap(!uiState.gridSnap)}
             title="Toggle Grid Snapping"
-            className={`p-1.5 rounded text-xs transition ${
-              uiState.gridSnap ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-slate-200'
+            aria-label="Toggle Grid Snapping"
+            className={`p-1.5 rounded-lg text-xs transition ${
+              uiState.gridSnap ? 'bg-blue-500/20 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Grid size={15} />
@@ -325,8 +325,9 @@ export const Header: React.FC = () => {
           <button
             onClick={() => uiStore.setShowDimensions(!uiState.showDimensions)}
             title="Toggle Dimension Lines & HUD"
-            className={`p-1.5 rounded text-xs transition ${
-              uiState.showDimensions ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-slate-200'
+            aria-label="Toggle Dimension Lines and HUD"
+            className={`p-1.5 rounded-lg text-xs transition ${
+              uiState.showDimensions ? 'bg-blue-500/20 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Ruler size={15} />
@@ -334,8 +335,9 @@ export const Header: React.FC = () => {
           <button
             onClick={() => uiStore.setShowWallCutaways(!uiState.showWallCutaways)}
             title="Toggle Wall Cutaways (Interior Visibility)"
-            className={`p-1.5 rounded text-xs transition ${
-              uiState.showWallCutaways ? 'bg-blue-500/20 text-blue-400' : 'text-slate-400 hover:text-slate-200'
+            aria-label="Toggle Wall Cutaways"
+            className={`p-1.5 rounded-lg text-xs transition ${
+              uiState.showWallCutaways ? 'bg-blue-500/20 text-blue-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <Maximize2 size={15} />
@@ -348,14 +350,15 @@ export const Header: React.FC = () => {
         {/* WebMCP Bridge Status Pill */}
         <button
           onClick={() => uiStore.setAgentBridgeModalOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-emerald-500/30 hover:border-emerald-500 text-xs transition shadow-sm group"
+          aria-label="Open WebMCP Agent Bridge"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-studio-surface border border-emerald-500/30 hover:border-emerald-500 text-xs transition shadow-sm group active:scale-95"
         >
-          <span className="relative flex h-2 w-2">
+          <span className="relative flex size-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
           </span>
-          <span className="text-emerald-400 font-medium font-mono text-[11px] group-hover:text-emerald-300">
-            WebMCP Ready ({TOOL_LIST.length} Tools)
+          <span className="text-emerald-400 font-medium font-mono tabular-nums text-[11px] group-hover:text-emerald-300">
+            WebMCP ({TOOL_LIST.length} Tools)
           </span>
           <Bot size={13} className="text-emerald-400" />
         </button>
@@ -364,43 +367,44 @@ export const Header: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a1e2b] hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium transition"
+            aria-label="Export 3D Model"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-200 text-xs font-medium transition active:scale-95"
           >
             <Download size={13} />
-            Export 3D
+            <span>Export 3D</span>
             <ChevronDown size={11} className="opacity-70" />
           </button>
 
           {isExportMenuOpen && (
-            <div className="absolute right-0 mt-1.5 w-48 bg-[#181c28] border border-slate-700 rounded-lg shadow-xl py-1.5 z-50 animate-in fade-in">
-              <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400">CAD & BIM Formats</div>
+            <div className="absolute right-0 mt-1.5 w-52 glass-popover rounded-xl py-1.5 z-50 animate-in-scale shadow-2xl">
+              <div className="px-3 py-1 text-[10px] uppercase font-bold text-slate-400 tracking-wider">CAD & BIM Formats</div>
               <button
                 onClick={() => handleExport('glb')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
               >
                 <span>GLTF / GLB Binary</span>
-                <span className="text-[10px] text-slate-400">3D Mesh</span>
+                <span className="text-[10px] font-mono text-slate-400">3D Mesh</span>
               </button>
               <button
                 onClick={() => handleExport('ifc4')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
               >
                 <span>IFC4 (BIM Structure)</span>
-                <span className="text-[10px] text-slate-400">CAD / Arch</span>
+                <span className="text-[10px] font-mono text-slate-400">CAD / Arch</span>
               </button>
               <button
                 onClick={() => handleExport('obj')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
               >
                 <span>Wavefront OBJ</span>
-                <span className="text-[10px] text-slate-400">Geometry</span>
+                <span className="text-[10px] font-mono text-slate-400">Geometry</span>
               </button>
               <button
                 onClick={() => handleExport('json')}
-                className="w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
+                className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-blue-600 hover:text-white transition flex items-center justify-between"
               >
                 <span>Scene State JSON</span>
-                <span className="text-[10px] text-slate-400">Metadata</span>
+                <span className="text-[10px] font-mono text-slate-400">Metadata</span>
               </button>
             </div>
           )}
@@ -413,14 +417,15 @@ export const Header: React.FC = () => {
               uiState.activeSidebarTab === 'copilot' ? 'catalog' : 'copilot'
             )
           }
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+          aria-label="Toggle AI Co-Designer panel"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95 ${
             uiState.activeSidebarTab === 'copilot'
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20'
-              : 'bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-glow-blue'
+              : 'bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 border border-blue-500/30'
           }`}
         >
           <Sparkles size={13} />
-          AI Co-Designer
+          <span>AI Co-Designer</span>
         </button>
       </div>
 

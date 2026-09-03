@@ -222,164 +222,189 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
 
   return (
     <div className={`relative w-full h-full overflow-hidden select-none ${isDark ? 'bg-[#0f172a]' : 'bg-[#f4f1ea]'} ${className}`}>
-      {/* Top CAD Blueprint Control Toolbar */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 flex-wrap pointer-events-auto">
-        {/* Theme Switcher */}
-        <div className="flex bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-xl">
-          <button
-            onClick={() => setBlueprintTheme('architectural')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${!isDark ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+      {/* Top CAD Command Ribbon */}
+      <div className="absolute top-4 left-4 right-4 z-20 flex items-center justify-between gap-2 flex-wrap pointer-events-none">
+        {/* Left Toolbar Cluster */}
+        <div className="flex items-center gap-2 flex-wrap pointer-events-auto">
+          {/* Theme Switcher */}
+          <div className="flex glass-toolbar p-1 rounded-2xl shadow-xl">
+            <button
+              onClick={() => setBlueprintTheme('architectural')}
+              aria-label="Architectural Plan Theme"
+              className={`px-3 py-1 text-xs font-semibold rounded-xl transition active:scale-95 ${
+                !isDark ? 'bg-amber-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
-          >
-            Architectural Plan
-          </button>
-          <button
-            onClick={() => setBlueprintTheme('dark_blueprint')}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition ${isDark ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+            >
+              Architectural
+            </button>
+            <button
+              onClick={() => setBlueprintTheme('dark_blueprint')}
+              aria-label="Dark CAD Blueprint Theme"
+              className={`px-3 py-1 text-xs font-semibold rounded-xl transition active:scale-95 ${
+                isDark ? 'bg-blue-600 text-white shadow-glow-blue' : 'text-slate-400 hover:text-white'
               }`}
-          >
-            CAD Blueprint
-          </button>
+            >
+              CAD Blueprint
+            </button>
+          </div>
+
+          {/* Overlay Mode Switcher */}
+          <div className="flex items-center gap-0.5 glass-toolbar p-1 rounded-2xl shadow-xl text-xs">
+            <span className="text-[11px] text-slate-400 font-semibold px-2 flex items-center gap-1">
+              <Layers size={12} className="text-indigo-400" />
+              <span>Layer:</span>
+            </span>
+            <button
+              onClick={() => setOverlayMode('combined')}
+              className={`px-2.5 py-1 rounded-xl font-medium transition active:scale-95 ${
+                overlayMode === 'combined' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Combined
+            </button>
+            <button
+              onClick={() => setOverlayMode('geometry')}
+              className={`px-2.5 py-1 rounded-xl font-medium transition active:scale-95 ${
+                overlayMode === 'geometry' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Geometry
+            </button>
+            <button
+              onClick={() => setOverlayMode('blueprint')}
+              className={`px-2.5 py-1 rounded-xl font-medium transition active:scale-95 ${
+                overlayMode === 'blueprint' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Blueprint
+            </button>
+          </div>
+
+          {/* Layer Toggles */}
+          <div className="flex items-center gap-0.5 glass-toolbar p-1 rounded-2xl shadow-xl text-xs">
+            <button
+              onClick={() => setShowDimensions(!showDimensions)}
+              className={`px-2.5 py-1 rounded-xl font-medium transition active:scale-95 ${
+                showDimensions ? 'bg-blue-600 text-white shadow-glow-blue' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Dimensions
+            </button>
+            <button
+              onClick={() => setShowHatching(!showHatching)}
+              className={`px-2.5 py-1 rounded-xl font-medium transition active:scale-95 ${
+                showHatching ? 'bg-blue-600 text-white shadow-glow-blue' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Flooring
+            </button>
+          </div>
         </div>
 
-        {/* Overlay Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-xl text-xs">
-          <span className="text-[11px] text-slate-400 font-semibold px-1.5 flex items-center gap-1">
-            <Layers size={12} className="text-indigo-400" />
-            Overlay:
-          </span>
-          <button
-            onClick={() => setOverlayMode('combined')}
-            className={`px-2 py-1 rounded-lg font-medium transition ${overlayMode === 'combined' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-          >
-            Combined
-          </button>
-          <button
-            onClick={() => setOverlayMode('geometry')}
-            className={`px-2 py-1 rounded-lg font-medium transition ${overlayMode === 'geometry' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-          >
-            Geometry
-          </button>
-          <button
-            onClick={() => setOverlayMode('blueprint')}
-            className={`px-2 py-1 rounded-lg font-medium transition ${overlayMode === 'blueprint' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
-          >
-            Blueprint
-          </button>
-        </div>
+        {/* Right Toolbar Cluster */}
+        <div className="flex items-center gap-2 flex-wrap pointer-events-auto">
+          {/* Verification Status Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs shadow-xl backdrop-blur-md font-mono tabular-nums">
+            <ShieldAlert size={13} className="text-emerald-400" />
+            <span className="font-semibold">
+              {((sceneData.validation?.confidence ?? 0.96) * 100).toFixed(0)}% Verified
+            </span>
+          </div>
 
-        {/* Verification Status Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs shadow-xl backdrop-blur-md">
-          <ShieldAlert size={13} className="text-emerald-400" />
-          <span className="font-semibold">
-            {((sceneData.validation?.confidence ?? 0.96) * 100).toFixed(0)}% Accuracy Verified
-          </span>
-        </div>
+          {/* Zoom & Pan Tools */}
+          <div className="flex items-center gap-0.5 glass-toolbar px-2 py-1 rounded-2xl shadow-xl text-slate-300">
+            <button
+              onClick={() => setZoom(z => Math.min(3.0, z + 0.2))}
+              className="p-1 hover:text-white hover:bg-studio-surface rounded-lg transition active:scale-95"
+              aria-label="Zoom in"
+              title="Zoom In"
+            >
+              <ZoomIn size={15} />
+            </button>
+            <span className="text-[11px] font-mono tabular-nums px-1.5">{Math.round(zoom * 100)}%</span>
+            <button
+              onClick={() => setZoom(z => Math.max(0.6, z - 0.2))}
+              className="p-1 hover:text-white hover:bg-studio-surface rounded-lg transition active:scale-95"
+              aria-label="Zoom out"
+              title="Zoom Out"
+            >
+              <ZoomOut size={15} />
+            </button>
+            <button
+              onClick={() => {
+                setZoom(1.0);
+                setPan({ x: 0, y: 0 });
+              }}
+              className="p-1 hover:text-white hover:bg-studio-surface rounded-lg transition active:scale-95"
+              aria-label="Reset zoom"
+              title="Reset View"
+            >
+              <RotateCcw size={14} />
+            </button>
+          </div>
 
-        {/* Editing Lock / Unlock Toggle Button (Default Locked) */}
-        <button
-          onClick={() => setIsEditingUnlocked(!isEditingUnlocked)}
-          className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 shadow-xl transition backdrop-blur-md ${isEditingUnlocked
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
-              : 'bg-emerald-950/80 border-emerald-600/60 text-emerald-300 hover:bg-emerald-900'
+          {/* Editing Lock / Unlock Toggle Button */}
+          <button
+            onClick={() => setIsEditingUnlocked(!isEditingUnlocked)}
+            className={`px-3 py-1.5 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 shadow-xl transition backdrop-blur-md active:scale-95 ${
+              isEditingUnlocked
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+                : 'bg-emerald-950/60 border-emerald-600/50 text-emerald-300 hover:bg-emerald-900/60'
             }`}
-          title="Toggle editing lock for 2D floor plan layout"
-        >
-          {isEditingUnlocked ? (
-            <>
-              <Unlock size={13} className="text-amber-400" />
-              <span>Editing Unlocked</span>
-            </>
-          ) : (
-            <>
-              <Lock size={13} className="text-emerald-400" />
-              <span>Locked (View Only)</span>
-            </>
-          )}
-        </button>
+            title="Toggle editing lock for 2D floor plan layout"
+            aria-label="Toggle editing lock"
+          >
+            {isEditingUnlocked ? (
+              <>
+                <Unlock size={13} className="text-amber-400" />
+                <span>Unlocked</span>
+              </>
+            ) : (
+              <>
+                <Lock size={13} className="text-emerald-400" />
+                <span>Locked</span>
+              </>
+            )}
+          </button>
 
-        {/* Layer Toggles */}
-        <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-1 rounded-xl shadow-xl text-xs">
+          {/* Import 2D Blueprint Button */}
           <button
-            onClick={() => setShowDimensions(!showDimensions)}
-            className={`px-2 py-1 rounded-lg font-medium transition ${showDimensions ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-              }`}
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-1.5 glass-toolbar hover:bg-studio-card border border-white/[0.08] text-slate-200 text-xs font-semibold rounded-2xl shadow-xl transition active:scale-95"
+            title="Import 2D CAD Blueprint or Floor Plan Image"
+            aria-label="Import Blueprint"
           >
-            Dimensions
+            <Upload size={13} />
+            <span>Import</span>
           </button>
-          <button
-            onClick={() => setShowHatching(!showHatching)}
-            className={`px-2 py-1 rounded-lg font-medium transition ${showHatching ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-              }`}
-          >
-            Flooring
-          </button>
-        </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileInputChange}
+            accept="image/*, .svg, .pdf, .dxf"
+            className="hidden"
+          />
 
-        {/* Zoom & Pan Tools */}
-        <div className="flex items-center gap-1 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-2 py-1 rounded-xl shadow-xl text-slate-300">
+          {/* Autonomous AI 3D Build Trigger Button */}
           <button
-            onClick={() => setZoom(z => Math.min(3.0, z + 0.2))}
-            className="p-1 hover:text-white hover:bg-slate-800 rounded-lg transition"
-            title="Zoom In"
+            onClick={handleAutoBuild}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-2xl shadow-glow-blue transition active:scale-95"
+            title="Synthesize 3D Architectural Plan with connected AI Agent"
           >
-            <ZoomIn size={15} />
+            <Sparkles size={13} />
+            <span>Auto-Build 3D</span>
           </button>
-          <span className="text-[11px] font-mono px-1">{Math.round(zoom * 100)}%</span>
+
+          {/* Export SVG Blueprint Button */}
           <button
-            onClick={() => setZoom(z => Math.max(0.6, z - 0.2))}
-            className="p-1 hover:text-white hover:bg-slate-800 rounded-lg transition"
-            title="Zoom Out"
+            onClick={handleExportBlueprint}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-2xl shadow-glow-blue transition active:scale-95"
+            aria-label="Export CAD SVG"
           >
-            <ZoomOut size={15} />
-          </button>
-          <button
-            onClick={() => {
-              setZoom(1.0);
-              setPan({ x: 0, y: 0 });
-            }}
-            className="p-1 hover:text-white hover:bg-slate-800 rounded-lg transition"
-            title="Reset View"
-          >
-            <RotateCcw size={14} />
+            <Download size={13} />
+            <span>Export SVG</span>
           </button>
         </div>
-
-        {/* Import 2D Blueprint Button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold rounded-xl shadow-xl transition"
-          title="Import 2D CAD Blueprint or Floor Plan Image"
-        >
-          <Upload size={13} />
-          Import Blueprint
-        </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileInputChange}
-          accept="image/*, .svg, .pdf, .dxf"
-          className="hidden"
-        />
-
-        {/* Autonomous AI 3D Build Trigger Button */}
-        <button
-          onClick={handleAutoBuild}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl shadow-xl shadow-blue-500/20 transition"
-          title="Synthesize 3D Architectural Plan with connected AI Agent"
-        >
-          <Sparkles size={13} />
-          Auto-Build 3D Plan
-        </button>
-
-        {/* Export SVG Blueprint Button */}
-        <button
-          onClick={handleExportBlueprint}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-xl transition"
-        >
-          <Download size={13} />
-          Export CAD SVG
-        </button>
       </div>
 
       {/* Lock Notification Toast */}

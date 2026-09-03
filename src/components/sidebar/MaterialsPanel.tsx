@@ -207,12 +207,12 @@ export const MaterialsPanel: React.FC = () => {
       : colorCollections.filter(c => c.category.toLowerCase().includes(activeCategory.toLowerCase()));
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-4 space-y-6 select-none">
+    <div className="flex flex-col h-full overflow-y-auto p-4 space-y-5 select-none bg-studio-panel">
       {/* Target Indicator Banner */}
-      <div className="p-3 bg-[#181c28] border border-slate-800 rounded-2xl text-xs flex items-center justify-between shadow-lg">
+      <div className="p-3 bg-studio-surface border border-white/[0.08] rounded-2xl text-xs flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center">
-            <Palette size={15} />
+          <div className="size-8 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/25 flex items-center justify-center">
+            <Palette size={16} />
           </div>
           <div>
             <div className="text-[10px] text-slate-400 uppercase font-medium">Currently Editing</div>
@@ -228,35 +228,36 @@ export const MaterialsPanel: React.FC = () => {
 
         {selectedFurniture && (
           <span
-            className="w-5 h-5 rounded-full border border-white/40 shadow"
+            className="size-5 rounded-full border border-white/40 shadow-sm"
             style={{ backgroundColor: selectedFurniture.color || '#ffffff' }}
           />
         )}
         {selectedRoom && !selectedFurniture && (
           <span
-            className="w-5 h-5 rounded-full border border-white/40 shadow"
+            className="size-5 rounded-full border border-white/40 shadow-sm"
             style={{ backgroundColor: selectedRoom.wallColor || '#f8fafc' }}
           />
         )}
       </div>
 
       {/* 1. Custom Full-Spectrum Interactive Color Picker */}
-      <div className="space-y-3 p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl shadow-md">
+      <div className="space-y-3 p-3.5 glass-card bg-studio-surface border-white/[0.08] rounded-2xl shadow-md">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
             <Pipette size={14} className="text-amber-400" /> Custom Color Picker
           </h3>
-          <span className="text-[10px] font-mono text-slate-400 uppercase">{customColor}</span>
+          <span className="text-[10px] font-mono tabular-nums text-slate-400 uppercase">{customColor}</span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* HTML5 Native Eye Dropper & Color Wheel */}
-          <div className="relative w-12 h-10 rounded-xl overflow-hidden border border-white/20 shadow-inner shrink-0 cursor-pointer">
+          <div className="relative size-10 rounded-xl overflow-hidden border border-white/20 shadow-inner shrink-0 cursor-pointer">
             <input
               type="color"
               value={customColor}
               onChange={e => setCustomColor(e.target.value)}
-              className="absolute -top-3 -left-3 w-20 h-20 cursor-pointer opacity-100"
+              aria-label="Pick color"
+              className="absolute -top-3 -left-3 size-16 cursor-pointer opacity-100"
             />
           </div>
 
@@ -266,7 +267,7 @@ export const MaterialsPanel: React.FC = () => {
               value={customColor}
               onChange={e => setCustomColor(e.target.value)}
               placeholder="#3b82f6"
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+              className="w-full bg-studio-canvas border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs text-white font-mono tabular-nums focus:border-blue-500/80 focus-ring transition"
             />
           </div>
         </div>
@@ -276,7 +277,7 @@ export const MaterialsPanel: React.FC = () => {
           {selectedFurniture && (
             <button
               onClick={() => handleApplyColor(customColor, 'furniture')}
-              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow transition"
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-glow-blue transition active:scale-95"
             >
               <Check size={13} />
               Set Furniture Color
@@ -285,7 +286,7 @@ export const MaterialsPanel: React.FC = () => {
 
           <button
             onClick={() => handleApplyColor(customColor, 'wall')}
-            className={`px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow transition ${
+            className={`px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-glow-emerald transition active:scale-95 ${
               !selectedFurniture ? 'col-span-2' : ''
             }`}
           >
@@ -295,7 +296,7 @@ export const MaterialsPanel: React.FC = () => {
         </div>
 
         {/* Recent Color History */}
-        <div className="pt-2 border-t border-slate-800/80">
+        <div className="pt-2 border-t border-white/[0.08]">
           <div className="text-[10px] text-slate-400 mb-1.5">Recent Swatches:</div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {recentColors.map((rc, idx) => (
@@ -306,8 +307,9 @@ export const MaterialsPanel: React.FC = () => {
                   if (selectedFurniture) handleApplyColor(rc, 'furniture');
                   else handleApplyColor(rc, 'wall');
                 }}
-                className="w-6 h-6 rounded-lg border border-white/20 shadow hover:scale-110 active:scale-95 transition"
+                className="size-6 rounded-lg border border-white/20 shadow hover:scale-110 active:scale-95 transition"
                 style={{ backgroundColor: rc }}
+                aria-label={`Use ${rc}`}
                 title={`Use ${rc}`}
               />
             ))}
@@ -321,7 +323,7 @@ export const MaterialsPanel: React.FC = () => {
           <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
             <Palette size={14} className="text-blue-400" /> Designer Palette Collections
           </h3>
-          <span className="text-[10px] text-slate-400 font-mono">48+ Tones</span>
+          <span className="text-[10px] text-slate-400 font-mono tabular-nums">48+ Tones</span>
         </div>
 
         {/* Category Pills */}
@@ -338,10 +340,10 @@ export const MaterialsPanel: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition ${
+              className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition active:scale-95 ${
                 activeCategory === cat.id
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'bg-slate-800/80 text-slate-400 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-glow-blue'
+                  : 'bg-studio-surface text-slate-400 hover:text-white border border-white/[0.08]'
               }`}
             >
               {cat.label}
@@ -349,20 +351,18 @@ export const MaterialsPanel: React.FC = () => {
           ))}
         </div>
 
-        {/* Swatch Collections */}
-        <div className="space-y-4">
+        {/* Swatch List */}
+        <div className="space-y-3">
           {filteredCollections.map(col => (
-            <div key={col.category} className="space-y-2">
-              <div className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: col.iconColor }} />
-                {col.category}
+            <div key={col.category} className="p-3 bg-studio-surface border border-white/[0.08] rounded-xl space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                <span className="size-2 rounded-full" style={{ backgroundColor: col.iconColor }} />
+                <span>{col.category}</span>
               </div>
-
               <div className="grid grid-cols-2 gap-1.5">
                 {col.colors.map(c => {
-                  const isCurrentFurniture = selectedFurniture?.color === c.hex;
-                  const isCurrentWall = selectedRoom?.wallColor === c.hex;
-
+                  const isCurrentFurniture = selectedFurniture?.color?.toLowerCase() === c.hex.toLowerCase();
+                  const isCurrentWall = selectedRoom?.wallColor?.toLowerCase() === c.hex.toLowerCase();
                   return (
                     <button
                       key={c.id}
@@ -371,14 +371,14 @@ export const MaterialsPanel: React.FC = () => {
                         if (selectedFurniture) handleApplyColor(c.hex, 'furniture');
                         else handleApplyColor(c.hex, 'wall');
                       }}
-                      className={`p-1.5 rounded-xl border flex items-center gap-2 transition text-left group ${
+                      className={`p-1.5 rounded-lg border flex items-center gap-2 transition text-left group active:scale-95 ${
                         isCurrentFurniture || isCurrentWall
-                          ? 'bg-blue-950/40 border-blue-500 shadow-md'
-                          : 'bg-[#181c28] border-slate-800/90 hover:border-slate-700 hover:bg-slate-800/50'
+                          ? 'border-blue-500 bg-blue-600/20'
+                          : 'border-white/[0.06] bg-studio-canvas hover:border-white/[0.14]'
                       }`}
                     >
                       <span
-                        className="w-5 h-5 rounded-lg border border-white/20 shadow-sm shrink-0 flex items-center justify-center"
+                        className="size-5 rounded-md border border-white/20 shadow-sm shrink-0 flex items-center justify-center"
                         style={{ backgroundColor: c.hex }}
                       >
                         {(isCurrentFurniture || isCurrentWall) && (
@@ -398,7 +398,7 @@ export const MaterialsPanel: React.FC = () => {
       </div>
 
       {/* 3. Floor Surfaces & Finishes */}
-      <div className="space-y-3 pt-2 border-t border-slate-800">
+      <div className="space-y-3 pt-2 border-t border-white/[0.08]">
         <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
           <Layers size={14} className="text-purple-400" /> Architectural Floor Materials
         </h3>
@@ -410,14 +410,14 @@ export const MaterialsPanel: React.FC = () => {
               <button
                 key={mat.id}
                 onClick={() => handleApplyFloor(mat.id)}
-                className={`p-2.5 rounded-xl border flex items-center gap-3 transition text-left ${
+                className={`p-2.5 rounded-xl border flex items-center gap-3 transition text-left active:scale-[0.98] ${
                   isCurrent
-                    ? 'bg-blue-950/40 border-blue-500 shadow-md'
-                    : 'bg-[#181c28] border-slate-800 hover:border-slate-700'
+                    ? 'bg-blue-600/15 border-blue-500 shadow-glow-blue ring-1 ring-blue-500/30'
+                    : 'bg-studio-surface border-white/[0.08] hover:border-white/[0.16]'
                 }`}
               >
                 <div
-                  className="w-8 h-8 rounded-xl border border-white/20 shadow-inner shrink-0 flex items-center justify-center"
+                  className="size-8 rounded-xl border border-white/20 shadow-inner shrink-0 flex items-center justify-center"
                   style={{ backgroundColor: mat.previewColor }}
                 >
                   {isCurrent && <Check size={14} className="text-slate-900 drop-shadow" />}

@@ -288,14 +288,16 @@ export const InspectorPanel: React.FC = () => {
   ];
 
   return (
-    <div className="w-72 h-full bg-[#141721] border-l border-slate-800/80 flex flex-col z-20 select-none overflow-hidden">
+    <div className="w-80 h-full bg-studio-panel border-l border-white/[0.08] flex flex-col z-20 select-none overflow-hidden">
       {/* Inspector Header */}
-      <div className="p-3 border-b border-slate-800 bg-[#11131a] flex items-center justify-between">
+      <div className="p-3 border-b border-white/[0.08] bg-studio-surface/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sliders size={14} className="text-blue-400" />
           <span className="text-xs font-semibold text-white">Precision Inspector</span>
         </div>
-        <span className="text-[10px] text-slate-500 font-mono">Feet (ft)</span>
+        <span className="text-[10px] text-slate-400 font-mono tabular-nums bg-studio-canvas px-2 py-0.5 rounded-full border border-white/[0.06]">
+          Feet (ft)
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
@@ -305,12 +307,12 @@ export const InspectorPanel: React.FC = () => {
             {/* Title & Category */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/25">
                   {selectedFurniture.category}
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">ID: {selectedFurniture.id}</span>
+                <span className="text-[10px] text-slate-400 font-mono tabular-nums">ID: {selectedFurniture.id}</span>
               </div>
-              <h3 className="text-sm font-semibold text-white">{selectedFurniture.name}</h3>
+              <h3 className="text-xs font-semibold text-white">{selectedFurniture.name}</h3>
               <p className="text-[11px] text-slate-400">
                 In Space:{' '}
                 <strong className="text-slate-200">
@@ -325,18 +327,29 @@ export const InspectorPanel: React.FC = () => {
                 <Move size={12} className="text-blue-400" /> Coordinates (X, Y, Z in ft)
               </label>
               <div className="grid grid-cols-3 gap-1.5">
-                {(['x', 'y', 'z'] as const).map(axis => (
-                  <div key={axis} className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
-                    <span className="text-[10px] text-slate-400 uppercase font-mono block">{axis}</span>
-                    <input
-                      type="number"
-                      step={0.5}
-                      value={Number(selectedFurniture.position[axis].toFixed(2))}
-                      onChange={e => handlePositionChange(axis, parseFloat(e.target.value) || 0)}
-                      className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
-                    />
-                  </div>
-                ))}
+                {(['x', 'y', 'z'] as const).map(axis => {
+                  const badgeStyle =
+                    axis === 'x'
+                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                      : axis === 'y'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                  return (
+                    <div key={axis} className="bg-studio-surface border border-white/[0.08] rounded-xl p-2 focus-within:border-blue-500/80 focus-within:shadow-glow-blue transition">
+                      <span className={`size-4 rounded flex items-center justify-center text-[9px] font-bold font-mono uppercase mb-1 border ${badgeStyle}`}>
+                        {axis}
+                      </span>
+                      <input
+                        type="number"
+                        step={0.5}
+                        value={Number(selectedFurniture.position[axis].toFixed(2))}
+                        onChange={e => handlePositionChange(axis, parseFloat(e.target.value) || 0)}
+                        aria-label={`Position ${axis.toUpperCase()}`}
+                        className="w-full bg-transparent text-xs text-white font-mono tabular-nums focus:outline-none"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -346,7 +359,7 @@ export const InspectorPanel: React.FC = () => {
                 <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
                   <Maximize2 size={12} className="text-emerald-400" /> Dimensions (W, H, D in ft)
                 </label>
-                <span className="text-[10px] text-slate-500 font-mono">0.5ft step</span>
+                <span className="text-[10px] text-slate-500 font-mono tabular-nums">0.5ft step</span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
                 {[
@@ -354,21 +367,23 @@ export const InspectorPanel: React.FC = () => {
                   { id: 'h', label: 'Height', val: selectedFurniture.dimensions.y * selectedFurniture.scale.y },
                   { id: 'd', label: 'Depth', val: selectedFurniture.dimensions.z * selectedFurniture.scale.z }
                 ].map(item => (
-                  <div key={item.id} className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
-                    <div className="flex items-center justify-between mb-0.5">
+                  <div key={item.id} className="bg-studio-surface border border-white/[0.08] rounded-xl p-2 focus-within:border-blue-500/80 transition">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-slate-400 font-mono">{item.label}</span>
                       <div className="flex items-center gap-0.5">
                         <button
                           type="button"
                           onClick={() => handleStepDimension(item.id as any, -0.5)}
-                          className="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-[9px] transition"
+                          aria-label={`Decrease ${item.label}`}
+                          className="size-4 rounded bg-studio-card hover:bg-studio-card/80 text-slate-300 flex items-center justify-center text-[9px] transition active:scale-95"
                         >
                           <Minus size={8} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleStepDimension(item.id as any, +0.5)}
-                          className="w-4 h-4 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-[9px] transition"
+                          aria-label={`Increase ${item.label}`}
+                          className="size-4 rounded bg-studio-card hover:bg-studio-card/80 text-slate-300 flex items-center justify-center text-[9px] transition active:scale-95"
                         >
                           <Plus size={8} />
                         </button>
@@ -380,7 +395,8 @@ export const InspectorPanel: React.FC = () => {
                       min={0.5}
                       value={Number(item.val.toFixed(2))}
                       onChange={e => handleDimensionChange(item.id as any, parseFloat(e.target.value) || 1)}
-                      className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      aria-label={`${item.label} in feet`}
+                      className="w-full bg-transparent text-xs text-white font-mono tabular-nums focus:outline-none"
                     />
                   </div>
                 ))}
@@ -1106,33 +1122,33 @@ export const InspectorPanel: React.FC = () => {
         ) : (
           /* General Scene Info */
           <div className="space-y-4 py-2">
-            <div className="p-3 bg-blue-950/20 border border-blue-900/40 rounded-xl text-xs text-blue-300 flex items-center gap-2.5">
+            <div className="p-3 bg-blue-950/20 border border-blue-500/30 rounded-xl text-xs text-blue-300 flex items-center gap-2.5 shadow-sm">
               <Info size={16} className="text-blue-400 shrink-0" />
-              <span>Click any furniture or room on the 3D canvas or spaces list to inspect and edit.</span>
+              <span className="text-pretty">Click any furniture item or room on the 3D canvas or spaces panel to inspect and edit dimensions.</span>
             </div>
 
             <div className="space-y-2">
               <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Residence Overview
               </label>
-              <div className="space-y-1.5 font-mono text-xs text-slate-300">
-                <div className="flex items-center justify-between p-2 bg-[#181c28] rounded-lg">
-                  <span className="text-slate-400">Total Spaces:</span>
-                  <strong className="text-white">{sceneData.rooms.length}</strong>
+              <div className="space-y-1.5 font-mono tabular-nums text-xs text-slate-300">
+                <div className="flex items-center justify-between p-2.5 bg-studio-surface border border-white/[0.08] rounded-xl">
+                  <span className="text-slate-400 font-sans">Total Spaces:</span>
+                  <strong className="text-white font-mono tabular-nums">{sceneData.rooms.length}</strong>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-[#181c28] rounded-lg">
-                  <span className="text-slate-400">Total Area:</span>
-                  <strong className="text-blue-400">
-                    {sceneData.rooms.reduce((a, r) => a + r.width * r.depth, 0)} sq.ft
+                <div className="flex items-center justify-between p-2.5 bg-studio-surface border border-white/[0.08] rounded-xl">
+                  <span className="text-slate-400 font-sans">Total Floor Area:</span>
+                  <strong className="text-blue-400 font-mono tabular-nums">
+                    {sceneData.rooms.reduce((a, r) => a + r.width * r.depth, 0)} sq ft
                   </strong>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-[#181c28] rounded-lg">
-                  <span className="text-slate-400">Placed Objects:</span>
-                  <strong className="text-white">{sceneData.furniture.length}</strong>
+                <div className="flex items-center justify-between p-2.5 bg-studio-surface border border-white/[0.08] rounded-xl">
+                  <span className="text-slate-400 font-sans">Placed Objects:</span>
+                  <strong className="text-white font-mono tabular-nums">{sceneData.furniture.length}</strong>
                 </div>
-                <div className="flex items-center justify-between p-2 bg-[#181c28] rounded-lg">
-                  <span className="text-slate-400">Ceiling Height:</span>
-                  <strong className="text-white">{sceneData.globalCeilingHeight} ft</strong>
+                <div className="flex items-center justify-between p-2.5 bg-studio-surface border border-white/[0.08] rounded-xl">
+                  <span className="text-slate-400 font-sans">Global Ceiling Height:</span>
+                  <strong className="text-white font-mono tabular-nums">{sceneData.globalCeilingHeight} ft</strong>
                 </div>
               </div>
             </div>

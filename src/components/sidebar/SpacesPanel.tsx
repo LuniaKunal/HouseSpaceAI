@@ -305,22 +305,23 @@ export const SpacesPanel: React.FC = () => {
   const resolvedTargetRoom = sceneData.rooms.find(r => r.id === targetRoomId) || selectedRoom || sceneData.rooms[0];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-studio-panel">
       {/* Header Summary */}
-      <div className="p-3 border-b border-slate-800 bg-[#141721] flex items-center justify-between shrink-0">
+      <div className="p-3 border-b border-white/[0.08] bg-studio-surface/80 flex items-center justify-between shrink-0">
         <div>
           <span className="text-xs font-semibold text-white">Residence Spaces</span>
-          <p className="text-[11px] text-slate-400">
-            {sceneData.rooms.length} Rooms &bull; <strong className="text-blue-400 font-mono">{totalArea.toLocaleString()} sq.ft</strong> total
+          <p className="text-[11px] text-slate-400 font-mono tabular-nums mt-0.5">
+            <span>{sceneData.rooms.length}</span> Spaces &bull; <strong className="text-blue-400 font-mono tabular-nums font-semibold">{totalArea.toLocaleString()} sq.ft</strong>
           </p>
         </div>
 
         <button
           onClick={() => (isAddingRoom ? setIsAddingRoom(false) : handleOpenAddRoom())}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition shadow-sm"
+          aria-label={isAddingRoom ? 'Cancel adding space' : 'Add Space'}
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition shadow-glow-blue active:scale-95"
         >
           <Plus size={14} />
-          Add Space
+          <span>{isAddingRoom ? 'Close' : 'Add Space'}</span>
         </button>
       </div>
 
@@ -328,7 +329,7 @@ export const SpacesPanel: React.FC = () => {
       {isAddingRoom && (
         <form
           onSubmit={handleCreateRoom}
-          className="bg-[#1a1e2d] border-b border-slate-800 flex flex-col shrink-0 animate-in fade-in shadow-lg"
+          className="bg-studio-surface border-b border-white/[0.08] flex flex-col shrink-0 animate-in-scale shadow-xl"
         >
           {/* Scrollable Form Body */}
           <div className="p-3.5 space-y-2.5 overflow-y-auto max-h-[380px]">
@@ -364,13 +365,13 @@ export const SpacesPanel: React.FC = () => {
 
             {/* Mode Selector (When existing rooms exist) */}
             {sceneData.rooms.length > 0 && (
-              <div className="grid grid-cols-2 gap-1.5 p-0.5 bg-[#11131a] rounded-lg border border-slate-800 text-[11px]">
+              <div className="grid grid-cols-2 gap-1 p-0.5 bg-studio-canvas rounded-xl border border-white/[0.08] text-[11px]">
                 <button
                   type="button"
                   onClick={() => setCreationMode('connected')}
-                  className={`flex items-center justify-center gap-1 py-1 rounded-md transition ${
+                  className={`flex items-center justify-center gap-1 py-1 rounded-lg transition ${
                     creationMode === 'connected'
-                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      ? 'bg-blue-600 text-white font-medium shadow-glow-blue'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -380,9 +381,9 @@ export const SpacesPanel: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCreationMode('standalone')}
-                  className={`flex items-center justify-center gap-1 py-1 rounded-md transition ${
+                  className={`flex items-center justify-center gap-1 py-1 rounded-lg transition ${
                     creationMode === 'standalone'
-                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      ? 'bg-blue-600 text-white font-medium shadow-glow-blue'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -396,7 +397,7 @@ export const SpacesPanel: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Quick Presets</label>
-                <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
+                <span className="text-[10px] text-slate-500 flex items-center gap-0.5 font-mono">
                   <Sparkles size={10} /> 1-Click
                 </span>
               </div>
@@ -406,10 +407,10 @@ export const SpacesPanel: React.FC = () => {
                     key={p.name}
                     type="button"
                     onClick={() => applyPreset(p)}
-                    className={`px-2 py-0.5 rounded text-[10px] border transition ${
+                    className={`px-2 py-0.5 rounded-lg text-[10px] border transition ${
                       newRoomName === p.name
-                        ? 'bg-blue-600/30 border-blue-500 text-blue-300 font-medium'
-                        : 'bg-[#11131a] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        ? 'bg-blue-600/20 border-blue-500/60 text-blue-300 font-medium'
+                        : 'bg-studio-canvas border-white/[0.08] text-slate-400 hover:text-slate-200 hover:border-white/[0.16]'
                     }`}
                   >
                     {p.name}
@@ -426,7 +427,7 @@ export const SpacesPanel: React.FC = () => {
                 value={newRoomName}
                 onChange={e => setNewRoomName(e.target.value)}
                 placeholder="e.g. Master Bedroom"
-                className="w-full bg-[#11131a] border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+                className="w-full bg-studio-canvas border border-white/[0.08] rounded-xl px-2.5 py-1.5 text-xs text-white focus:border-blue-500/80 focus-ring transition"
               />
             </div>
 
@@ -679,10 +680,10 @@ export const SpacesPanel: React.FC = () => {
           </div>
 
           {/* Fixed Pinned Action Buttons (Always Visible!) */}
-          <div className="p-3 bg-[#141724] border-t border-slate-800 flex gap-2 shrink-0">
+          <div className="p-3 bg-studio-surface border-t border-white/[0.08] flex gap-2 shrink-0">
             <button
               type="submit"
-              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold transition shadow-md shadow-blue-600/25 flex items-center justify-center gap-1"
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition shadow-glow-blue flex items-center justify-center gap-1 active:scale-[0.98]"
             >
               <Plus size={14} />
               {sceneData.rooms.length === 0
@@ -694,7 +695,7 @@ export const SpacesPanel: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAddingRoom(false)}
-              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition"
+              className="px-3.5 py-2 bg-studio-card hover:bg-studio-card/80 text-slate-300 rounded-xl text-xs font-medium transition"
             >
               Cancel
             </button>
@@ -705,20 +706,20 @@ export const SpacesPanel: React.FC = () => {
       {/* Room Tree List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {sceneData.rooms.length === 0 && !isAddingRoom && (
-          <div className="text-center py-12 px-4 border border-dashed border-slate-800/80 rounded-xl bg-[#141722]/50 my-2">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center mx-auto mb-3">
+          <div className="text-center py-12 px-4 border border-dashed border-white/[0.10] rounded-2xl bg-studio-surface/40 my-2">
+            <div className="size-11 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mx-auto mb-3 shadow-glow-blue">
               <Home size={20} />
             </div>
-            <p className="text-xs font-semibold text-slate-200 mb-1">No spaces created yet</p>
-            <p className="text-[11px] text-slate-400 mb-3.5 leading-relaxed">
-              Start building your floor plan by adding your primary room or importing a CAD plan.
+            <p className="text-xs font-semibold text-white mb-1">No spaces created yet</p>
+            <p className="text-[11px] text-slate-400 mb-3.5 leading-relaxed text-pretty">
+              Start building your floor plan by adding your primary space or importing a 2D CAD blueprint.
             </p>
             <button
               onClick={handleOpenAddRoom}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition shadow"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition shadow-glow-blue active:scale-95"
             >
               <Plus size={13} />
-              Add First Room
+              <span>Add Primary Space</span>
             </button>
           </div>
         )}
@@ -734,8 +735,8 @@ export const SpacesPanel: React.FC = () => {
               onClick={() => handleSelectRoom(room)}
               className={`p-3 rounded-xl border transition cursor-pointer ${
                 isSelected
-                  ? 'bg-blue-950/30 border-blue-500 shadow-md shadow-blue-500/10'
-                  : 'bg-[#181c28] border-slate-800 hover:border-slate-700'
+                  ? 'bg-blue-600/15 border-blue-500/80 shadow-glow-blue ring-1 ring-blue-500/30'
+                  : 'bg-studio-surface border-white/[0.08] hover:border-white/[0.16]'
               }`}
             >
               <div className="flex items-center justify-between">

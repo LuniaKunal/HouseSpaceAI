@@ -940,12 +940,12 @@ export const AgentCopilotPanel: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden select-none bg-[#11131c]">
-      {/* Header */}
-      <div className="p-3 border-b border-slate-800 bg-[#141721] flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg">
-            <Sparkles size={14} />
+    <div className="flex flex-col h-full overflow-hidden bg-studio-panel">
+      {/* Copilot Header */}
+      <div className="p-3.5 border-b border-white/[0.08] bg-studio-surface/80 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-glow-blue">
+            <Sparkles size={16} />
           </div>
           <div>
             <h3 className="text-xs font-bold text-white">AI Co-Designer</h3>
@@ -953,13 +953,14 @@ export const AgentCopilotPanel: React.FC = () => {
           </div>
         </div>
 
-        <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+        <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono tabular-nums bg-emerald-950/30 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
+          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
           <Bot size={11} /> {TOOL_LIST.length} Tools Ready
         </span>
       </div>
 
       {/* 1-Click Fast Goal Presets */}
-      <div className="p-3 bg-[#181c28] border-b border-slate-800/80 space-y-2">
+      <div className="p-3 bg-studio-surface/40 border-b border-white/[0.08] space-y-2">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
           <Crown size={12} className="text-amber-400" />
           1-Click Autonomous Makeovers
@@ -969,7 +970,8 @@ export const AgentCopilotPanel: React.FC = () => {
           <button
             onClick={handleConvertGuestToOffice}
             disabled={isProcessing}
-            className="p-2 rounded-xl bg-slate-900/90 hover:bg-blue-950/50 border border-slate-800 hover:border-blue-500/60 text-left transition flex flex-col gap-1 group disabled:opacity-50"
+            aria-label="Study Office Makeover"
+            className="p-2 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-blue-500/50 text-left transition flex flex-col gap-1 group disabled:opacity-50 active:scale-95"
           >
             <Laptop size={14} className="text-blue-400 group-hover:scale-110 transition" />
             <div className="text-[10px] font-bold text-slate-200 group-hover:text-white leading-tight">
@@ -981,7 +983,8 @@ export const AgentCopilotPanel: React.FC = () => {
           <button
             onClick={handleUpgradeBalcony}
             disabled={isProcessing}
-            className="p-2 rounded-xl bg-slate-900/90 hover:bg-emerald-950/50 border border-slate-800 hover:border-emerald-500/60 text-left transition flex flex-col gap-1 group disabled:opacity-50"
+            aria-label="Green Oasis Makeover"
+            className="p-2 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-emerald-500/50 text-left transition flex flex-col gap-1 group disabled:opacity-50 active:scale-95"
           >
             <Flower2 size={14} className="text-emerald-400 group-hover:scale-110 transition" />
             <div className="text-[10px] font-bold text-slate-200 group-hover:text-white leading-tight">
@@ -993,7 +996,8 @@ export const AgentCopilotPanel: React.FC = () => {
           <button
             onClick={handleModernizeLivingRoom}
             disabled={isProcessing}
-            className="p-2 rounded-xl bg-slate-900/90 hover:bg-purple-950/50 border border-slate-800 hover:border-purple-500/60 text-left transition flex flex-col gap-1 group disabled:opacity-50"
+            aria-label="Luxury Marble Makeover"
+            className="p-2 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-purple-500/50 text-left transition flex flex-col gap-1 group disabled:opacity-50 active:scale-95"
           >
             <Layers size={14} className="text-purple-400 group-hover:scale-110 transition" />
             <div className="text-[10px] font-bold text-slate-200 group-hover:text-white leading-tight">
@@ -1014,10 +1018,10 @@ export const AgentCopilotPanel: React.FC = () => {
             }`}
           >
             <div
-              className={`max-w-[90%] p-2.5 rounded-2xl text-xs ${
+              className={`max-w-[90%] p-3 rounded-2xl text-xs ${
                 msg.sender === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-none shadow-md'
-                  : 'bg-[#181c28] text-slate-200 border border-slate-800 rounded-bl-none shadow-lg'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none shadow-glow-blue'
+                  : 'bg-studio-surface text-slate-200 border border-white/[0.08] rounded-bl-none shadow-md'
               }`}
             >
               {msg.sender === 'agent' && (
@@ -1026,14 +1030,14 @@ export const AgentCopilotPanel: React.FC = () => {
                 </div>
               )}
 
-              <div className="leading-relaxed whitespace-pre-wrap">{msg.text}</div>
+              <div className="leading-relaxed whitespace-pre-wrap text-pretty">{msg.text}</div>
 
               {/* Action Steps Checklist */}
               {msg.actions && msg.actions.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-slate-700/60 space-y-1">
-                  <div className="text-[10px] text-slate-400 font-semibold uppercase">Executed Actions:</div>
+                <div className="mt-2.5 pt-2 border-t border-white/[0.08] space-y-1">
+                  <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Executed Actions:</div>
                   {msg.actions.map((act, i) => (
-                    <div key={i} className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono">
+                    <div key={i} className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono tabular-nums">
                       <CheckCircle2 size={11} className="shrink-0" />
                       <span>{act}</span>
                     </div>
@@ -1042,7 +1046,7 @@ export const AgentCopilotPanel: React.FC = () => {
               )}
             </div>
 
-            <span className="text-[9px] text-slate-500 font-mono px-1">
+            <span className="text-[9px] text-slate-500 font-mono tabular-nums px-1">
               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
@@ -1063,7 +1067,7 @@ export const AgentCopilotPanel: React.FC = () => {
       </div>
 
       {/* Quick Prompt Suggestions */}
-      <div className="p-2 bg-[#141721] border-t border-slate-800/80">
+      <div className="p-2 bg-studio-surface/40 border-t border-white/[0.08]">
         <div className="text-[9px] text-slate-400 mb-1 px-1">Suggested Design Prompts:</div>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[10px]">
           {promptSuggestions.map((s, idx) => (
@@ -1072,7 +1076,7 @@ export const AgentCopilotPanel: React.FC = () => {
               onClick={() => {
                 setPromptInput(s);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white whitespace-nowrap transition border border-slate-700/60"
+              className="px-2.5 py-1 rounded-lg bg-studio-surface hover:bg-studio-card text-slate-300 hover:text-white whitespace-nowrap transition border border-white/[0.08] active:scale-95"
             >
               {s}
             </button>
@@ -1081,7 +1085,7 @@ export const AgentCopilotPanel: React.FC = () => {
       </div>
 
       {/* Interactive Prompt Input Bar */}
-      <form onSubmit={handleNaturalLanguageSubmit} className="p-3 bg-[#11131c] border-t border-slate-800 flex items-center gap-2">
+      <form onSubmit={handleNaturalLanguageSubmit} className="p-3 bg-studio-surface border-t border-white/[0.08] flex items-center gap-2">
         <input
           type="file"
           ref={cadFileInputRef}
@@ -1094,8 +1098,9 @@ export const AgentCopilotPanel: React.FC = () => {
           type="button"
           onClick={() => cadFileInputRef.current?.click()}
           title="Upload 2D CAD Blueprint / Floorplan"
+          aria-label="Upload 2D CAD Blueprint or Floorplan"
           disabled={isProcessing}
-          className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-blue-500 text-slate-400 hover:text-blue-400 disabled:opacity-40 flex items-center justify-center transition shrink-0 shadow"
+          className="size-9 rounded-xl bg-studio-canvas border border-white/[0.08] hover:border-blue-500 text-slate-400 hover:text-blue-400 disabled:opacity-40 flex items-center justify-center transition shrink-0 active:scale-95"
         >
           <Paperclip size={15} />
         </button>
@@ -1106,13 +1111,14 @@ export const AgentCopilotPanel: React.FC = () => {
           onChange={e => setPromptInput(e.target.value)}
           placeholder="E.g. Build 3D plan from CAD blueprint..."
           disabled={isProcessing}
-          className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-medium"
+          className="flex-1 bg-studio-canvas border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-blue-500/80 focus-ring font-medium transition"
         />
 
         <button
           type="submit"
           disabled={!promptInput.trim() || isProcessing}
-          className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 text-white flex items-center justify-center transition shadow-lg shrink-0"
+          aria-label="Send design prompt"
+          className="size-9 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-studio-card text-white flex items-center justify-center transition shadow-glow-blue shrink-0 active:scale-95"
         >
           <Send size={14} />
         </button>
