@@ -1,11 +1,11 @@
 /**
  * Complete Architectural Project Definition for 4BHK_Sample
  * Exactly replicating Sample_maps/Sample_1.png floor plan blueprint:
- * - 18 Rooms & Zones with accurate dimensions, positions, and finishes
- * - 14 Doors with exact swing arcs and orientations
- * - 10 Windows with double-line architectural symbols
- * - 11 Connection Gates for seamless doorway openings
- * - 30+ Furnishings & Fixtures with exact orientations (Beds, Sofas, Dining, Modular Kitchen, Mandir, etc.)
+ * - 18 Rooms & Zones with true blueprint dimensions, positions, finishes, and wall alcoves
+ * - 14 Doors with exact swing arcs, hinges, and orientations matching blueprint drafting
+ * - 10 Windows with double-line architectural symbols and accurate elevation heights
+ * - 12 Connection Gates for seamless doorway openings and corridor transitions
+ * - 45 Furnishings, Structural RCC Columns, Mirrors, and Iconic Concentric Lighting Symbols
  * - Calibrated CAD blueprint overlay pointing to /Sample_maps/Sample_1.png
  */
 
@@ -16,6 +16,10 @@ import { Room, DoorOpening, WindowOpening, ConnectionGate, FurnitureObject } fro
 export const FOUR_BHK_ROOMS: Room[] = [
   // ---------------------------------------------------------
   // 1. MASTER BEDROOM SUITE (Top-Left)
+  // Blueprint labels:
+  // - Master Bedroom: 18'-0" x 11'-3" (18.0 x 11.25 ft)
+  // - Walk in Area: 8'-9" x 5'-4" (8.75 x 5.33 ft)
+  // - Att. Toilet: 8'-3" x 5'-4" (8.25 x 5.33 ft)
   // ---------------------------------------------------------
   {
     id: 'room-master',
@@ -23,7 +27,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
     width: 18.0,
     depth: 11.25, // 18'-0" x 11'-3"
     height: 9.5,
-    position: { x: -19.0, y: 0, z: -7.55 },
+    position: { x: -19.0, y: 0, z: -7.545 },
     floorMaterial: 'herringbone_wood',
     wallColor: '#fdfbf7',
     wallThickness: 0.5,
@@ -33,10 +37,10 @@ export const FOUR_BHK_ROOMS: Room[] = [
   {
     id: 'room-master-walkin',
     name: 'Walk in Area',
-    width: 8.875,
-    depth: 5.33, // 8'-9" x 5'-4"
+    width: 8.75, // 8'-9" (true blueprint width)
+    depth: 5.33, // 5'-4"
     height: 9.5,
-    position: { x: -23.56, y: 0, z: -15.83 },
+    position: { x: -23.625, y: 0, z: -15.835 },
     floorMaterial: 'hardwood_oak',
     wallColor: '#f8fafc',
     wallThickness: 0.5,
@@ -46,10 +50,10 @@ export const FOUR_BHK_ROOMS: Room[] = [
   {
     id: 'room-master-toilet',
     name: 'Att. Toilet',
-    width: 9.125,
-    depth: 5.33, // 8'-3" x 5'-4"
+    width: 8.25, // 8'-3" (true blueprint width)
+    depth: 5.33, // 5'-4"
     height: 9.5,
-    position: { x: -14.56, y: 0, z: -15.83 },
+    position: { x: -15.125, y: 0, z: -15.835 },
     floorMaterial: 'ceramic_tile',
     wallColor: '#f1f5f9',
     wallThickness: 0.5,
@@ -59,6 +63,10 @@ export const FOUR_BHK_ROOMS: Room[] = [
 
   // ---------------------------------------------------------
   // 2. SON BEDROOM SUITE (Bottom-Left)
+  // Blueprint labels:
+  // - Son Bedroom: 18'-0" x 12'-9" (18.0 x 12.75 ft)
+  // - Walk in Area: 9'-0" x 5'-9" (9.0 x 5.75 ft)
+  // - Att. Toilet: 8'-3" x 5'-9" (8.25 x 5.75 ft)
   // ---------------------------------------------------------
   {
     id: 'room-son',
@@ -76,8 +84,8 @@ export const FOUR_BHK_ROOMS: Room[] = [
   {
     id: 'room-son-walkin',
     name: 'Walk in Area',
-    width: 9.0,
-    depth: 5.75, // 9'-0" x 5'-9"
+    width: 9.0, // 9'-0"
+    depth: 5.75, // 5'-9"
     height: 9.5,
     position: { x: -23.5, y: 0, z: +13.705 },
     floorMaterial: 'hardwood_oak',
@@ -89,10 +97,10 @@ export const FOUR_BHK_ROOMS: Room[] = [
   {
     id: 'room-son-toilet',
     name: 'Att. Toilet',
-    width: 9.0,
-    depth: 5.75, // 8'-3" x 5'-9"
+    width: 8.25, // 8'-3" (true blueprint width)
+    depth: 5.75, // 5'-9"
     height: 9.5,
-    position: { x: -14.5, y: 0, z: +13.705 },
+    position: { x: -14.875, y: 0, z: +13.705 },
     floorMaterial: 'ceramic_tile',
     wallColor: '#f1f5f9',
     wallThickness: 0.5,
@@ -102,6 +110,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
 
   // ---------------------------------------------------------
   // 3. GUEST BEDROOM (Top-Center)
+  // Blueprint labels: 13'-9" x 10'-0" (13.75 x 10.0 ft)
   // ---------------------------------------------------------
   {
     id: 'room-guest',
@@ -119,6 +128,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
 
   // ---------------------------------------------------------
   // 4. POWDER TOILET (Top-Center between Guest & Daughter)
+  // Blueprint labels: 4'-9" x 6'-3" (4.75 x 6.25 ft)
   // ---------------------------------------------------------
   {
     id: 'room-ptoilet',
@@ -136,6 +146,10 @@ export const FOUR_BHK_ROOMS: Room[] = [
 
   // ---------------------------------------------------------
   // 5. DAUGHTER BEDROOM SUITE & BALCONY (Top-Right)
+  // Blueprint labels:
+  // - Daughter Bedroom: 16'-9" x 11'-9" (16.75 x 11.75 ft)
+  // - Att. Toilet: 8'-6" x 4'-9" (8.5 x 4.75 ft)
+  // - Balcony: 8'-0" x 5'-0" (8.0 x 5.0 ft)
   // ---------------------------------------------------------
   {
     id: 'room-daughter',
@@ -178,7 +192,9 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 6. DINING AREA & CENTRAL CORRIDOR
+  // 6. DINING AREA & CENTRAL CORRIDOR (With North Wall Alcove)
+  // Leverages new WallAlcove tool to extend floor & walls northwards
+  // into the corridor leading to P. Toilet and framing the vanity Basin niche!
   // ---------------------------------------------------------
   {
     id: 'room-dining',
@@ -187,6 +203,13 @@ export const FOUR_BHK_ROOMS: Room[] = [
     depth: 10.5,
     height: 9.5,
     position: { x: -0.75, y: 0, z: -3.25 },
+    alcove: {
+      edge: 'north',
+      type: 'protrusion',
+      offset: 13.75, // distance from west wall to corridor opening
+      width: 4.75,   // spans the width of P. Toilet corridor
+      depth: 3.75    // extends north to touch P. Toilet at z = -12.25
+    },
     floorMaterial: 'marble_carrara',
     wallColor: '#fdfbf7',
     wallThickness: 0.5,
@@ -195,7 +218,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 7. KITCHEN & FOOD SERVICE
+  // 7. KITCHEN & FOOD SERVICE (10'-9" x 11'-2")
   // ---------------------------------------------------------
   {
     id: 'room-kitchen',
@@ -212,7 +235,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 8. POOJA ROOM (Sacred Altar)
+  // 8. POOJA ROOM (Sacred Sanctuary) (3'-0" x 2'-6")
   // ---------------------------------------------------------
   {
     id: 'room-pooja',
@@ -229,7 +252,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 9. STORE ROOM
+  // 9. STORE ROOM (4'-9" x 5'-9")
   // ---------------------------------------------------------
   {
     id: 'room-store',
@@ -246,7 +269,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 10. UTILITY AREA (Laundry & Wash)
+  // 10. UTILITY AREA (Laundry & Wash) (14'-0" x 4'-6")
   // ---------------------------------------------------------
   {
     id: 'room-utility',
@@ -263,7 +286,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 11. GRAND LIVING AREA (South-East)
+  // 11. GRAND LIVING AREA (South-East) (20'-0" x 18'-9")
   // ---------------------------------------------------------
   {
     id: 'room-living',
@@ -280,7 +303,7 @@ export const FOUR_BHK_ROOMS: Room[] = [
   },
 
   // ---------------------------------------------------------
-  // 12. MAIN ENTRY FOYER
+  // 12. MAIN ENTRY FOYER (South Vestibule)
   // ---------------------------------------------------------
   {
     id: 'room-entry',
@@ -312,7 +335,7 @@ export const FOUR_BHK_DOORS: DoorOpening[] = [
   {
     id: 'door-master-walkin',
     roomId: 'room-master-walkin',
-    position: { x: -19.5, y: 0, z: -13.17 },
+    position: { x: -19.25, y: 0, z: -13.17 },
     width: 2.8,
     height: 7.0,
     doorType: 'standard',
@@ -322,7 +345,7 @@ export const FOUR_BHK_DOORS: DoorOpening[] = [
   {
     id: 'door-master-toilet',
     roomId: 'room-master-toilet',
-    position: { x: -19.125, y: 0, z: -15.5 },
+    position: { x: -19.25, y: 0, z: -15.5 },
     width: 2.5,
     height: 7.0,
     doorType: 'standard',
@@ -342,7 +365,7 @@ export const FOUR_BHK_DOORS: DoorOpening[] = [
   {
     id: 'door-son-walkin',
     roomId: 'room-son-walkin',
-    position: { x: -19.5, y: 0, z: +10.83 },
+    position: { x: -19.0, y: 0, z: +10.83 },
     width: 2.8,
     height: 7.0,
     doorType: 'standard',
@@ -432,7 +455,7 @@ export const FOUR_BHK_DOORS: DoorOpening[] = [
   {
     id: 'door-main-entry',
     roomId: 'room-entry',
-    position: { x: +6.0, y: 0, z: +16.5 },
+    position: { x: +5.75, y: 0, z: +16.5 },
     width: 3.5,
     height: 7.5,
     doorType: 'standard',
@@ -445,13 +468,13 @@ export const FOUR_BHK_WINDOWS: WindowOpening[] = [
   {
     id: 'win-master-toilet',
     roomId: 'room-master-toilet',
-    position: { x: -14.5, y: 4.5, z: -18.5 },
+    position: { x: -15.125, y: 4.5, z: -18.5 },
     width: 4.0,
     height: 3.5,
     elevation: 4.5,
     rotation: 0
   },
-  // Master Bedroom North Window
+  // Master Bedroom North Lightwell Window
   {
     id: 'win-master-north',
     roomId: 'room-master',
@@ -465,7 +488,7 @@ export const FOUR_BHK_WINDOWS: WindowOpening[] = [
   {
     id: 'win-master-west',
     roomId: 'room-master',
-    position: { x: -28.0, y: 3.5, z: -7.55 },
+    position: { x: -28.0, y: 3.5, z: -7.545 },
     width: 6.0,
     height: 5.0,
     elevation: 2.5,
@@ -485,7 +508,7 @@ export const FOUR_BHK_WINDOWS: WindowOpening[] = [
   {
     id: 'win-son-toilet',
     roomId: 'room-son-toilet',
-    position: { x: -14.5, y: 4.5, z: +16.58 },
+    position: { x: -14.875, y: 4.5, z: +16.58 },
     width: 4.0,
     height: 3.5,
     elevation: 4.5,
@@ -531,7 +554,7 @@ export const FOUR_BHK_WINDOWS: WindowOpening[] = [
     elevation: 4.0,
     rotation: 0
   },
-  // Living Area East Windows (Behind lush green planter trough)
+  // Living Area East Floor-to-Ceiling Windows (Behind lush green planter trough)
   {
     id: 'win-living-east',
     roomId: 'room-living',
@@ -560,7 +583,7 @@ export const FOUR_BHK_GATES: ConnectionGate[] = [
     wallDirection: 'right',
     width: 3.0,
     height: 8.0,
-    position: { x: -19.125, y: 0, z: -15.83 }
+    position: { x: -19.25, y: 0, z: -15.835 }
   },
   {
     id: 'gate-son-walkin',
@@ -642,12 +665,21 @@ export const FOUR_BHK_GATES: ConnectionGate[] = [
     width: 4.5,
     height: 8.5,
     position: { x: +7.5, y: 0, z: +14.125 }
+  },
+  {
+    id: 'gate-dining-corridor',
+    roomIdA: 'room-dining',
+    roomIdB: 'room-ptoilet',
+    wallDirection: 'above',
+    width: 4.75,
+    height: 8.5,
+    position: { x: +6.125, y: 0, z: -8.5 }
   }
 ];
 
 export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
   // =========================================================
-  // 1. MASTER BEDROOM (Headboard SOUTH, facing NORTH)
+  // 1. MASTER BEDROOM (Headboard SOUTH, pillows facing NORTH)
   // =========================================================
   {
     id: 'furn-master-bed',
@@ -705,6 +737,35 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#334155',
     locked: false
   },
+  // Master Bedroom Corner Uplighters (Iconic concentric light symbols from Sample_1.png)
+  {
+    id: 'furn-master-light-nw',
+    roomId: 'room-master',
+    name: 'Corner Uplighter (Master NW)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: -26.8, y: 0, z: -11.8 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-master-light-sw',
+    roomId: 'room-master',
+    name: 'Corner Uplighter (Master SW)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: -26.8, y: 0, z: -3.0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
   // Master Walk-in Area
   {
     id: 'furn-master-walkin-wardrobe',
@@ -712,7 +773,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Wardrobe 2\'-0" x 5\'-4"',
     type: 'wardrobe_sliding',
     category: 'storage',
-    position: { x: -27.0, y: 0, z: -15.83 },
+    position: { x: -27.0, y: 0, z: -15.835 },
     rotation: { x: 0, y: 90, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 5.33, y: 8.5, z: 2.0 },
@@ -726,12 +787,26 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Low ht Consol 36" x 20"',
     type: 'consol_low_ht',
     category: 'storage',
-    position: { x: -23.56, y: 0, z: -17.5 },
+    position: { x: -23.625, y: 0, z: -17.5 },
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 3.0, y: 2.4, z: 1.67 },
     material: 'marble_carrara',
     color: '#f8fafc',
+    locked: false
+  },
+  {
+    id: 'furn-master-walkin-mirror',
+    roomId: 'room-master-walkin',
+    name: 'Mirror 36" (Master)',
+    type: 'mirror_wall',
+    category: 'decor',
+    position: { x: -23.625, y: 3.5, z: -18.35 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 3.0, y: 3.5, z: 0.15 },
+    material: 'mirror_silver',
+    color: '#38bdf8',
     locked: false
   },
   // Master Attached Toilet
@@ -741,7 +816,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'WC (Master Toilet)',
     type: 'bathroom_wc_commode',
     category: 'bathroom',
-    position: { x: -17.0, y: 0, z: -17.3 },
+    position: { x: -17.5, y: 0, z: -17.3 },
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 1.6, y: 2.4, z: 2.2 },
@@ -755,7 +830,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Basin Counter (Master)',
     type: 'bathroom_vanity_basin',
     category: 'bathroom',
-    position: { x: -14.56, y: 0, z: -14.0 },
+    position: { x: -15.125, y: 0, z: -14.0 },
     rotation: { x: 0, y: 180, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 3.2, y: 2.8, z: 1.8 },
@@ -769,7 +844,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Shower Enclosure (Master)',
     type: 'bathroom_shower_cubicle',
     category: 'bathroom',
-    position: { x: -11.5, y: 0, z: -15.83 },
+    position: { x: -12.3, y: 0, z: -15.835 },
     rotation: { x: 0, y: -90, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 3.2, y: 7.5, z: 3.2 },
@@ -779,7 +854,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
   },
 
   // =========================================================
-  // 2. SON BEDROOM (Headboard SOUTH, facing NORTH)
+  // 2. SON BEDROOM (Headboard SOUTH, pillows facing NORTH)
   // =========================================================
   {
     id: 'furn-son-bed',
@@ -865,6 +940,35 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#e2e8f0',
     locked: false
   },
+  // Son Bedroom Corner Uplighters (Iconic concentric symbols from Sample_1.png)
+  {
+    id: 'furn-son-light-nw',
+    roomId: 'room-son',
+    name: 'Corner Uplighter (Son NW)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: -26.8, y: 0, z: -0.8 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-son-light-sw',
+    roomId: 'room-son',
+    name: 'Corner Uplighter (Son SW)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: -26.8, y: 0, z: +9.8 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
   // Son Walk-in Area
   {
     id: 'furn-son-walkin-wardrobe',
@@ -894,6 +998,20 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#f8fafc',
     locked: false
   },
+  {
+    id: 'furn-son-walkin-mirror',
+    roomId: 'room-son-walkin',
+    name: 'Mirror 36" (Son)',
+    type: 'mirror_wall',
+    category: 'decor',
+    position: { x: -23.5, y: 3.5, z: +16.45 },
+    rotation: { x: 0, y: 180, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 3.0, y: 3.5, z: 0.15 },
+    material: 'mirror_silver',
+    color: '#38bdf8',
+    locked: false
+  },
   // Son Attached Toilet
   {
     id: 'furn-son-wc',
@@ -901,7 +1019,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'WC (Son Toilet)',
     type: 'bathroom_wc_commode',
     category: 'bathroom',
-    position: { x: -17.0, y: 0, z: +15.5 },
+    position: { x: -17.2, y: 0, z: +15.5 },
     rotation: { x: 0, y: 180, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 1.6, y: 2.4, z: 2.2 },
@@ -915,7 +1033,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Basin Counter (Son)',
     type: 'bathroom_vanity_basin',
     category: 'bathroom',
-    position: { x: -14.5, y: 0, z: +11.8 },
+    position: { x: -14.875, y: 0, z: +11.8 },
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 3.2, y: 2.8, z: 1.8 },
@@ -929,7 +1047,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     name: 'Shower Enclosure (Son)',
     type: 'bathroom_shower_cubicle',
     category: 'bathroom',
-    position: { x: -11.3, y: 0, z: +13.705 },
+    position: { x: -11.9, y: 0, z: +13.705 },
     rotation: { x: 0, y: -90, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
     dimensions: { x: 3.2, y: 7.5, z: 3.2 },
@@ -939,7 +1057,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
   },
 
   // =========================================================
-  // 3. GUEST BEDROOM (Headboard WEST, facing EAST)
+  // 3. GUEST BEDROOM (Headboard WEST, pillows facing EAST)
   // =========================================================
   {
     id: 'furn-guest-bed',
@@ -997,6 +1115,20 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#334155',
     locked: false
   },
+  {
+    id: 'furn-guest-mirror',
+    roomId: 'room-guest',
+    name: 'Mirror (Guest Bedroom)',
+    type: 'mirror_wall',
+    category: 'decor',
+    position: { x: -3.125, y: 3.5, z: -8.65 },
+    rotation: { x: 0, y: 180, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 4.5, y: 3.5, z: 0.15 },
+    material: 'mirror_silver',
+    color: '#38bdf8',
+    locked: false
+  },
 
   // =========================================================
   // 4. POWDER TOILET & CORRIDOR WASH BASIN
@@ -1043,9 +1175,23 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#f1f5f9',
     locked: false
   },
+  {
+    id: 'furn-corridor-light',
+    roomId: 'room-dining',
+    name: 'Wall Sconce (Corridor Niche)',
+    type: 'light_sconce',
+    category: 'lighting',
+    position: { x: +7.8, y: 4.5, z: -10.5 },
+    rotation: { x: 0, y: 270, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 0.8, y: 1.2, z: 0.8 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
 
   // =========================================================
-  // 5. DAUGHTER BEDROOM (Headboard NORTH, facing SOUTH)
+  // 5. DAUGHTER BEDROOM (Headboard NORTH, pillows facing SOUTH)
   // =========================================================
   {
     id: 'furn-daughter-bed',
@@ -1118,6 +1264,20 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     locked: false
   },
   {
+    id: 'furn-daughter-mirror',
+    roomId: 'room-daughter',
+    name: 'Mirror (Daughter Bedroom)',
+    type: 'mirror_wall',
+    category: 'decor',
+    position: { x: +9.6, y: 3.5, z: -3.0 },
+    rotation: { x: 0, y: 90, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 2.5, y: 3.5, z: 0.15 },
+    material: 'mirror_silver',
+    color: '#38bdf8',
+    locked: false
+  },
+  {
     id: 'furn-daughter-tv',
     roomId: 'room-daughter',
     name: 'T.V (Daughter Bedroom)',
@@ -1129,6 +1289,35 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     dimensions: { x: 4.5, y: 3.0, z: 1.2 },
     material: 'wood_oak',
     color: '#1e293b',
+    locked: false
+  },
+  // Daughter Bedroom Corner Uplighters
+  {
+    id: 'furn-daughter-light-ne',
+    roomId: 'room-daughter',
+    name: 'Corner Uplighter (Daughter NE)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +24.2, y: 0, z: -12.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-daughter-light-se',
+    roomId: 'room-daughter',
+    name: 'Corner Uplighter (Daughter SE)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +24.2, y: 0, z: -3.2 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
     locked: false
   },
   // Daughter Attached Toilet
@@ -1174,17 +1363,17 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#cbd5e1',
     locked: false
   },
-  // Balcony Planters
+  // Balcony Planters (Lush 6-pot planter series matching Sample_1.png)
   {
     id: 'furn-balcony-plants',
     roomId: 'room-balcony',
-    name: 'Balcony Planter Pots Trio',
+    name: 'Balcony Planter Pots Row',
     type: 'planter_balcony_pots',
     category: 'outdoor',
     position: { x: +21.0, y: 0, z: -17.5 },
     rotation: { x: 0, y: 0, z: 0 },
     scale: { x: 1, y: 1, z: 1 },
-    dimensions: { x: 4.5, y: 3.0, z: 1.5 },
+    dimensions: { x: 6.5, y: 3.0, z: 1.5 },
     material: 'terracotta_plants',
     color: '#ea580c',
     locked: false
@@ -1219,6 +1408,20 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     dimensions: { x: 6.0, y: 3.0, z: 1.4 },
     material: 'wood_walnut',
     color: '#334155',
+    locked: false
+  },
+  {
+    id: 'furn-dining-plant',
+    roomId: 'room-dining',
+    name: 'Dining Corner Planter',
+    type: 'planter_pot_tall',
+    category: 'decor',
+    position: { x: -4.0, y: 0, z: -8.0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.8, y: 3.5, z: 1.8 },
+    material: 'terracotta_plants',
+    color: '#16a34a',
     locked: false
   },
 
@@ -1337,7 +1540,7 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
   },
 
   // =========================================================
-  // 11. LIVING AREA (Sofas, Center Table, Armchairs, TV Unit, Planters)
+  // 11. LIVING AREA (Sofas, Center Table, Armchairs, TV Unit, Planters, Lamps)
   // =========================================================
   {
     id: 'furn-living-sofa-north',
@@ -1451,6 +1654,63 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     color: '#16a34a',
     locked: false
   },
+  // Living Area Iconic Lighting Fixtures
+  {
+    id: 'furn-living-light-ne',
+    roomId: 'room-living',
+    name: 'Corner Uplighter (Living NE)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +24.2, y: 0, z: -0.8 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-living-light-se',
+    roomId: 'room-living',
+    name: 'Corner Uplighter (Living SE)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +24.2, y: 0, z: +15.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 5.5, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-living-tv-light-left',
+    roomId: 'room-living',
+    name: 'TV Accent Lamp (Left)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +9.5, y: 0, z: +15.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 4.8, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
+  {
+    id: 'furn-living-tv-light-right',
+    roomId: 'room-living',
+    name: 'TV Accent Lamp (Right)',
+    type: 'light_floor_lamp',
+    category: 'lighting',
+    position: { x: +21.5, y: 0, z: +15.5 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 4.8, z: 1.5 },
+    material: 'brass_warm_glow',
+    color: '#f59e0b',
+    locked: false
+  },
 
   // =========================================================
   // 12. MAIN ENTRY FOYER
@@ -1468,6 +1728,81 @@ export const FOUR_BHK_FURNITURE: FurnitureObject[] = [
     material: 'wood_oak',
     color: '#334155',
     locked: false
+  },
+
+  // =========================================================
+  // 13. ARCHITECTURAL STRUCTURAL RCC COLUMNS (Red Pillars in Sample_1.png)
+  // Structural columns placed at critical load-bearing locations
+  // =========================================================
+  {
+    id: 'furn-col-master-son-west',
+    roomId: 'room-master',
+    name: 'Structural Column (West Master/Son)',
+    type: 'architectural_column',
+    category: 'decor',
+    position: { x: -28.0, y: 0, z: -1.92 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 9.5, z: 0.8 },
+    material: 'concrete_column_red',
+    color: '#b91c1c',
+    locked: true
+  },
+  {
+    id: 'furn-col-master-son-east',
+    roomId: 'room-master',
+    name: 'Structural Column (East Master/Son)',
+    type: 'architectural_column',
+    category: 'decor',
+    position: { x: -10.0, y: 0, z: -1.92 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 9.5, z: 0.8 },
+    material: 'concrete_column_red',
+    color: '#b91c1c',
+    locked: true
+  },
+  {
+    id: 'furn-col-daughter-living-west',
+    roomId: 'room-living',
+    name: 'Structural Column (West Daughter/Living)',
+    type: 'architectural_column',
+    category: 'decor',
+    position: { x: +8.5, y: 0, z: -2.0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 9.5, z: 0.8 },
+    material: 'concrete_column_red',
+    color: '#b91c1c',
+    locked: true
+  },
+  {
+    id: 'furn-col-daughter-living-east',
+    roomId: 'room-living',
+    name: 'Structural Column (East Daughter/Living)',
+    type: 'architectural_column',
+    category: 'decor',
+    position: { x: +25.5, y: 0, z: -2.0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.5, y: 9.5, z: 0.8 },
+    material: 'concrete_column_red',
+    color: '#b91c1c',
+    locked: true
+  },
+  {
+    id: 'furn-col-balcony-east',
+    roomId: 'room-balcony',
+    name: 'Structural Column (Balcony East)',
+    type: 'architectural_column',
+    category: 'decor',
+    position: { x: +25.25, y: 0, z: -13.75 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    dimensions: { x: 1.2, y: 9.5, z: 0.8 },
+    material: 'concrete_column_red',
+    color: '#b91c1c',
+    locked: true
   }
 ];
 
@@ -1502,7 +1837,7 @@ export function build4BHKSampleProject(): Project {
     metadata: {
       id: 'proj-4bhk-sample-residence',
       name: '4BHK_Sample',
-      description: 'Comprehensive 4BHK architectural floor plan residence with Master Suite, Son Suite, Guest Bedroom, Daughter Suite, Living Area with Planter Strip, Dining with Dumb Waiter, Kitchen, Store, Pooja, Utility and Main Entry Foyer.',
+      description: 'Comprehensive 4BHK architectural floor plan residence with Master Suite, Son Suite, Guest Bedroom, Daughter Suite, Living Area with Planter Strip, Dining with Dumb Waiter, Kitchen, Store, Pooja, Utility and Main Entry Foyer matching Sample_1.png.',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       roomCount: FOUR_BHK_ROOMS.length,
@@ -1510,7 +1845,7 @@ export function build4BHKSampleProject(): Project {
       totalAreaSqFt: Math.round(totalAreaSqFt),
       tags: ['4bhk', 'residential', 'luxury', 'architectural'],
       unit: 'feet',
-      version: '1.0.0'
+      version: '1.1.0'
     },
     sceneData: FOUR_BHK_SAMPLE_SCENE,
     cadData: FOUR_BHK_SAMPLE_CAD_DATA,
@@ -1518,7 +1853,7 @@ export function build4BHKSampleProject(): Project {
       {
         id: 'msg-seed-1',
         role: 'agent',
-        text: 'Welcome to the 4BHK_Sample architectural workspace! All 18 rooms, door swings, and furniture fixtures have been calibrated to match Sample_1.png blueprint with millimeter precision.',
+        text: 'Welcome to the 4BHK_Sample architectural workspace! All 18 rooms, true blueprint dimensions, RCC structural columns, door swings, and iconic lighting fixtures have been calibrated to match Sample_1.png blueprint with millimeter precision.',
         timestamp: Date.now()
       }
     ]
