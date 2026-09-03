@@ -3,6 +3,8 @@ import { projectStorage } from '../storage/indexedDBStorage';
 import { sceneStore, SceneData } from './sceneStore';
 import { uiStore } from './uiStore';
 import { extractFloorPlanFromBlueprint } from '../geometry/geometryExtractor';
+import { build4BHKSampleProject } from '../data/floorplan4bhkLayout';
+import { build3BHKSampleProject } from '../data/floorplan3bhkSampleLayout';
 
 export interface ProjectStoreState {
   projects: ProjectMetadata[];
@@ -59,16 +61,34 @@ class ProjectStore {
       let allProjects = await projectStorage.getAllProjects();
       let activeProject: Project | null = null;
 
+      // Ensure 4BHK_Sample project is seeded and available
+      let sample4BHK = allProjects.find(
+        p => p.metadata.name === '4BHK_Sample' || p.metadata.id === 'proj-4bhk-sample-residence'
+      );
+      if (!sample4BHK) {
+        sample4BHK = build4BHKSampleProject();
+        await projectStorage.saveProject(sample4BHK);
+        allProjects = await projectStorage.getAllProjects();
+      }
+
+      // Ensure 3BHK_Sample project is seeded and available
+      let sample3BHK = allProjects.find(
+        p => p.metadata.name === '3BHK_Sample' || p.metadata.id === 'proj-3bhk-sample-residence'
+      );
+      if (!sample3BHK) {
+        sample3BHK = build3BHKSampleProject();
+        await projectStorage.saveProject(sample3BHK);
+        allProjects = await projectStorage.getAllProjects();
+      }
+
       if (allProjects.length > 0) {
         const activeId = projectStorage.getActiveProjectId();
-        activeProject = (activeId ? allProjects.find(p => p.metadata.id === activeId) : null) || allProjects[0];
+        activeProject = activeId ? allProjects.find(p => p.metadata.id === activeId) || null : null;
+        if (!activeProject || activeProject.metadata.name === 'Untitled Project') {
+          activeProject = sample3BHK || sample4BHK || allProjects[0];
+        }
       } else {
-        // Zero hardcoded geometry on first boot: initialize a clean blank workspace
-        activeProject = await this.createProject({
-          name: 'Untitled Project',
-          template: 'blank',
-          description: 'Clean architectural workspace'
-        });
+        activeProject = sample3BHK || sample4BHK;
         allProjects = await projectStorage.getAllProjects();
       }
 
@@ -97,6 +117,34 @@ class ProjectStore {
       this.state = { ...this.state, isLoading: false, autosaveStatus: 'error' };
       this.notify();
     }
+  }
+
+  public async load4BHKSampleProject(): Promise<Project> {
+    const allProjects = await projectStorage.getAllProjects();
+    let sample4BHK = allProjects.find(
+      p => p.metadata.name === '4BHK_Sample' || p.metadata.id === 'proj-4bhk-sample-residence'
+    );
+    if (!sample4BHK) {
+      sample4BHK = build4BHKSampleProject();
+      await projectStorage.saveProject(sample4BHK);
+    }
+
+    await this.openProject(sample4BHK.metadata.id);
+    return sample4BHK;
+  }
+
+  public async load3BHKSampleProject(): Promise<Project> {
+    const allProjects = await projectStorage.getAllProjects();
+    let sample3BHK = allProjects.find(
+      p => p.metadata.name === '3BHK_Sample' || p.metadata.id === 'proj-3bhk-sample-residence'
+    );
+    if (!sample3BHK) {
+      sample3BHK = build3BHKSampleProject();
+      await projectStorage.saveProject(sample3BHK);
+    }
+
+    await this.openProject(sample3BHK.metadata.id);
+    return sample3BHK;
   }
 
   public async createProject(options: {

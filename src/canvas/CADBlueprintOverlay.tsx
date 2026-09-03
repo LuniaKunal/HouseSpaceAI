@@ -427,7 +427,8 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
         <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
           {/* 0. UPLOADED CAD REFERENCE BLUEPRINT (if attached to project) */}
           {overlayMode !== 'geometry' && projectState.activeProject?.cadData?.dataUrl && projectState.activeProject.cadData.visible !== false && (() => {
-            const fpBounds = sceneData.floorPlan?.bounds;
+            const customBounds = (projectState.activeProject.cadData as any).bounds;
+            const fpBounds = customBounds || sceneData.floorPlan?.bounds;
             const imgMinX = fpBounds ? fpBounds.minX : (projectState.activeProject.cadData.position?.x || 0) - 25;
             const imgMinY = fpBounds ? fpBounds.minY : (projectState.activeProject.cadData.position?.z || 0) - 20;
             const imgWidthFt = fpBounds ? Math.max(20, fpBounds.widthFeet) : 50;

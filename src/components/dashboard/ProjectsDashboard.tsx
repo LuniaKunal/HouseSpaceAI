@@ -170,6 +170,44 @@ export const ProjectsDashboard: React.FC = () => {
             </p>
           </button>
 
+          {/* Quick Load 4BHK Sample Blueprint Card */}
+          {/* <button
+            onClick={() => projectStore.load4BHKSampleProject()}
+            className="group h-[310px] border border-blue-500/30 hover:border-blue-500 rounded-2xl bg-gradient-to-b from-blue-950/20 to-[#0f121d] hover:bg-blue-600/[0.08] transition-all duration-200 flex flex-col items-center justify-center p-6 text-center shadow-lg shadow-blue-500/5 relative overflow-hidden"
+          >
+            <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/40 text-[10px] font-semibold text-blue-300 flex items-center gap-1">
+              <Sparkles size={10} /> 4BHK
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/40 text-blue-400 group-hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-sm mb-3">
+              <Home size={24} />
+            </div>
+            <h4 className="text-sm font-semibold text-white group-hover:text-blue-400 transition">
+              4BHK_Sample
+            </h4>
+            <p className="text-xs text-slate-400 mt-1 max-w-[190px] leading-relaxed">
+              Open exact 4BHK residence matching Sample_1.png blueprint
+            </p>
+          </button> */}
+
+          {/* Quick Load 3BHK Sample Blueprint Card */}
+          {/* <button
+            onClick={() => projectStore.load3BHKSampleProject()}
+            className="group h-[310px] border border-indigo-500/30 hover:border-indigo-500 rounded-2xl bg-gradient-to-b from-indigo-950/20 to-[#0f121d] hover:bg-indigo-600/[0.08] transition-all duration-200 flex flex-col items-center justify-center p-6 text-center shadow-lg shadow-indigo-500/5 relative overflow-hidden"
+          >
+            <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-[10px] font-semibold text-indigo-300 flex items-center gap-1">
+              <Sparkles size={10} /> 3BHK
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/40 text-indigo-400 group-hover:scale-110 flex items-center justify-center transition-all duration-200 shadow-sm mb-3">
+              <Home size={24} />
+            </div>
+            <h4 className="text-sm font-semibold text-white group-hover:text-indigo-400 transition">
+              3BHK_Sample
+            </h4>
+            <p className="text-xs text-slate-400 mt-1 max-w-[190px] leading-relaxed">
+              Open exact 3BHK residence matching Sample_2.png blueprint
+            </p>
+          </button> */}
+
           {/* Existing Project Cards */}
           {filteredProjects.map(project => (
             <ProjectCard
