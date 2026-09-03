@@ -422,7 +422,8 @@ class SceneStore {
     direction: 'above' | 'right' | 'below' | 'left',
     name: string,
     width: number = 12,
-    depth: number = 12
+    depth: number = 12,
+    floorMaterial?: RoomFloorMaterial
   ): Room | null {
     const ref = this.data.rooms.find(r => r.id === referenceRoomId);
     if (!ref) return null;
@@ -446,7 +447,7 @@ class SceneStore {
       depth,
       height: ref.height,
       position: { x: targetX, y: 0, z: targetZ },
-      floorMaterial: ref.floorMaterial,
+      floorMaterial: floorMaterial || ref.floorMaterial,
       wallColor: ref.wallColor
     });
 
