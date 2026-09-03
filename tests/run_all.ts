@@ -22,6 +22,11 @@ const TEST_SUITES: TestSuite[] = [
     description: 'Verifies L-shaped room generation, polygon footprint decomposition, and wall helper cuts'
   },
   {
+    name: 'Wall Alcoves, Outward Wings & Edge Alignment',
+    file: 'test_alcoves_and_alignment.ts',
+    description: 'Verifies 8-vertex wall alcoves, outward wing extensions, and multi-room edge alignment'
+  },
+  {
     name: 'Furniture Dimension & Wall Snapping Tools',
     file: 'test_furniture_dimension_tools.ts',
     description: 'Verifies set_furniture_dimensions, fit_furniture_to_wall, and wall clearance snapping'

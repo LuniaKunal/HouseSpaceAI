@@ -1,4 +1,4 @@
-import { Room, CornerNotch, Vector2D } from '../types/scene';
+import { Room, CornerNotch, WallAlcove, Vector2D } from '../types/scene';
 
 export interface RoomEdge {
   id: string;
@@ -97,11 +97,123 @@ export function createNotchFootprint(
 }
 
 /**
+ * Generates an ordered 8-vertex orthogonal polygon footprint for rooms
+ * with a middle-wall alcove (inward recess or outward protrusion/wing).
+ */
+export function createAlcoveFootprint(
+  width: number,
+  depth: number,
+  alcove?: WallAlcove
+): Vector2D[] {
+  const halfW = width / 2;
+  const halfD = depth / 2;
+
+  if (!alcove || alcove.width <= 0 || alcove.depth <= 0) {
+    return [
+      { x: -halfW, z: -halfD },
+      { x: halfW, z: -halfD },
+      { x: halfW, z: halfD },
+      { x: -halfW, z: halfD }
+    ];
+  }
+
+  const isRecess = alcove.type === 'recess';
+  const aw = alcove.width;
+  const ad = alcove.depth;
+  const offset = Math.max(0, alcove.offset || 0);
+
+  switch (alcove.edge) {
+    case 'east': {
+      // Right wall (X = halfW), runs from Z = -halfD to +halfD
+      const z1 = Math.min(halfD - 0.5, -halfD + offset);
+      const z2 = Math.min(halfD, z1 + aw);
+      const stepX = isRecess ? halfW - ad : halfW + ad;
+
+      return [
+        { x: -halfW, z: -halfD }, // NW
+        { x: halfW, z: -halfD },  // NE
+        { x: halfW, z: z1 },      // Start of alcove on right wall
+        { x: stepX, z: z1 },      // Step into/out of alcove
+        { x: stepX, z: z2 },      // Along alcove back wall
+        { x: halfW, z: z2 },      // Return to right wall
+        { x: halfW, z: halfD },   // SE
+        { x: -halfW, z: halfD }   // SW
+      ];
+    }
+
+    case 'west': {
+      // Left wall (X = -halfW), clockwise runs from Z = +halfD up to -halfD
+      const z1 = Math.min(halfD - 0.5, -halfD + offset);
+      const z2 = Math.min(halfD, z1 + aw);
+      const stepX = isRecess ? -halfW + ad : -halfW - ad;
+
+      return [
+        { x: -halfW, z: -halfD }, // NW
+        { x: halfW, z: -halfD },  // NE
+        { x: halfW, z: halfD },   // SE
+        { x: -halfW, z: halfD },  // SW
+        { x: -halfW, z: z2 },     // Start of alcove from bottom
+        { x: stepX, z: z2 },      // Step into/out of alcove
+        { x: stepX, z: z1 },      // Along alcove back wall
+        { x: -halfW, z: z1 }      // Return to left wall
+      ];
+    }
+
+    case 'north': {
+      // Top wall (Z = -halfD), runs from X = -halfW to +halfW
+      const x1 = Math.min(halfW - 0.5, -halfW + offset);
+      const x2 = Math.min(halfW, x1 + aw);
+      const stepZ = isRecess ? -halfD + ad : -halfD - ad;
+
+      return [
+        { x: -halfW, z: -halfD }, // NW
+        { x: x1, z: -halfD },     // Before alcove
+        { x: x1, z: stepZ },      // Step into/out of alcove
+        { x: x2, z: stepZ },      // Along alcove wall
+        { x: x2, z: -halfD },     // Return to top wall
+        { x: halfW, z: -halfD },  // NE
+        { x: halfW, z: halfD },   // SE
+        { x: -halfW, z: halfD }   // SW
+      ];
+    }
+
+    case 'south': {
+      // Bottom wall (Z = halfD), clockwise runs from X = +halfW to -halfW
+      const x1 = Math.min(halfW - 0.5, -halfW + offset);
+      const x2 = Math.min(halfW, x1 + aw);
+      const stepZ = isRecess ? halfD - ad : halfD + ad;
+
+      return [
+        { x: -halfW, z: -halfD }, // NW
+        { x: halfW, z: -halfD },  // NE
+        { x: halfW, z: halfD },   // SE
+        { x: x2, z: halfD },      // Before alcove from right
+        { x: x2, z: stepZ },      // Step into/out of alcove
+        { x: x1, z: stepZ },      // Along alcove wall
+        { x: x1, z: halfD },      // Return to bottom wall
+        { x: -halfW, z: halfD }   // SW
+      ];
+    }
+
+    default:
+      return [
+        { x: -halfW, z: -halfD },
+        { x: halfW, z: -halfD },
+        { x: halfW, z: halfD },
+        { x: -halfW, z: halfD }
+      ];
+  }
+}
+
+/**
  * Returns the room-local polygon footprint for any room.
  */
 export function getRoomFootprint(room: Room): Vector2D[] {
   if (room.footprint && room.footprint.length >= 4) {
     return room.footprint;
+  }
+  if (room.alcove && room.alcove.width > 0 && room.alcove.depth > 0) {
+    return createAlcoveFootprint(room.width, room.depth, room.alcove);
   }
   return createNotchFootprint(room.width, room.depth, room.notch);
 }
@@ -119,11 +231,16 @@ export function getRoomWorldPolygon(room: Room): Vector2D[] {
 
 /**
  * Calculates the exact floor surface area in square feet.
- * Subtracts the notch area from bounding box if present.
+ * Subtracts the notch area from bounding box if present, or adjusts for alcoves.
  */
 export function getRoomAreaSqFt(room: Room): number {
   if (room.notch && room.notch.width > 0 && room.notch.depth > 0) {
     return Number((room.width * room.depth - room.notch.width * room.notch.depth).toFixed(2));
+  }
+  if (room.alcove && room.alcove.width > 0 && room.alcove.depth > 0) {
+    const delta = room.alcove.width * room.alcove.depth;
+    const base = room.width * room.depth;
+    return Number((room.alcove.type === 'protrusion' ? base + delta : base - delta).toFixed(2));
   }
   const pts = getRoomFootprint(room);
   if (pts.length === 4) {

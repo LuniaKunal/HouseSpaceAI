@@ -66,6 +66,7 @@ export const SpacesPanel: React.FC = () => {
   const [newRoomWidth, setNewRoomWidth] = useState(16);
   const [newRoomDepth, setNewRoomDepth] = useState(14);
   const [connectionDirection, setConnectionDirection] = useState<'above' | 'right' | 'below' | 'left'>('right');
+  const [connectionAlignment, setConnectionAlignment] = useState<'start' | 'center' | 'end'>('center');
   const [selectedMaterial, setSelectedMaterial] = useState<RoomFloorMaterial>('hardwood_oak');
 
   // L-Shaped Room Form State
@@ -287,7 +288,8 @@ export const SpacesPanel: React.FC = () => {
         d,
         selectedMaterial,
         4,
-        notch
+        notch,
+        connectionAlignment
       );
 
       if (newRoom) {
@@ -620,6 +622,40 @@ export const SpacesPanel: React.FC = () => {
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Wall Alignment Controls */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] text-slate-300">Wall Alignment</label>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {connectionAlignment === 'start'
+                        ? connectionDirection === 'above' || connectionDirection === 'below' ? 'Left aligned' : 'Top aligned'
+                        : connectionAlignment === 'end'
+                        ? connectionDirection === 'above' || connectionDirection === 'below' ? 'Right aligned' : 'Bottom aligned'
+                        : 'Centered'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { id: 'start', label: connectionDirection === 'above' || connectionDirection === 'below' ? '⇤ Left' : '⇤ Top' },
+                      { id: 'center', label: '⬌ Center' },
+                      { id: 'end', label: connectionDirection === 'above' || connectionDirection === 'below' ? '⇥ Right' : '⇥ Bottom' }
+                    ].map(a => (
+                      <button
+                        type="button"
+                        key={a.id}
+                        onClick={() => setConnectionAlignment(a.id as any)}
+                        className={`py-1 rounded border text-[10px] font-medium transition ${
+                          connectionAlignment === a.id
+                            ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                            : 'bg-[#12141c] border-slate-700 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

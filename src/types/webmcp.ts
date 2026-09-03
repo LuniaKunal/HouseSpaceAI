@@ -1,4 +1,4 @@
-import { Vector3D, RoomFloorMaterial, DoorType, CameraViewMode, CameraAngle, SceneStateSnapshot, CornerNotch } from './scene';
+import { Vector3D, RoomFloorMaterial, DoorType, CameraViewMode, CameraAngle, SceneStateSnapshot, CornerNotch, WallAlcove } from './scene';
 
 export interface WebMCPToolDefinition {
   name: string;
@@ -60,10 +60,12 @@ export interface CreateRoomInput {
   floorMaterial?: RoomFloorMaterial;
   wallColor?: string;
   notch?: CornerNotch;
+  alcove?: WallAlcove;
   connectedTo?: {
     roomId: string;
     direction: 'above' | 'right' | 'below' | 'left';
     openingWidth?: number;
+    alignment?: 'start' | 'center' | 'end' | number;
   };
   autoPosition?: boolean;
 }
@@ -77,6 +79,17 @@ export interface AddConnectedRoomInput {
   floorMaterial?: RoomFloorMaterial;
   openingWidth?: number; // in feet (default 4)
   notch?: CornerNotch;
+  alignment?: 'start' | 'center' | 'end' | number;
+  alcove?: WallAlcove;
+}
+
+export interface AddWallAlcoveInput {
+  roomId: string;
+  edge: 'north' | 'south' | 'east' | 'west';
+  type: 'recess' | 'protrusion';
+  offset?: number;
+  width: number;
+  depth: number;
 }
 
 export interface FitRoomIntoNotchInput {

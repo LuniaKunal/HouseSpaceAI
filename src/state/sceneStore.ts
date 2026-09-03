@@ -9,7 +9,8 @@ import {
   Vector2D,
   SceneStateSnapshot,
   RoomFloorMaterial,
-  CornerNotch
+  CornerNotch,
+  WallAlcove
 } from '../types/scene';
 
 import { historyManager, SceneHistorySnapshot } from './historyStore';
@@ -17,6 +18,7 @@ import { CATALOG_ITEMS } from '../data/catalogData';
 import { FloorPlan, GeometryValidation } from '../types/floorPlan';
 import {
   createNotchFootprint,
+  createAlcoveFootprint,
   getRoomFootprint,
   getRoomAreaSqFt,
   findSharedWallOverlap,
@@ -147,6 +149,7 @@ class SceneStore {
     floorMaterial?: RoomFloorMaterial;
     wallColor?: string;
     notch?: CornerNotch;
+    alcove?: WallAlcove;
     footprint?: Vector2D[];
   }): Room {
     this.saveSnapshot();
@@ -155,6 +158,8 @@ class SceneStore {
     const d = Math.max(4, input.depth || 12);
     const footprint = input.footprint && input.footprint.length >= 4
       ? input.footprint
+      : input.alcove && input.alcove.width > 0 && input.alcove.depth > 0
+      ? createAlcoveFootprint(w, d, input.alcove)
       : createNotchFootprint(w, d, input.notch);
 
     const newRoom: Room = {
@@ -166,6 +171,7 @@ class SceneStore {
       position: input.position || { x: 0, y: 0, z: 0 },
       footprint,
       notch: input.notch,
+      alcove: input.alcove,
       floorMaterial: input.floorMaterial || 'hardwood_oak',
       wallColor: input.wallColor || '#f1f5f9',
       wallThickness: 0.5,
@@ -500,7 +506,9 @@ class SceneStore {
     depth: number = 12,
     floorMaterial?: RoomFloorMaterial,
     openingWidth: number = 4,
-    notch?: CornerNotch
+    notch?: CornerNotch,
+    alignment?: 'start' | 'center' | 'end' | number,
+    alcove?: WallAlcove
   ): Room | null {
     const ref = this.data.rooms.find(r => r.id === referenceRoomId);
     if (!ref) return null;
@@ -510,12 +518,40 @@ class SceneStore {
 
     if (direction === 'above') {
       targetZ = ref.position.z - (ref.depth / 2 + depth / 2);
+      if (alignment === 'start') {
+        targetX = ref.position.x - ref.width / 2 + width / 2;
+      } else if (alignment === 'end') {
+        targetX = ref.position.x + ref.width / 2 - width / 2;
+      } else if (typeof alignment === 'number') {
+        targetX = ref.position.x - ref.width / 2 + alignment + width / 2;
+      }
     } else if (direction === 'below') {
       targetZ = ref.position.z + (ref.depth / 2 + depth / 2);
+      if (alignment === 'start') {
+        targetX = ref.position.x - ref.width / 2 + width / 2;
+      } else if (alignment === 'end') {
+        targetX = ref.position.x + ref.width / 2 - width / 2;
+      } else if (typeof alignment === 'number') {
+        targetX = ref.position.x - ref.width / 2 + alignment + width / 2;
+      }
     } else if (direction === 'right') {
       targetX = ref.position.x + (ref.width / 2 + width / 2);
+      if (alignment === 'start') {
+        targetZ = ref.position.z - ref.depth / 2 + depth / 2;
+      } else if (alignment === 'end') {
+        targetZ = ref.position.z + ref.depth / 2 - depth / 2;
+      } else if (typeof alignment === 'number') {
+        targetZ = ref.position.z - ref.depth / 2 + alignment + depth / 2;
+      }
     } else if (direction === 'left') {
       targetX = ref.position.x - (ref.width / 2 + width / 2);
+      if (alignment === 'start') {
+        targetZ = ref.position.z - ref.depth / 2 + depth / 2;
+      } else if (alignment === 'end') {
+        targetZ = ref.position.z + ref.depth / 2 - depth / 2;
+      } else if (typeof alignment === 'number') {
+        targetZ = ref.position.z - ref.depth / 2 + alignment + depth / 2;
+      }
     }
 
     const newRoom = this.createRoom({
@@ -526,11 +562,48 @@ class SceneStore {
       position: { x: targetX, y: 0, z: targetZ },
       floorMaterial: floorMaterial || ref.floorMaterial,
       wallColor: ref.wallColor,
-      notch
+      notch,
+      alcove
     });
 
     this.connectRooms(ref.id, newRoom.id, direction, openingWidth);
     return newRoom;
+  }
+
+  /**
+   * Adds, modifies, or clears a middle-wall alcove (inward recess or outward protrusion/wing)
+   * on an existing room, regenerating the 8-vertex orthogonal polygon footprint and resyncing gates.
+   */
+  public addWallAlcove(roomId: string, alcove: WallAlcove | null): boolean {
+    const room = this.data.rooms.find(r => r.id === roomId);
+    if (!room || room.locked) return false;
+    this.saveSnapshot();
+
+    const activeAlcove = alcove !== null ? alcove : undefined;
+    const footprint = activeAlcove
+      ? createAlcoveFootprint(room.width, room.depth, activeAlcove)
+      : room.notch
+      ? createNotchFootprint(room.width, room.depth, room.notch)
+      : undefined;
+
+    const updatedRooms = this.data.rooms.map(r => {
+      if (r.id === roomId) {
+        return {
+          ...r,
+          alcove: activeAlcove,
+          footprint
+        };
+      }
+      return r;
+    });
+
+    this.data = {
+      ...this.data,
+      rooms: updatedRooms,
+      gates: this.syncGatesForRoom(roomId, updatedRooms)
+    };
+    this.notify();
+    return true;
   }
 
   /**

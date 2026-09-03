@@ -27,7 +27,7 @@ import {
   ArrowDown,
   ArrowLeft
 } from 'lucide-react';
-import { CornerNotch } from '../../types/scene';
+import { CornerNotch, WallAlcove } from '../../types/scene';
 import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
 
 export const InspectorPanel: React.FC = () => {
@@ -131,6 +131,32 @@ export const InspectorPanel: React.FC = () => {
       uiStore.setSelected(child.id, 'room');
       uiStore.addToast('Space Nested', `Added "${child.name}" inside cutout notch`, 'success');
     }
+  };
+
+  // Wall Alcove / Wing Extension handlers
+  const handleToggleAlcove = (enable: boolean) => {
+    if (!selectedRoom) return;
+    if (enable) {
+      const defaultAlcove: WallAlcove = {
+        edge: 'east',
+        type: 'protrusion',
+        offset: Math.floor(selectedRoom.depth / 3),
+        width: Math.min(6, Math.max(3, Math.floor(selectedRoom.depth / 3))),
+        depth: 4
+      };
+      sceneStore.addWallAlcove(selectedRoom.id, defaultAlcove);
+    } else {
+      sceneStore.addWallAlcove(selectedRoom.id, null);
+    }
+  };
+
+  const handleUpdateAlcove = (patch: Partial<WallAlcove>) => {
+    if (!selectedRoom || !selectedRoom.alcove) return;
+    const updated: WallAlcove = {
+      ...selectedRoom.alcove,
+      ...patch
+    };
+    sceneStore.addWallAlcove(selectedRoom.id, updated);
   };
 
   // Step dimension +/- 0.5ft
@@ -732,6 +758,114 @@ export const InspectorPanel: React.FC = () => {
                   >
                     <Sparkles size={12} /> Fit Attached Space in Notch
                   </button>
+                </div>
+              )}
+            </div>
+
+            {/* Wall Alcove / Wing Extension Section */}
+            <div className="space-y-2 p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <span className="text-emerald-400 font-bold">⊞</span> Wall Alcove / Wing
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAlcove(!selectedRoom.alcove)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                    selectedRoom.alcove
+                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                      : 'bg-blue-600/20 border-blue-500/30 text-blue-300'
+                  }`}
+                >
+                  {selectedRoom.alcove ? 'Remove' : '+ Add Alcove/Wing'}
+                </button>
+              </div>
+
+              {selectedRoom.alcove && (
+                <div className="space-y-2 pt-1 border-t border-slate-800/80 animate-in fade-in text-xs">
+                  {/* Type: Inward Recess vs Outward Wing */}
+                  <div className="grid grid-cols-2 gap-1.5 p-0.5 bg-[#141724] rounded-lg border border-slate-800 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateAlcove({ type: 'recess' })}
+                      className={`py-1 rounded-md transition ${
+                        selectedRoom.alcove.type === 'recess'
+                          ? 'bg-blue-600 text-white font-medium shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Inward Recess
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateAlcove({ type: 'protrusion' })}
+                      className={`py-1 rounded-md transition ${
+                        selectedRoom.alcove.type === 'protrusion'
+                          ? 'bg-blue-600 text-white font-medium shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Outward Wing
+                    </button>
+                  </div>
+
+                  {/* Edge Selector */}
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Wall Edge</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {(['north', 'east', 'south', 'west'] as const).map(edge => {
+                        const isSel = selectedRoom.alcove?.edge === edge;
+                        return (
+                          <button
+                            type="button"
+                            key={edge}
+                            onClick={() => handleUpdateAlcove({ edge })}
+                            className={`py-1 rounded border text-[10px] font-mono capitalize transition ${
+                              isSel
+                                ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-sm'
+                                : 'bg-[#181c28] border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {edge}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Dimensions: Offset, Width, Depth */}
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <div className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
+                      <span className="text-[10px] text-slate-400 block font-mono">Offset</span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={selectedRoom.alcove.offset || 0}
+                        onChange={e => handleUpdateAlcove({ offset: Math.max(0, Number(e.target.value)) })}
+                        className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      />
+                    </div>
+                    <div className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
+                      <span className="text-[10px] text-slate-400 block font-mono">Width</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={selectedRoom.alcove.width}
+                        onChange={e => handleUpdateAlcove({ width: Math.max(1, Number(e.target.value)) })}
+                        className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      />
+                    </div>
+                    <div className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
+                      <span className="text-[10px] text-slate-400 block font-mono">Depth</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={selectedRoom.alcove.depth}
+                        onChange={e => handleUpdateAlcove({ depth: Math.max(1, Number(e.target.value)) })}
+                        className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

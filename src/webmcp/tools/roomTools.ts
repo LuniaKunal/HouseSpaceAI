@@ -4,6 +4,7 @@ import {
   CreateRoomInput,
   AddConnectedRoomInput,
   FitRoomIntoNotchInput,
+  AddWallAlcoveInput,
   RenameRoomInput,
   MoveRoomInput,
   SetRoomDimensionsInput,
@@ -67,6 +68,18 @@ export const roomTools = {
           required: ['corner', 'width', 'depth'],
           description: 'Optional corner notch cutout parameterizing an L-shaped room'
         },
+        alcove: {
+          type: 'object',
+          properties: {
+            edge: { type: 'string', enum: ['north', 'south', 'east', 'west'] },
+            type: { type: 'string', enum: ['recess', 'protrusion'] },
+            offset: { type: 'number' },
+            width: { type: 'number' },
+            depth: { type: 'number' }
+          },
+          required: ['edge', 'type', 'width', 'depth'],
+          description: 'Optional middle-wall alcove (inward recess or outward protrusion wing)'
+        },
         connectedTo: {
           type: 'object',
           properties: {
@@ -76,7 +89,11 @@ export const roomTools = {
               enum: ['above', 'right', 'below', 'left'],
               description: 'Cardinal direction relative to reference room'
             },
-            openingWidth: { type: 'number', description: 'Doorway opening width in feet' }
+            openingWidth: { type: 'number', description: 'Doorway opening width in feet' },
+            alignment: {
+              description: 'Alignment along wall: "start" (top/left), "center", "end" (bottom/right), or numeric offset in feet',
+              oneOf: [{ type: 'string', enum: ['start', 'center', 'end'] }, { type: 'number' }]
+            }
           },
           required: ['roomId', 'direction'],
           description: 'Optional reference room attachment configuration'
@@ -94,7 +111,9 @@ export const roomTools = {
           input.depth,
           input.floorMaterial,
           input.connectedTo.openingWidth || 4,
-          input.notch
+          input.notch,
+          input.connectedTo.alignment,
+          input.alcove
         );
         if (!connected) throw new Error(`Could not connect room to "${input.connectedTo.roomId}". Reference room not found.`);
         uiStore.setSelected(connected.id, 'room');
@@ -106,6 +125,7 @@ export const roomTools = {
           dimensions: { width: connected.width, depth: connected.depth, height: connected.height },
           position: connected.position,
           notch: connected.notch,
+          alcove: connected.alcove,
           footprint: connected.footprint,
           areaSqFt: getRoomAreaSqFt(connected)
         };
@@ -177,6 +197,10 @@ export const roomTools = {
           description: 'Floor surface material texture'
         },
         openingWidth: { type: 'number', description: 'Doorway gate opening width in feet (default 4)' },
+        alignment: {
+          description: 'Alignment along wall: "start" (top/left), "center", "end" (bottom/right), or numeric offset in feet',
+          oneOf: [{ type: 'string', enum: ['start', 'center', 'end'] }, { type: 'number' }]
+        },
         notch: {
           type: 'object',
           properties: {
@@ -190,6 +214,18 @@ export const roomTools = {
           },
           required: ['corner', 'width', 'depth'],
           description: 'Optional corner notch cutout parameterizing an L-shaped room'
+        },
+        alcove: {
+          type: 'object',
+          properties: {
+            edge: { type: 'string', enum: ['north', 'south', 'east', 'west'] },
+            type: { type: 'string', enum: ['recess', 'protrusion'] },
+            offset: { type: 'number' },
+            width: { type: 'number' },
+            depth: { type: 'number' }
+          },
+          required: ['edge', 'type', 'width', 'depth'],
+          description: 'Optional middle-wall alcove (inward recess or outward protrusion wing)'
         }
       },
       required: ['referenceRoomId', 'direction', 'name']
@@ -203,7 +239,9 @@ export const roomTools = {
         input.depth || 12,
         input.floorMaterial,
         input.openingWidth || 4,
-        input.notch
+        input.notch,
+        input.alignment,
+        input.alcove
       );
       if (!room) {
         throw new Error(`Failed to add connected room. Reference room "${input.referenceRoomId}" not found.`);
@@ -219,10 +257,62 @@ export const roomTools = {
         dimensions: { width: room.width, depth: room.depth, height: room.height },
         position: room.position,
         notch: room.notch,
+        alcove: room.alcove,
         footprint: room.footprint,
         connectedTo: input.referenceRoomId,
         direction: input.direction,
         gateId: gate?.id,
+        areaSqFt: getRoomAreaSqFt(room)
+      };
+    }
+  },
+
+  add_wall_alcove: {
+    name: 'add_wall_alcove',
+    title: 'Add Wall Alcove or Wing Extension',
+    category: 'Rooms' as const,
+    description: 'Adds a middle-wall alcove (inward recess or outward protrusion/wing extension) along any wall edge of an existing room, creating an 8-vertex orthogonal architectural layout (e.g. entryway foyer, hallway vestibule, or entertainment niche).',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        roomId: { type: 'string', description: 'ID of the room to add the alcove or extension to' },
+        edge: {
+          type: 'string',
+          enum: ['north', 'south', 'east', 'west'],
+          description: 'Which wall edge contains the alcove/extension'
+        },
+        type: {
+          type: 'string',
+          enum: ['recess', 'protrusion'],
+          description: 'recess = inward cutout into room; protrusion = outward extension/wing out of room'
+        },
+        offset: { type: 'number', description: 'Distance in feet from start of wall edge (default: 0)' },
+        width: { type: 'number', description: 'Span along the wall in feet' },
+        depth: { type: 'number', description: 'Depth inward or outward in feet' }
+      },
+      required: ['roomId', 'edge', 'type', 'width', 'depth']
+    },
+    execute: async (input: AddWallAlcoveInput) => {
+      const ok = sceneStore.addWallAlcove(input.roomId, {
+        edge: input.edge,
+        type: input.type,
+        offset: input.offset || 0,
+        width: input.width,
+        depth: input.depth
+      });
+      if (!ok) {
+        throw new Error(`Failed to add wall alcove. Room "${input.roomId}" not found or is locked.`);
+      }
+      const room = sceneStore.getData().rooms.find(r => r.id === input.roomId)!;
+      uiStore.setSelected(room.id, 'room');
+      uiStore.recordAgentAction('add_wall_alcove', `Added ${input.type} alcove (${input.width}x${input.depth} ft on ${input.edge} wall) to "${room.name}"`, room.id);
+      return {
+        success: true,
+        roomId: room.id,
+        name: room.name,
+        alcove: room.alcove,
+        footprint: room.footprint,
         areaSqFt: getRoomAreaSqFt(room)
       };
     }

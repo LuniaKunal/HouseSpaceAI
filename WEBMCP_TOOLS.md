@@ -101,19 +101,20 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-## 3. Master WebMCP Tool Catalog Summary (44 Tools)
+## 3. Master WebMCP Tool Catalog Summary (45 Tools)
 
 | # | Category | Tool Name | Human Confirmation | Description Summary |
 |---|:---|:---|:---:|:---|
-| 1 | **Rooms** | `create_room` | No | Creates a new rectangular or L-shaped room space |
-| 2 | **Rooms** | `add_connected_room` | No | Adds room snapped to an existing room with doorway gate |
-| 3 | **Rooms** | `fit_room_into_notch` | No | Nests ensuite/closet into the cutout notch of an L-room |
-| 4 | **Rooms** | `rename_room` | No | Updates display label of a room |
-| 5 | **Rooms** | `move_room` | No | Translates room and enclosed objects to new (x, z) coordinates |
-| 6 | **Rooms** | `set_room_dimensions` | No | Resizes width, depth, height, or notch parameters |
-| 7 | **Rooms** | `delete_room` | ⚠️ **Required** | Deletes room, openings, and enclosed furniture |
-| 8 | **Rooms** | `connect_rooms` | No | Snaps rooms flush and cuts shared doorway opening |
-| 9 | **Rooms** | `disconnect_rooms` | No | Removes shared opening and restores solid partition wall |
+| 1 | **Rooms** | `create_room` | No | Creates a new rectangular, L-shaped, or alcove room space |
+| 2 | **Rooms** | `add_connected_room` | No | Adds room snapped to an existing room with alignment & doorway gate |
+| 3 | **Rooms** | `add_wall_alcove` | No | Adds middle-wall alcove (inward recess or outward wing) to room |
+| 4 | **Rooms** | `fit_room_into_notch` | No | Nests ensuite/closet into the cutout notch of an L-room |
+| 5 | **Rooms** | `rename_room` | No | Updates display label of a room |
+| 6 | **Rooms** | `move_room` | No | Translates room and enclosed objects to new (x, z) coordinates |
+| 7 | **Rooms** | `set_room_dimensions` | No | Resizes width, depth, height, or notch parameters |
+| 8 | **Rooms** | `delete_room` | ⚠️ **Required** | Deletes room, openings, and enclosed furniture |
+| 9 | **Rooms** | `connect_rooms` | No | Snaps rooms flush and cuts shared doorway opening |
+| 10 | **Rooms** | `disconnect_rooms` | No | Removes shared opening and restores solid partition wall |
 | 10 | **Structure** | `add_wall` | No | Creates interior partition wall segment {start, end} |
 | 11 | **Structure** | `set_wall_dimensions` | No | Adjusts wall thickness, length, or height |
 | 12 | **Structure** | `place_door` | No | Places standard, sliding, double, pocket, or arch door |
@@ -154,12 +155,12 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ## 4. Comprehensive Tool Reference by Category
 
-### Category 1: Rooms (9 Tools)
+### Category 1: Rooms (10 Tools)
 
 #### `create_room`
 * **Title:** Create Room
 * **Requires Confirmation:** `false`
-* **Description:** Creates a new architectural room space on the floor plan with custom dimensions, position, and floor material. Automatically positions non-overlapping standalone rooms when position is omitted. Supports L-shaped rooms via corner notch cutout.
+* **Description:** Creates a new architectural room space on the floor plan with custom dimensions, position, and floor material. Automatically positions non-overlapping standalone rooms when position is omitted. Supports L-shaped rooms via corner notch cutout, and middle-wall alcoves / wing extensions.
 * **Input Schema:**
   | Property | Type | Required | Default | Description |
   |---|---|:---:|---|---|
@@ -204,8 +205,27 @@ window.addEventListener('housespace:agent-result', (event) => {
   | `depth` | `number` | No | `12` | Depth of new room in feet |
   | `floorMaterial` | `enum` | No | `hardwood_oak` | Material enum identifier |
   | `openingWidth` | `number` | No | `4.0` | Doorway gate opening width in feet |
+  | `alignment` | `enum` / `number` | No | `center` | Alignment along wall: `'start'` (top/left), `'center'`, `'end'` (bottom/right), or numeric offset in feet |
   | `notch` | `object` | No | `null` | Cutout notch for L-shaped room `{ corner, width, depth }` |
-* **Output:** `{ success: true, roomId, name, dimensions, position, notch, footprint, connectedTo, direction, gateId, areaSqFt }`
+  | `alcove` | `object` | No | `null` | Middle-wall alcove or wing `{ edge, type, offset, width, depth }` |
+* **Output:** `{ success: true, roomId, name, dimensions, position, notch, alcove, footprint, connectedTo, direction, gateId, areaSqFt }`
+
+---
+
+#### `add_wall_alcove`
+* **Title:** Add Wall Alcove or Wing Extension
+* **Requires Confirmation:** `false`
+* **Description:** Adds a middle-wall alcove (inward recess or outward protrusion/wing extension) along any wall edge of an existing room, creating an 8-vertex orthogonal architectural layout (e.g. entryway foyer, hallway vestibule, or entertainment niche).
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `roomId` | `string` | Yes | — | ID of the room to add the alcove or extension to |
+  | `edge` | `enum` | Yes | — | Which wall edge contains the alcove: `'north'`, `'south'`, `'east'`, `'west'` |
+  | `type` | `enum` | Yes | — | `'recess'` = inward cutout into room; `'protrusion'` = outward extension/wing out of room |
+  | `offset` | `number` | No | `0` | Distance in feet from start of wall edge |
+  | `width` | `number` | Yes | — | Span along the wall in feet |
+  | `depth` | `number` | Yes | — | Depth inward or outward in feet |
+* **Output:** `{ success: true, roomId, name, alcove, footprint, areaSqFt }`
 
 ---
 

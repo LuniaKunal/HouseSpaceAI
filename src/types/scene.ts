@@ -28,6 +28,14 @@ export type CornerNotch = {
   depth: number; // cutout depth in feet
 };
 
+export interface WallAlcove {
+  edge: 'north' | 'south' | 'east' | 'west';
+  type: 'recess' | 'protrusion'; // inward cutout vs outward extension/wing
+  offset: number; // distance from start of wall in feet
+  width: number;  // span along the wall in feet
+  depth: number;  // depth inward or outward in feet
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -37,6 +45,7 @@ export interface Room {
   position: Vector3D; // center position in feet (x, y=0, z)
   footprint?: Vector2D[]; // ordered polygon vertices in room-local coordinates
   notch?: CornerNotch; // optional L-shaped corner cutout
+  alcove?: WallAlcove; // optional middle-wall recess or outward wing extension
   floorMaterial: RoomFloorMaterial;
   wallColor: string; // hex color
   wallThickness: number; // feet (e.g. 0.5)
