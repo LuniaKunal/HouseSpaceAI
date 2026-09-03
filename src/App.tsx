@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Header } from './components/header/Header';
 import { LeftSidebar } from './components/sidebar/LeftSidebar';
 import { StudioCanvas } from './canvas/StudioCanvas';
@@ -64,6 +65,9 @@ export const App: React.FC = () => {
 
       {/* Live Agent & Human Tool Call HUD Toasts */}
       <AgentActionFeed />
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 };
