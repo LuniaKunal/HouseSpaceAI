@@ -20,13 +20,24 @@ import {
   Sparkles,
   Compass,
   Minus,
-  Plus
+  Plus,
+  Link2,
+  ArrowUp,
+  ArrowRight,
+  ArrowDown,
+  ArrowLeft
 } from 'lucide-react';
 
 export const InspectorPanel: React.FC = () => {
   const [uiState, setUiState] = useState<UIState>(uiStore.getState());
   const [sceneData, setSceneData] = useState<SceneData>(sceneStore.getData());
   const [customColor, setCustomColor] = useState<string>('#3b82f6');
+
+  // Room connection state
+  const [connectTargetId, setConnectTargetId] = useState<string>('');
+  const [connectDirection, setConnectDirection] = useState<'above' | 'right' | 'below' | 'left'>('right');
+  const [connectWidth, setConnectWidth] = useState<number>(4);
+  const [isConnectOpen, setIsConnectOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const unsubUI = uiStore.subscribe(u => setUiState({ ...u }));
@@ -648,6 +659,157 @@ export const InspectorPanel: React.FC = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Connected Spaces & Doorway Gates */}
+            <div className="space-y-2 p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Link2 size={12} className="text-blue-400" /> Space Interconnections
+                </label>
+                {sceneData.rooms.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const others = sceneData.rooms.filter(r => r.id !== selectedRoom.id);
+                      if (!connectTargetId && others.length > 0) setConnectTargetId(others[0].id);
+                      setIsConnectOpen(!isConnectOpen);
+                    }}
+                    className="text-[10px] text-blue-400 hover:text-blue-300 font-medium"
+                  >
+                    {isConnectOpen ? 'Close' : '+ Connect Space'}
+                  </button>
+                )}
+              </div>
+
+              {/* Existing Gates List */}
+              {sceneData.gates.filter(g => g.roomIdA === selectedRoom.id || g.roomIdB === selectedRoom.id).length > 0 ? (
+                <div className="space-y-1 pt-1">
+                  {sceneData.gates
+                    .filter(g => g.roomIdA === selectedRoom.id || g.roomIdB === selectedRoom.id)
+                    .map(g => {
+                      const otherId = g.roomIdA === selectedRoom.id ? g.roomIdB : g.roomIdA;
+                      const otherRoom = sceneData.rooms.find(r => r.id === otherId);
+                      return (
+                        <div
+                          key={g.id}
+                          className="flex items-center justify-between p-1.5 rounded-lg bg-[#141724] border border-slate-800 text-[11px]"
+                        >
+                          <div className="flex items-center gap-1.5 text-slate-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                            <span className="font-medium truncate max-w-[120px]">{otherRoom?.name || 'Adjacent'}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {g.width}ft doorway ({g.wallDirection})
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="text-[10px] text-amber-400/90 py-1 flex items-center gap-1.5">
+                  <Info size={11} className="shrink-0" />
+                  <span>Standalone space (no doorways connected yet)</span>
+                </div>
+              )}
+
+              {/* Connect Form */}
+              {isConnectOpen && sceneData.rooms.length > 1 && (
+                <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Connect to Room</label>
+                    <select
+                      value={connectTargetId || (sceneData.rooms.find(r => r.id !== selectedRoom.id)?.id || '')}
+                      onChange={e => setConnectTargetId(e.target.value)}
+                      className="w-full bg-[#11131a] border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
+                    >
+                      {sceneData.rooms
+                        .filter(r => r.id !== selectedRoom.id)
+                        .map(r => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Attach Direction (Auto-Doorway)</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[
+                        { id: 'above', label: 'Above', icon: ArrowUp },
+                        { id: 'right', label: 'Right', icon: ArrowRight },
+                        { id: 'below', label: 'Below', icon: ArrowDown },
+                        { id: 'left', label: 'Left', icon: ArrowLeft }
+                      ].map(dir => {
+                        const Icon = dir.icon;
+                        const isSel = connectDirection === dir.id;
+                        return (
+                          <button
+                            type="button"
+                            key={dir.id}
+                            onClick={() => setConnectDirection(dir.id as any)}
+                            className={`flex items-center justify-center gap-1 py-1 rounded-md border text-[10px] font-medium transition ${
+                              isSel
+                                ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                                : 'bg-[#12141c] border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Icon size={10} />
+                            {dir.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-slate-400">Door:</span>
+                      {[3, 4, 5, 6].map(w => (
+                        <button
+                          key={w}
+                          type="button"
+                          onClick={() => setConnectWidth(w)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                            connectWidth === w
+                              ? 'bg-blue-600 text-white border-blue-500'
+                              : 'bg-[#11131a] border-slate-700 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {w}'
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetId = connectTargetId || sceneData.rooms.find(r => r.id !== selectedRoom.id)?.id;
+                        if (!targetId) return;
+                        const target = sceneData.rooms.find(r => r.id === targetId);
+                        const gate = sceneStore.connectRooms(
+                          targetId,
+                          selectedRoom.id,
+                          connectDirection,
+                          connectWidth
+                        );
+                        if (gate) {
+                          uiStore.addToast(
+                            'Spaces Connected',
+                            `Connected "${selectedRoom.name}" to "${target?.name}" with ${gate.width}ft doorway`,
+                            'success'
+                          );
+                          setIsConnectOpen(false);
+                        }
+                      }}
+                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs font-semibold flex items-center gap-1 transition shadow"
+                    >
+                      <Check size={12} /> Connect
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Actions */}

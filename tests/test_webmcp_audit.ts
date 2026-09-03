@@ -1,7 +1,7 @@
-import { ensureWebMCPContextReady, registerAllWebMCPTools, runWebMCPDevCheck } from './src/webmcp/bridge';
-import { ALL_TOOLS, TOOL_LIST, executeWebMCPTool } from './src/webmcp/registry';
-import { sceneStore } from './src/state/sceneStore';
-import { projectStore } from './src/state/projectStore';
+import { ensureWebMCPContextReady, registerAllWebMCPTools, runWebMCPDevCheck } from '../src/webmcp/bridge';
+import { ALL_TOOLS, TOOL_LIST, executeWebMCPTool } from '../src/webmcp/registry';
+import { sceneStore } from '../src/state/sceneStore';
+import { projectStore } from '../src/state/projectStore';
 
 // Polyfill minimal browser globals for Node test environment
 if (typeof globalThis.EventTarget === 'undefined') {

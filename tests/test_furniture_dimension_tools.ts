@@ -1,6 +1,6 @@
-import { projectStore } from './src/state/projectStore';
-import { sceneStore } from './src/state/sceneStore';
-import { executeWebMCPTool } from './src/webmcp/registry';
+import { projectStore } from '../src/state/projectStore';
+import { sceneStore } from '../src/state/sceneStore';
+import { executeWebMCPTool } from '../src/webmcp/registry';
 
 async function runFurnitureDimensionVerification() {
   console.log('================================================================');
@@ -35,7 +35,7 @@ async function runFurnitureDimensionVerification() {
     roomId: bed3.id,
     position: { x: 0, y: 0, z: 3 },
     dimensions: { x: 5, y: 7.5, z: 2 }
-  });
+  } as any);
 
   const wardrobeInBed1 = sceneStore.addFurniture({
     type: 'wardrobe_sliding_mirror',
@@ -43,7 +43,7 @@ async function runFurnitureDimensionVerification() {
     roomId: bed1.id,
     position: { x: 20, y: 0, z: 4 },
     dimensions: { x: 6, y: 7.5, z: 2.2 }
-  });
+  } as any);
 
   console.log(`   Loaded active project: "${proj.metadata.name}" (${sceneStore.getData().rooms.length} rooms)`);
 

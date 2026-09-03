@@ -1,9 +1,9 @@
-import { projectStore } from './src/state/projectStore';
-import { sceneStore } from './src/state/sceneStore';
-import { uiStore } from './src/state/uiStore';
-import { agentStore } from './src/state/agentStore';
-import { executeWebMCPTool } from './src/webmcp/registry';
-import { triggerCadAutoBuildIfConnected } from './src/webmcp/tools/cadTools';
+import { projectStore } from '../src/state/projectStore';
+import { sceneStore } from '../src/state/sceneStore';
+import { uiStore } from '../src/state/uiStore';
+import { agentStore } from '../src/state/agentStore';
+import { executeWebMCPTool } from '../src/webmcp/registry';
+import { triggerCadAutoBuildIfConnected } from '../src/webmcp/tools/cadTools';
 
 async function runCadTo3DVerification() {
   console.log('====================================================');

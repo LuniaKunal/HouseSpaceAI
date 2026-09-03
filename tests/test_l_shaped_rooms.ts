@@ -6,13 +6,13 @@ import {
   getRoomEdges,
   isPointInRoom,
   findSharedWallOverlap
-} from './src/geometry/roomGeometry';
-import { Room } from './src/types/scene';
-import { sceneStore } from './src/state/sceneStore';
-import { roomTools } from './src/webmcp/tools/roomTools';
-import { objectTools } from './src/webmcp/tools/objectTools';
-import { viewTools } from './src/webmcp/tools/viewTools';
-import { createRoomWallsGroup } from './src/canvas/roomAndWallHelpers';
+} from '../src/geometry/roomGeometry';
+import { Room } from '../src/types/scene';
+import { sceneStore } from '../src/state/sceneStore';
+import { roomTools } from '../src/webmcp/tools/roomTools';
+import { objectTools } from '../src/webmcp/tools/objectTools';
+import { viewTools } from '../src/webmcp/tools/viewTools';
+import { createRoomWallsGroup } from '../src/canvas/roomAndWallHelpers';
 
 async function runLShapedRoomsVerification() {
   console.log('================================================================');
@@ -253,19 +253,19 @@ async function runLShapedRoomsVerification() {
   console.log('\n7. Testing get_scene_state reflects footprint and accurate areas...');
   const state = await viewTools.get_scene_state.execute({});
   const bedRoomInState = state.rooms.find((r: any) => r.id === createBedRes.roomId);
-  console.log(`   Bedroom in state footprint count: ${bedRoomInState.footprint?.length}`);
-  console.log(`   Bedroom in state notch: ${JSON.stringify(bedRoomInState.notch)}`);
+  console.log(`   Bedroom in state footprint count: ${bedRoomInState?.footprint?.length}`);
+  console.log(`   Bedroom in state notch: ${JSON.stringify(bedRoomInState?.notch)}`);
   console.log(`   Total Area: ${state.dimensions.totalAreaSqFt} sq ft`);
 
-  if (!bedRoomInState.footprint || bedRoomInState.footprint.length !== 6) {
+  if (!bedRoomInState || !bedRoomInState.footprint || bedRoomInState.footprint.length !== 6) {
     throw new Error('get_scene_state must include 6-vertex polygon footprint for L-shaped room');
   }
 
   // Test 8: 3D Walls Group Generation
   console.log('\n8. Testing 3D Walls Group Generation for L-Shaped Room...');
   const walls = createRoomWallsGroup(
-    bedRoomInState,
-    state.gates,
+    bedRoomInState as Room,
+    state.gates || [],
     state.doors,
     state.windows,
     false,

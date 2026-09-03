@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TOOL_LIST, executeWebMCPTool } from '../../webmcp/registry';
 import { agentStore } from '../../state/agentStore';
+import { sceneStore } from '../../state/sceneStore';
 import { uiStore } from '../../state/uiStore';
 import {
   X,
@@ -57,6 +58,17 @@ export const AgentBridgeModal: React.FC<AgentBridgeModalProps> = ({ isOpen, onCl
       }
       if (toolName === 'create_room') {
         setToolInputJson(JSON.stringify({ name: 'Cozy Study', width: 12, depth: 10 }, null, 2));
+      } else if (toolName === 'connect_rooms') {
+        const rooms = sceneStore.getData().rooms;
+        const r1 = rooms[0]?.id || 'room-1';
+        const r2 = rooms[1]?.id || 'room-2';
+        setToolInputJson(JSON.stringify({ roomIdA: r1, roomIdB: r2, wallDirection: 'right', openingWidth: 4 }, null, 2));
+      } else if (toolName === 'add_connected_room') {
+        const r1 = sceneStore.getData().rooms[0]?.id || 'room-1';
+        setToolInputJson(JSON.stringify({ referenceRoomId: r1, direction: 'right', name: 'Connected Suite', width: 12, depth: 12, openingWidth: 4 }, null, 2));
+      } else if (toolName === 'disconnect_rooms') {
+        const gate = sceneStore.getData().gates[0];
+        setToolInputJson(JSON.stringify({ gateId: gate?.id || 'gate-1', roomIdA: gate?.roomIdA || 'room-1', roomIdB: gate?.roomIdB || 'room-2' }, null, 2));
       } else if (toolName === 'add_furniture') {
         setToolInputJson(JSON.stringify({ type: 'sofa_3seater', position: { x: 2, y: 0, z: 2 } }, null, 2));
       } else if (toolName === 'move_object') {

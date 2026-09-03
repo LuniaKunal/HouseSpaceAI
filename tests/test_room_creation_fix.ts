@@ -1,6 +1,6 @@
-import { sceneStore } from './src/state/sceneStore';
-import { uiStore } from './src/state/uiStore';
-import { executeWebMCPTool } from './src/webmcp/registry';
+import { sceneStore } from '../src/state/sceneStore';
+import { uiStore } from '../src/state/uiStore';
+import { executeWebMCPTool } from '../src/webmcp/registry';
 
 async function runTests() {
   console.log('=== TEST: Room Creation & Addition Fix Verification ===\n');
@@ -99,7 +99,85 @@ async function runTests() {
   console.log(`Rooms after redo: ${data.rooms.length}`);
   if (data.rooms.length !== 3) throw new Error('Expected 3 rooms after redo');
 
-  console.log('\n🎉 ALL ROOM CREATION & ADDITION TESTS PASSED SUCCESSFULLY!');
+  // 6. Test WebMCP tools via executeWebMCPTool
+  console.log('\n--- Step 5: Test WebMCP Tools via executeWebMCPTool ---');
+  sceneStore.clearScene();
+  console.log('Cleared scene for WebMCP tool validation.');
+
+  // WebMCP create_room (Primary standalone at origin)
+  const mcpRoom1 = await executeWebMCPTool('create_room', {
+    name: 'WebMCP Great Room',
+    width: 20,
+    depth: 18,
+    floorMaterial: 'marble_carrara'
+  });
+  console.log(`WebMCP create_room: "${mcpRoom1.name}" (ID: ${mcpRoom1.roomId}) at (${mcpRoom1.position.x}, ${mcpRoom1.position.z})`);
+  if (!mcpRoom1.success || sceneStore.getData().rooms.length !== 1) {
+    throw new Error('WebMCP create_room failed');
+  }
+
+  // WebMCP add_connected_room (Attached room with auto doorway gate)
+  const mcpRoom2 = await executeWebMCPTool('add_connected_room', {
+    referenceRoomId: mcpRoom1.roomId,
+    direction: 'right',
+    name: 'WebMCP Dining Suite',
+    width: 14,
+    depth: 16,
+    floorMaterial: 'hardwood_oak'
+  });
+  console.log(`WebMCP add_connected_room: "${mcpRoom2.name}" connected ${mcpRoom2.direction} of ${mcpRoom2.connectedTo}`);
+  if (!mcpRoom2.success || sceneStore.getData().rooms.length !== 2) {
+    throw new Error('WebMCP add_connected_room failed');
+  }
+  if (sceneStore.getData().gates.length !== 1) {
+    throw new Error('WebMCP add_connected_room should have created 1 doorway gate');
+  }
+
+  // WebMCP create_room with connectedTo parameter
+  const mcpRoom3 = await executeWebMCPTool('create_room', {
+    name: 'WebMCP Kitchen',
+    width: 12,
+    depth: 12,
+    floorMaterial: 'ceramic_tile',
+    connectedTo: {
+      roomId: mcpRoom1.roomId,
+      direction: 'below'
+    }
+  });
+  console.log(`WebMCP create_room with connectedTo: "${mcpRoom3.name}" connected below`);
+  if (!mcpRoom3.success || sceneStore.getData().rooms.length !== 3) {
+    throw new Error('WebMCP create_room with connectedTo failed');
+  }
+  if (sceneStore.getData().gates.length !== 2) {
+    throw new Error('Expected 2 doorway gates now');
+  }
+
+  // WebMCP create_room with auto-positioning (standalone non-overlapping)
+  const mcpRoom4 = await executeWebMCPTool('create_room', {
+    name: 'WebMCP Courtyard',
+    width: 10,
+    depth: 10,
+    floorMaterial: 'terrazzo'
+  });
+  console.log(`WebMCP create_room autoPosition: "${mcpRoom4.name}" at (${mcpRoom4.position.x}, ${mcpRoom4.position.z})`);
+  if (!mcpRoom4.success || sceneStore.getData().rooms.length !== 4) {
+    throw new Error('WebMCP create_room autoPosition failed');
+  }
+
+  // WebMCP undo and redo
+  const mcpUndo = await executeWebMCPTool('undo', {});
+  if (!mcpUndo.success || sceneStore.getData().rooms.length !== 3) {
+    throw new Error('WebMCP undo failed');
+  }
+  console.log('WebMCP undo: reverted back to 3 rooms.');
+
+  const mcpRedo = await executeWebMCPTool('redo', {});
+  if (!mcpRedo.success || sceneStore.getData().rooms.length !== 4) {
+    throw new Error('WebMCP redo failed');
+  }
+  console.log('WebMCP redo: restored 4 rooms.');
+
+  console.log('\n🎉 ALL ROOM CREATION, ADDITION & WebMCP TESTS PASSED 100%!');
 }
 
 runTests().catch(err => {

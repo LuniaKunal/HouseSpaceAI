@@ -2,11 +2,13 @@ import { sceneStore } from '../../state/sceneStore';
 import { uiStore } from '../../state/uiStore';
 import {
   CreateRoomInput,
+  AddConnectedRoomInput,
   RenameRoomInput,
   MoveRoomInput,
   SetRoomDimensionsInput,
   DeleteRoomInput,
-  ConnectRoomsInput
+  ConnectRoomsInput,
+  DisconnectRoomsInput
 } from '../../types/webmcp';
 import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
 
@@ -15,7 +17,7 @@ export const roomTools = {
     name: 'create_room',
     title: 'Create Room',
     category: 'Rooms' as const,
-    description: 'Creates a new architectural room space on the floor plan with custom dimensions, position, and floor material.',
+    description: 'Creates a new architectural room space on the floor plan with custom dimensions, position, and floor material. Automatically positions non-overlapping standalone rooms when position is omitted.',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
@@ -62,12 +64,66 @@ export const roomTools = {
           },
           required: ['corner', 'width', 'depth'],
           description: 'Optional corner notch cutout parameterizing an L-shaped room'
+        },
+        connectedTo: {
+          type: 'object',
+          properties: {
+            roomId: { type: 'string', description: 'ID of reference room to attach to' },
+            direction: {
+              type: 'string',
+              enum: ['above', 'right', 'below', 'left'],
+              description: 'Cardinal direction relative to reference room'
+            },
+            openingWidth: { type: 'number', description: 'Doorway opening width in feet' }
+          },
+          required: ['roomId', 'direction'],
+          description: 'Optional reference room attachment configuration'
         }
       },
       required: ['name', 'width', 'depth']
     },
     execute: async (input: CreateRoomInput) => {
-      const room = sceneStore.createRoom(input);
+      if (input.connectedTo) {
+        const connected = sceneStore.addConnectedRoom(
+          input.connectedTo.roomId,
+          input.connectedTo.direction,
+          input.name,
+          input.width,
+          input.depth,
+          input.floorMaterial,
+          input.connectedTo.openingWidth || 4
+        );
+        if (!connected) throw new Error(`Could not connect room to "${input.connectedTo.roomId}". Reference room not found.`);
+        uiStore.setSelected(connected.id, 'room');
+        uiStore.recordAgentAction('create_room', `Created connected room "${connected.name}"`, connected.id);
+        return {
+          success: true,
+          roomId: connected.id,
+          name: connected.name,
+          dimensions: { width: connected.width, depth: connected.depth, height: connected.height },
+          position: connected.position,
+          notch: connected.notch,
+          footprint: connected.footprint,
+          areaSqFt: getRoomAreaSqFt(connected)
+        };
+      }
+
+      let position = input.position;
+      if (!position) {
+        const existingRooms = sceneStore.getData().rooms;
+        if (existingRooms.length > 0) {
+          const maxX = Math.max(...existingRooms.map(r => r.position.x + r.width / 2));
+          const avgZ = existingRooms.reduce((acc, r) => acc + r.position.z, 0) / existingRooms.length;
+          position = { x: Math.round(maxX + input.width / 2 + 2), y: 0, z: Math.round(avgZ) };
+        } else {
+          position = { x: 0, y: 0, z: 0 };
+        }
+      }
+
+      const room = sceneStore.createRoom({
+        ...input,
+        position
+      });
       uiStore.setSelected(room.id, 'room');
       const shapeDesc = room.notch ? `L-shaped ${room.width}x${room.depth} ft (notch: ${room.notch.corner})` : `${room.width}x${room.depth} ft`;
       uiStore.recordAgentAction('create_room', `Created room "${room.name}" (${shapeDesc})`, room.id);
@@ -79,6 +135,73 @@ export const roomTools = {
         position: room.position,
         notch: room.notch,
         footprint: room.footprint,
+        areaSqFt: getRoomAreaSqFt(room)
+      };
+    }
+  },
+
+  add_connected_room: {
+    name: 'add_connected_room',
+    title: 'Add Connected Room',
+    category: 'Rooms' as const,
+    description: 'Creates a new room attached directly to an existing reference room in a cardinal direction (above, right, below, left) with automatic shared wall alignment and a connecting doorway gate.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        referenceRoomId: { type: 'string', description: 'ID of the existing room to attach to' },
+        direction: {
+          type: 'string',
+          enum: ['above', 'right', 'below', 'left'],
+          description: 'Direction of the new room relative to the reference room'
+        },
+        name: { type: 'string', description: 'Display name of the new room (e.g. Kitchen, Balcony, Master Bedroom)' },
+        width: { type: 'number', description: 'Width of new room in feet (default 12)' },
+        depth: { type: 'number', description: 'Depth of new room in feet (default 12)' },
+        floorMaterial: {
+          type: 'string',
+          enum: [
+            'hardwood_oak',
+            'hardwood_walnut',
+            'marble_carrara',
+            'marble_nero',
+            'terrazzo',
+            'concrete_polished',
+            'ceramic_tile',
+            'carpet_plush',
+            'herringbone_wood'
+          ],
+          description: 'Floor surface material texture'
+        },
+        openingWidth: { type: 'number', description: 'Doorway gate opening width in feet (default 4)' }
+      },
+      required: ['referenceRoomId', 'direction', 'name']
+    },
+    execute: async (input: AddConnectedRoomInput) => {
+      const room = sceneStore.addConnectedRoom(
+        input.referenceRoomId,
+        input.direction,
+        input.name,
+        input.width || 12,
+        input.depth || 12,
+        input.floorMaterial,
+        input.openingWidth || 4
+      );
+      if (!room) {
+        throw new Error(`Failed to add connected room. Reference room "${input.referenceRoomId}" not found.`);
+      }
+      uiStore.setSelected(room.id, 'room');
+      const gate = sceneStore.getData().gates.find(g => (g.roomIdA === room.id || g.roomIdB === room.id));
+      uiStore.recordAgentAction('add_connected_room', `Added "${room.name}" connected ${input.direction} of ${input.referenceRoomId}`, room.id);
+      return {
+        success: true,
+        roomId: room.id,
+        name: room.name,
+        dimensions: { width: room.width, depth: room.depth, height: room.height },
+        position: room.position,
+        connectedTo: input.referenceRoomId,
+        direction: input.direction,
+        gateId: gate?.id,
         areaSqFt: getRoomAreaSqFt(room)
       };
     }
@@ -213,7 +336,7 @@ export const roomTools = {
     name: 'connect_rooms',
     title: 'Connect Rooms',
     category: 'Rooms' as const,
-    description: 'Creates a shared doorway gate opening between two adjacent rooms.',
+    description: 'Creates a shared doorway gate opening between two adjacent rooms. Automatically snaps standalone rooms flush to eliminate gaps and cuts the doorway opening on both rooms.',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
@@ -223,29 +346,94 @@ export const roomTools = {
         wallDirection: {
           type: 'string',
           enum: ['above', 'right', 'below', 'left'],
-          description: 'Direction of room B relative to room A'
+          description: 'Direction of room B relative to room A (auto-detected if omitted)'
         },
         openingWidth: { type: 'number', description: 'Width of doorway opening in feet (default 4)' }
       },
       required: ['roomIdA', 'roomIdB']
     },
     execute: async (input: ConnectRoomsInput) => {
+      const data = sceneStore.getData();
+      const rA = data.rooms.find(r => r.id === input.roomIdA);
+      const rB = data.rooms.find(r => r.id === input.roomIdB);
+      if (!rA || !rB) throw new Error(`Could not find rooms "${input.roomIdA}" and "${input.roomIdB}".`);
+
+      let dir = input.wallDirection;
+      if (!dir) {
+        const dx = rB.position.x - rA.position.x;
+        const dz = rB.position.z - rA.position.z;
+        dir = Math.abs(dx) >= Math.abs(dz) ? (dx >= 0 ? 'right' : 'left') : (dz >= 0 ? 'below' : 'above');
+      }
+
       const gate = sceneStore.connectRooms(
         input.roomIdA,
         input.roomIdB,
-        input.wallDirection || 'right',
+        dir,
         input.openingWidth || 4
       );
       if (!gate) throw new Error(`Could not connect rooms "${input.roomIdA}" and "${input.roomIdB}".`);
-      uiStore.recordAgentAction('connect_rooms', `Connected rooms with ${gate.width}ft doorway`, gate.id);
+      uiStore.recordAgentAction('connect_rooms', `Connected rooms "${rA.name}" and "${rB.name}" with ${gate.width}ft doorway`, gate.id);
+      
+      const updatedData = sceneStore.getData();
+      const updatedA = updatedData.rooms.find(r => r.id === input.roomIdA);
+      const updatedB = updatedData.rooms.find(r => r.id === input.roomIdB);
+
       return {
         success: true,
         gateId: gate.id,
         roomIdA: gate.roomIdA,
         roomIdB: gate.roomIdB,
+        wallDirection: gate.wallDirection,
         position: gate.position,
         width: gate.width,
-        openingWidth: gate.width
+        openingWidth: gate.width,
+        roomAPosition: updatedA?.position,
+        roomBPosition: updatedB?.position
+      };
+    }
+  },
+
+  disconnect_rooms: {
+    name: 'disconnect_rooms',
+    title: 'Disconnect Rooms',
+    category: 'Rooms' as const,
+    description: 'Removes the doorway gate connection between two rooms, restoring a solid partition wall.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        roomIdA: { type: 'string', description: 'ID of the first room' },
+        roomIdB: { type: 'string', description: 'ID of the second room' },
+        gateId: { type: 'string', description: 'Optional specific gate ID to remove' }
+      }
+    },
+    execute: async (input: DisconnectRoomsInput) => {
+      let rAId = input.roomIdA;
+      let rBId = input.roomIdB;
+
+      if (input.gateId && (!rAId || !rBId)) {
+        const foundGate = sceneStore.getData().gates.find(g => g.id === input.gateId);
+        if (foundGate) {
+          rAId = foundGate.roomIdA;
+          rBId = foundGate.roomIdB;
+        }
+      }
+
+      if (!rAId || !rBId) {
+        throw new Error('Please provide either roomIdA and roomIdB, or a valid gateId to disconnect rooms.');
+      }
+
+      const ok = sceneStore.disconnectRooms(rAId, rBId);
+      if (!ok) {
+        throw new Error(`Failed to disconnect rooms "${rAId}" and "${rBId}".`);
+      }
+
+      uiStore.recordAgentAction('disconnect_rooms', `Removed doorway connection between rooms`, input.gateId);
+      return {
+        success: true,
+        roomIdA: rAId,
+        roomIdB: rBId,
+        message: 'Rooms disconnected; solid partition wall restored.'
       };
     }
   }

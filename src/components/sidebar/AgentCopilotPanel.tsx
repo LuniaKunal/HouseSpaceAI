@@ -476,6 +476,97 @@ export const AgentCopilotPanel: React.FC = () => {
       return null;
     }
 
+    // 2b. Connect Rooms / Create Doorway Gate Intent
+    const isConnectIntent =
+      q.includes('connect room') ||
+      q.includes('connect the room') ||
+      q.includes('connect spaces') ||
+      q.includes('connect standalone') ||
+      q.includes('create doorway') ||
+      q.includes('add doorway') ||
+      q.includes('create gate') ||
+      q.includes('open doorway') ||
+      q.includes('link room') ||
+      (q.includes('connect') && (q.includes('to') || q.includes('and')));
+
+    if (isConnectIntent) {
+      setActiveTaskTitle('Connecting Rooms & Cutting Doorway Gate...');
+      const rooms = sceneStore.getData().rooms;
+      if (rooms.length >= 2) {
+        let roomA: Room | undefined;
+        let roomB: Room | undefined;
+
+        for (const r of rooms) {
+          const rName = r.name.toLowerCase();
+          if (q.includes(rName)) {
+            if (!roomA) roomA = r;
+            else if (!roomB && r.id !== roomA.id) roomB = r;
+          }
+        }
+
+        if (!roomA) roomA = rooms[0];
+        if (!roomB) {
+          if (q.includes('standalone')) {
+            const standalone = rooms.find(r => r.connections.length === 0 && r.id !== roomA!.id);
+            if (standalone) roomB = standalone;
+          }
+          if (!roomB) {
+            roomB = rooms.find(r => r.id !== roomA!.id) || rooms[1];
+          }
+        }
+
+        let dir: 'above' | 'right' | 'below' | 'left' | undefined;
+        if (q.includes('above') || q.includes('north') || q.includes('top')) dir = 'above';
+        else if (q.includes('below') || q.includes('south') || q.includes('bottom')) dir = 'below';
+        else if (q.includes('left') || q.includes('west')) dir = 'left';
+        else if (q.includes('right') || q.includes('east')) dir = 'right';
+
+        const connectRes = await executeWebMCPTool(
+          'connect_rooms',
+          {
+            roomIdA: roomA.id,
+            roomIdB: roomB.id,
+            wallDirection: dir,
+            openingWidth: 4
+          },
+          'copilot'
+        );
+
+        actionsTaken.push(`Connected "${roomA.name}" and "${roomB.name}" with a ${connectRes.width}ft doorway gate`);
+        return {
+          text: `Successfully connected **${roomA.name}** and **${roomB.name}**! Generated a **${connectRes.width}ft** shared doorway opening (${connectRes.wallDirection} wall) and automatically aligned the room geometry flush into the architectural layout.`,
+          actions: [
+            `Created doorway gate ${connectRes.gateId}`,
+            `Parametrically cut wall openings on both adjacent spaces`,
+            `Synchronized mutual space connectivity`
+          ]
+        };
+      }
+    }
+
+    // 2c. Disconnect Rooms / Remove Doorway Gate Intent
+    const isDisconnectIntent =
+      q.includes('disconnect') ||
+      (q.includes('remove') && (q.includes('gate') || q.includes('doorway')));
+
+    if (isDisconnectIntent) {
+      setActiveTaskTitle('Disconnecting Rooms...');
+      const gates = sceneStore.getData().gates;
+      if (gates.length > 0) {
+        const gateToKill = gates[0];
+        await executeWebMCPTool(
+          'disconnect_rooms',
+          { gateId: gateToKill.id },
+          'copilot'
+        );
+        actionsTaken.push(`Removed doorway gate and restored solid wall`);
+        return {
+          text: `Disconnected the spaces and restored the solid partition wall.`,
+          actions: ['Removed doorway gate opening', 'Restored solid partition wall geometry']
+        };
+      }
+    }
+
     // 3. Wall Paint Color Instruction
     const detectedColor = detectColorInQuery(q);
     const isWallIntent = q.includes('wall') || q.includes('paint') || q.includes('color') || q.includes('tint');

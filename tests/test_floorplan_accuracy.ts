@@ -1,9 +1,9 @@
-import { extractFloorPlanFromBlueprint, parseDimensionText, extractFromSvgBlueprint } from './src/geometry/geometryExtractor';
-import { validateFloorPlanGeometry } from './src/geometry/geometryValidator';
-import { reconstruct3DFromFloorPlan } from './src/geometry/deterministicReconstruction';
-import { furnishRoomsWithConstraints } from './src/geometry/constrainedFurniture';
-import { sceneStore } from './src/state/sceneStore';
-import { projectStore } from './src/state/projectStore';
+import { extractFloorPlanFromBlueprint, parseDimensionText, extractFromSvgBlueprint } from '../src/geometry/geometryExtractor';
+import { validateFloorPlanGeometry } from '../src/geometry/geometryValidator';
+import { reconstruct3DFromFloorPlan } from '../src/geometry/deterministicReconstruction';
+import { furnishRoomsWithConstraints } from '../src/geometry/constrainedFurniture';
+import { sceneStore } from '../src/state/sceneStore';
+import { projectStore } from '../src/state/projectStore';
 
 async function runFloorPlanAccuracyVerification() {
   console.log('========================================================================');

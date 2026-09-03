@@ -137,6 +137,51 @@ export const SpacesPanel: React.FC = () => {
     await executeWebMCPTool('delete_room', { roomId }, 'user');
   };
 
+  // Connect existing room state
+  const [connectingRoomId, setConnectingRoomId] = useState<string | null>(null);
+  const [connectTargetId, setConnectTargetId] = useState<string>('');
+  const [connectDirection, setConnectDirection] = useState<'above' | 'right' | 'below' | 'left'>('right');
+  const [connectWidth, setConnectWidth] = useState<number>(4);
+
+  const handleStartConnect = (room: Room, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (connectingRoomId === room.id) {
+      setConnectingRoomId(null);
+      return;
+    }
+    const otherRooms = sceneData.rooms.filter(r => r.id !== room.id);
+    if (otherRooms.length === 0) return;
+    setConnectingRoomId(room.id);
+    setConnectTargetId(otherRooms[0].id);
+  };
+
+  const handleExecuteConnect = (room: Room, e: React.MouseEvent | React.FormEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!connectTargetId) return;
+    const targetRoom = sceneData.rooms.find(r => r.id === connectTargetId);
+    if (!targetRoom) return;
+
+    const gate = sceneStore.connectRooms(
+      connectTargetId,
+      room.id,
+      connectDirection,
+      connectWidth
+    );
+
+    if (gate) {
+      uiStore.setSelected(room.id, 'room');
+      uiStore.addToast(
+        'Rooms Connected',
+        `Connected "${room.name}" to "${targetRoom.name}" with a ${gate.width}ft doorway gate`,
+        'success'
+      );
+      setConnectingRoomId(null);
+    } else {
+      uiStore.addToast('Connection Failed', 'Could not connect the spaces', 'error');
+    }
+  };
+
   const applyPreset = (preset: RoomPreset) => {
     setNewRoomName(preset.name);
     setNewRoomWidth(preset.w);
@@ -547,6 +592,19 @@ export const SpacesPanel: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2">
+                  {sceneData.rooms.length > 1 && (
+                    <button
+                      onClick={e => handleStartConnect(room, e)}
+                      className={`p-1 transition ${
+                        connectingRoomId === room.id
+                          ? 'text-blue-400 bg-blue-500/20 rounded'
+                          : 'text-slate-400 hover:text-blue-400'
+                      }`}
+                      title="Connect to Space (Create Doorway)"
+                    >
+                      <Link2 size={12} />
+                    </button>
+                  )}
                   <button
                     onClick={e => handleStartRename(room, e)}
                     className="p-1 text-slate-400 hover:text-slate-200"
@@ -578,6 +636,123 @@ export const SpacesPanel: React.FC = () => {
                 </span>
                 <span>{roomFurniture.length} items</span>
               </div>
+
+              {/* Connected Gates Badges */}
+              {sceneData.gates.filter(g => g.roomIdA === room.id || g.roomIdB === room.id).length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1.5 mt-1.5 border-t border-slate-800/40">
+                  {sceneData.gates
+                    .filter(g => g.roomIdA === room.id || g.roomIdB === room.id)
+                    .map(g => {
+                      const otherId = g.roomIdA === room.id ? g.roomIdB : g.roomIdA;
+                      const otherRoom = sceneData.rooms.find(r => r.id === otherId);
+                      return (
+                        <span
+                          key={g.id}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-mono"
+                          title={`Doorway Gate (${g.width}ft wide)`}
+                        >
+                          <Link2 size={9} className="text-blue-400" />
+                          {otherRoom?.name || 'Adjacent'} ({g.width}ft)
+                        </span>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Expandable Connect Form */}
+              {connectingRoomId === room.id && (
+                <div
+                  onClick={e => e.stopPropagation()}
+                  className="mt-2.5 pt-2.5 border-t border-blue-900/40 bg-blue-950/20 -mx-3 -mb-3 p-3 rounded-b-xl space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-blue-300 flex items-center gap-1">
+                      <Link2 size={11} /> Connect to Space
+                    </span>
+                    <button
+                      onClick={() => setConnectingRoomId(null)}
+                      className="text-[10px] text-slate-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Attach To Room</label>
+                    <select
+                      value={connectTargetId}
+                      onChange={e => setConnectTargetId(e.target.value)}
+                      className="w-full bg-[#11131a] border border-slate-700 rounded-md px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
+                    >
+                      {sceneData.rooms
+                        .filter(r => r.id !== room.id)
+                        .map(r => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Wall Direction</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[
+                        { id: 'above', label: 'Above', icon: ArrowUp },
+                        { id: 'right', label: 'Right', icon: ArrowRight },
+                        { id: 'below', label: 'Below', icon: ArrowDown },
+                        { id: 'left', label: 'Left', icon: ArrowLeft }
+                      ].map(dir => {
+                        const Icon = dir.icon;
+                        const isSel = connectDirection === dir.id;
+                        return (
+                          <button
+                            type="button"
+                            key={dir.id}
+                            onClick={() => setConnectDirection(dir.id as any)}
+                            className={`flex items-center justify-center gap-1 py-1 rounded border text-[10px] transition ${
+                              isSel
+                                ? 'bg-blue-600 text-white border-blue-500 font-medium'
+                                : 'bg-[#12141c] border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Icon size={10} />
+                            {dir.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-slate-400">Gate:</span>
+                      {[3, 4, 5].map(w => (
+                        <button
+                          key={w}
+                          type="button"
+                          onClick={() => setConnectWidth(w)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                            connectWidth === w
+                              ? 'bg-blue-600 text-white border-blue-500'
+                              : 'bg-[#11131a] border-slate-700 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {w}ft
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={e => handleExecuteConnect(room, e)}
+                      className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded text-[11px] flex items-center gap-1 transition shadow-sm"
+                    >
+                      <Check size={11} /> Connect
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

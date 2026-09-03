@@ -1,9 +1,9 @@
-import { sceneStore } from './src/state/sceneStore.ts';
-import { uiStore } from './src/state/uiStore.ts';
-import { roomTools } from './src/webmcp/tools/roomTools.ts';
-import { objectTools } from './src/webmcp/tools/objectTools.ts';
-import { viewTools } from './src/webmcp/tools/viewTools.ts';
-import { workflowTools } from './src/webmcp/tools/workflowTools.ts';
+import { sceneStore } from '../src/state/sceneStore';
+import { uiStore } from '../src/state/uiStore';
+import { roomTools } from '../src/webmcp/tools/roomTools';
+import { objectTools } from '../src/webmcp/tools/objectTools';
+import { viewTools } from '../src/webmcp/tools/viewTools';
+import { workflowTools } from '../src/webmcp/tools/workflowTools';
 
 async function runGuestSuiteTestCase() {
   console.log('====================================================');
@@ -215,10 +215,10 @@ async function runGuestSuiteTestCase() {
   });
 
   // Check 5: Each connect_rooms call produced exactly one gate object, width <= shared wall length
-  const gatesAB = state.gates.filter((g: any) =>
+  const gatesAB = (state.gates || []).filter((g: any) =>
     (g.roomIdA === bedroomId && g.roomIdB === bathroomId) || (g.roomIdA === bathroomId && g.roomIdB === bedroomId)
   );
-  const gatesAC = state.gates.filter((g: any) =>
+  const gatesAC = (state.gates || []).filter((g: any) =>
     (g.roomIdA === bedroomId && g.roomIdB === closetId) || (g.roomIdA === closetId && g.roomIdB === bedroomId)
   );
   const c5_pass = gatesAB.length === 1 && gatesAC.length === 1 &&
@@ -338,10 +338,10 @@ async function runGuestSuiteTestCase() {
     depth: 12
   });
   const stateEsc1 = sceneStore.getSceneState();
-  const g1Esc = stateEsc1.gates.find((g: any) => g.id === g1.id);
-  const g2Esc = stateEsc1.gates.find((g: any) => g.id === g2.id);
+  const g1Esc = (stateEsc1.gates || []).find((g: any) => g.id === g1.id);
+  const g2Esc = (stateEsc1.gates || []).find((g: any) => g.id === g2.id);
   const bedEsc = stateEsc1.rooms.find((r: any) => r.id === bedroomId);
-  const esc1_pass = g1Esc && Math.abs(g1Esc.position.x - (bedEsc.position.x + bedEsc.width / 2)) < 0.01 &&
+  const esc1_pass = bedEsc && g1Esc && Math.abs(g1Esc.position.x - (bedEsc.position.x + bedEsc.width / 2)) < 0.01 &&
     g2Esc && Math.abs(g2Esc.position.z - (bedEsc.position.z + bedEsc.depth / 2)) < 0.01;
   console.log(`  -> Escalation 1 (Dynamic Gate Sync): ${esc1_pass ? '✅ PASSED' : '❌ FAILED'}`);
 
@@ -354,7 +354,7 @@ async function runGuestSuiteTestCase() {
     openingWidth: 3.5
   });
   const stateEsc2 = sceneStore.getSceneState();
-  const gatesAB_count = stateEsc2.gates.filter((g: any) =>
+  const gatesAB_count = (stateEsc2.gates || []).filter((g: any) =>
     (g.roomIdA === bedroomId && g.roomIdB === bathroomId) || (g.roomIdA === bathroomId && g.roomIdB === bedroomId)
   ).length;
   const esc2_pass = gatesAB_count === 1;
@@ -365,7 +365,7 @@ async function runGuestSuiteTestCase() {
   await roomTools.delete_room.execute({ roomId: bathroomId });
   const stateEsc3 = sceneStore.getSceneState();
   const bathExists = stateEsc3.rooms.some((r: any) => r.id === bathroomId);
-  const orphanedGate = stateEsc3.gates.some((g: any) => g.roomIdA === bathroomId || g.roomIdB === bathroomId);
+  const orphanedGate = (stateEsc3.gates || []).some((g: any) => g.roomIdA === bathroomId || g.roomIdB === bathroomId);
   const esc3_pass = !bathExists && !orphanedGate;
   console.log(`  -> Escalation 3 (Orphan Gate Cleanup): ${esc3_pass ? '✅ PASSED' : '❌ FAILED'}`);
 

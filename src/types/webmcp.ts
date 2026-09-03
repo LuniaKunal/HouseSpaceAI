@@ -60,6 +60,22 @@ export interface CreateRoomInput {
   floorMaterial?: RoomFloorMaterial;
   wallColor?: string;
   notch?: CornerNotch;
+  connectedTo?: {
+    roomId: string;
+    direction: 'above' | 'right' | 'below' | 'left';
+    openingWidth?: number;
+  };
+  autoPosition?: boolean;
+}
+
+export interface AddConnectedRoomInput {
+  referenceRoomId: string;
+  direction: 'above' | 'right' | 'below' | 'left';
+  name: string;
+  width?: number; // in feet (default 12)
+  depth?: number; // in feet (default 12)
+  floorMaterial?: RoomFloorMaterial;
+  openingWidth?: number; // in feet (default 4)
 }
 
 export interface RenameRoomInput {
@@ -89,6 +105,12 @@ export interface ConnectRoomsInput {
   roomIdB: string;
   wallDirection?: 'above' | 'right' | 'below' | 'left';
   openingWidth?: number;
+}
+
+export interface DisconnectRoomsInput {
+  roomIdA?: string;
+  roomIdB?: string;
+  gateId?: string;
 }
 
 // Structure
@@ -270,6 +292,14 @@ export interface ListProjectsInput {
 
 export interface DeleteProjectInput {
   projectId?: string;
+}
+
+export interface DuplicateProjectInput {
+  projectId?: string;
+}
+
+export interface LoadSampleProjectInput {
+  sampleName: '3BHK_Sample' | '4BHK_Sample' | string;
 }
 
 export interface SelectItemInput {

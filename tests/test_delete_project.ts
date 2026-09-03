@@ -1,6 +1,6 @@
-import { projectStore } from './src/state/projectStore';
-import { executeWebMCPTool } from './src/webmcp/registry';
-import { projectStorage } from './src/storage/indexedDBStorage';
+import { projectStore } from '../src/state/projectStore';
+import { executeWebMCPTool } from '../src/webmcp/registry';
+import { projectStorage } from '../src/storage/indexedDBStorage';
 
 async function testProjectDeletion() {
   console.log('====================================================');

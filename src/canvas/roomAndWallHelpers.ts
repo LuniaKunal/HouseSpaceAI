@@ -190,12 +190,12 @@ function createLShapedRoomWallsGroup(
 
       const cuts: Interval[] = [];
       for (const g of roomGates) {
-        if (Math.abs(g.position.z - zPlane) < 0.35 && g.position.x >= minX - 0.5 && g.position.x <= maxX + 0.5) {
+        if (Math.abs(g.position.z - zPlane) < 0.55 && g.position.x >= minX - 0.5 && g.position.x <= maxX + 0.5) {
           cuts.push({ start: g.position.x - g.width / 2, end: g.position.x + g.width / 2 });
         }
       }
       for (const d of roomDoors) {
-        if (Math.abs(d.position.z - zPlane) < 0.35 && d.position.x >= minX - 0.5 && d.position.x <= maxX + 0.5) {
+        if (Math.abs(d.position.z - zPlane) < 0.55 && d.position.x >= minX - 0.5 && d.position.x <= maxX + 0.5) {
           cuts.push({ start: d.position.x - d.width / 2, end: d.position.x + d.width / 2 });
         }
       }
@@ -204,7 +204,7 @@ function createLShapedRoomWallsGroup(
         for (const n of otherRooms) {
           const nEdges = getRoomEdges(n);
           for (const ne of nEdges) {
-            if (ne.direction === 'south' && Math.abs((ne.start.z + ne.end.z) / 2 - zPlane) < 0.25) {
+            if (ne.direction === 'south' && Math.abs((ne.start.z + ne.end.z) / 2 - zPlane) < 0.6) {
               const nMinX = Math.min(ne.start.x, ne.end.x);
               const nMaxX = Math.max(ne.start.x, ne.end.x);
               const oStart = Math.max(minX, nMinX);
@@ -263,12 +263,12 @@ function createLShapedRoomWallsGroup(
 
       const cuts: Interval[] = [];
       for (const g of roomGates) {
-        if (Math.abs(g.position.x - xPlane) < 0.35 && g.position.z >= minZ - 0.5 && g.position.z <= maxZ + 0.5) {
+        if (Math.abs(g.position.x - xPlane) < 0.55 && g.position.z >= minZ - 0.5 && g.position.z <= maxZ + 0.5) {
           cuts.push({ start: g.position.z - g.width / 2, end: g.position.z + g.width / 2 });
         }
       }
       for (const d of roomDoors) {
-        if (Math.abs(d.position.x - xPlane) < 0.35 && d.position.z >= minZ - 0.5 && d.position.z <= maxZ + 0.5) {
+        if (Math.abs(d.position.x - xPlane) < 0.55 && d.position.z >= minZ - 0.5 && d.position.z <= maxZ + 0.5) {
           cuts.push({ start: d.position.z - d.width / 2, end: d.position.z + d.width / 2 });
         }
       }
@@ -281,7 +281,7 @@ function createLShapedRoomWallsGroup(
         for (const w of otherRooms) {
           const wEdges = getRoomEdges(w);
           for (const we of wEdges) {
-            if (we.direction === 'east' && Math.abs((we.start.x + we.end.x) / 2 - xPlane) < 0.25) {
+            if (we.direction === 'east' && Math.abs((we.start.x + we.end.x) / 2 - xPlane) < 0.6) {
               const wMinZ = Math.min(we.start.z, we.end.z);
               const wMaxZ = Math.max(we.start.z, we.end.z);
               const oStart = Math.max(minZ, wMinZ);
@@ -386,7 +386,7 @@ export function createRoomWallsGroup(
   const northNeighborCuts: Interval[] = [];
   for (const n of otherRooms) {
     const nMaxZ = n.position.z + n.depth / 2;
-    if (Math.abs(nMaxZ - rMinZ) < 0.25) {
+    if (Math.abs(nMaxZ - rMinZ) < 0.6) {
       const nMinX = n.position.x - n.width / 2;
       const nMaxX = n.position.x + n.width / 2;
       const overlapStart = Math.max(rMinX, nMinX);
@@ -399,12 +399,12 @@ export function createRoomWallsGroup(
 
   // Also cut gates/doors on North edge
   for (const g of roomGates) {
-    if (Math.abs(g.position.z - rMinZ) < 0.35) {
+    if (Math.abs(g.position.z - rMinZ) < 0.55) {
       northNeighborCuts.push({ start: g.position.x - g.width / 2, end: g.position.x + g.width / 2 });
     }
   }
   for (const d of roomDoors) {
-    if (Math.abs(d.position.z - rMinZ) < 0.35) {
+    if (Math.abs(d.position.z - rMinZ) < 0.55) {
       northNeighborCuts.push({ start: d.position.x - d.width / 2, end: d.position.x + d.width / 2 });
     }
   }
@@ -433,12 +433,12 @@ export function createRoomWallsGroup(
   // -------------------------------------------------------------
   const southCuts: Interval[] = [];
   for (const g of roomGates) {
-    if (Math.abs(g.position.z - rMaxZ) < 0.35) {
+    if (Math.abs(g.position.z - rMaxZ) < 0.55) {
       southCuts.push({ start: g.position.x - g.width / 2, end: g.position.x + g.width / 2 });
     }
   }
   for (const d of roomDoors) {
-    if (Math.abs(d.position.z - rMaxZ) < 0.35) {
+    if (Math.abs(d.position.z - rMaxZ) < 0.55) {
       southCuts.push({ start: d.position.x - d.width / 2, end: d.position.x + d.width / 2 });
     }
   }
@@ -479,7 +479,7 @@ export function createRoomWallsGroup(
   const westNeighborCuts: Interval[] = [];
   for (const w of otherRooms) {
     const wMaxX = w.position.x + w.width / 2;
-    if (Math.abs(wMaxX - rMinX) < 0.25) {
+    if (Math.abs(wMaxX - rMinX) < 0.6) {
       const wMinZ = w.position.z - w.depth / 2;
       const wMaxZ = w.position.z + w.depth / 2;
       const overlapStart = Math.max(rMinZ, wMinZ);
@@ -492,12 +492,12 @@ export function createRoomWallsGroup(
 
   // Cut gates/doors on West edge
   for (const g of roomGates) {
-    if (Math.abs(g.position.x - rMinX) < 0.35) {
+    if (Math.abs(g.position.x - rMinX) < 0.55) {
       westNeighborCuts.push({ start: g.position.z - g.width / 2, end: g.position.z + g.width / 2 });
     }
   }
   for (const d of roomDoors) {
-    if (Math.abs(d.position.x - rMinX) < 0.35) {
+    if (Math.abs(d.position.x - rMinX) < 0.55) {
       westNeighborCuts.push({ start: d.position.z - d.width / 2, end: d.position.z + d.width / 2 });
     }
   }
@@ -530,12 +530,12 @@ export function createRoomWallsGroup(
   // -------------------------------------------------------------
   const eastCuts: Interval[] = [];
   for (const g of roomGates) {
-    if (Math.abs(g.position.x - rMaxX) < 0.35) {
+    if (Math.abs(g.position.x - rMaxX) < 0.55) {
       eastCuts.push({ start: g.position.z - g.width / 2, end: g.position.z + g.width / 2 });
     }
   }
   for (const d of roomDoors) {
-    if (Math.abs(d.position.x - rMaxX) < 0.35) {
+    if (Math.abs(d.position.x - rMaxX) < 0.55) {
       eastCuts.push({ start: d.position.z - d.width / 2, end: d.position.z + d.width / 2 });
     }
   }

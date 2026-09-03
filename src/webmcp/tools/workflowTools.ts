@@ -311,6 +311,69 @@ export const workflowTools = {
     }
   },
 
+  duplicate_project: {
+    name: 'duplicate_project',
+    title: 'Duplicate Project',
+    category: 'Workflow' as const,
+    description: 'Creates a cloned duplicate copy of an existing project workspace.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        projectId: { type: 'string', description: 'ID of project to clone (defaults to active project)' }
+      }
+    },
+    execute: async (input: { projectId?: string } = {}) => {
+      const targetId = input.projectId || projectStore.getState().activeProject?.metadata.id;
+      if (!targetId) throw new Error('No project found to duplicate.');
+      const cloned = await projectStore.duplicateProject(targetId);
+      uiStore.recordAgentAction('duplicate_project', `Duplicated project as "${cloned.metadata.name}"`, cloned.metadata.id);
+      return {
+        success: true,
+        projectId: cloned.metadata.id,
+        name: cloned.metadata.name,
+        roomCount: cloned.metadata.roomCount,
+        totalAreaSqFt: cloned.metadata.totalAreaSqFt
+      };
+    }
+  },
+
+  load_sample_project: {
+    name: 'load_sample_project',
+    title: 'Load Sample Project',
+    category: 'Workflow' as const,
+    description: 'Loads pre-built architectural blueprints: "3BHK_Sample" (Sample_2.png) or "4BHK_Sample" (Sample_1.png).',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        sampleName: {
+          type: 'string',
+          enum: ['3BHK_Sample', '4BHK_Sample'],
+          description: 'Name of the sample architectural blueprint to load'
+        }
+      },
+      required: ['sampleName']
+    },
+    execute: async (input: { sampleName: '3BHK_Sample' | '4BHK_Sample' | string }) => {
+      let project;
+      if (input.sampleName.includes('3BHK') || input.sampleName.includes('2')) {
+        project = await projectStore.load3BHKSampleProject();
+      } else {
+        project = await projectStore.load4BHKSampleProject();
+      }
+      uiStore.setActiveView('studio');
+      uiStore.recordAgentAction('load_sample_project', `Loaded sample project "${project.metadata.name}"`, project.metadata.id);
+      return {
+        success: true,
+        projectId: project.metadata.id,
+        name: project.metadata.name,
+        roomCount: project.metadata.roomCount,
+        totalAreaSqFt: project.metadata.totalAreaSqFt
+      };
+    }
+  },
+
   clear_scene: {
     name: 'clear_scene',
     title: 'Clear Scene',

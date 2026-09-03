@@ -330,8 +330,8 @@ class SceneStore {
     wallDirection: 'above' | 'right' | 'below' | 'left' = 'right',
     openingWidth: number = 4
   ): ConnectionGate | null {
-    const roomA = this.data.rooms.find(r => r.id === roomIdA);
-    const roomB = this.data.rooms.find(r => r.id === roomIdB);
+    let roomA = this.data.rooms.find(r => r.id === roomIdA);
+    let roomB = this.data.rooms.find(r => r.id === roomIdB);
     if (!roomA || !roomB) return null;
 
     this.saveSnapshot();
@@ -341,8 +341,82 @@ class SceneStore {
       g => (g.roomIdA === roomIdA && g.roomIdB === roomIdB) || (g.roomIdA === roomIdB && g.roomIdB === roomIdA)
     );
 
-    // Position gate accurately at the exact midpoint of the shared wall overlap
-    const overlap = findSharedWallOverlap(roomA, roomB, wallDirection);
+    // 1. Check if rooms already share an overlapping wall
+    let overlap = findSharedWallOverlap(roomA, roomB, wallDirection) || findSharedWallOverlap(roomA, roomB);
+
+    // 2. If rooms do not share a wall (or overlap is negligible, e.g. standalone rooms with gap),
+    // automatically snap the standalone/unlocked room flush to the other room.
+    let updatedRooms = [...this.data.rooms];
+    let updatedFurniture = [...this.data.furniture];
+
+    if (!overlap || overlap.sharedLength < 0.5) {
+      // Determine which room moves:
+      // If roomB is locked, or roomB is the primary origin room at (0,0) while roomA is offset, snap roomA.
+      // Otherwise, snap roomB against roomA.
+      const shouldSnapA = roomB.locked || (roomB.position.x === 0 && roomB.position.z === 0 && (roomA.position.x !== 0 || roomA.position.z !== 0));
+      const targetRoom = shouldSnapA ? roomB : roomA;
+      const movingRoom = shouldSnapA ? roomA : roomB;
+
+      const oppositeDir: Record<'above' | 'right' | 'below' | 'left', 'above' | 'right' | 'below' | 'left'> = {
+        above: 'below',
+        below: 'above',
+        left: 'right',
+        right: 'left'
+      };
+
+      const dir = shouldSnapA ? oppositeDir[wallDirection] : wallDirection;
+
+      let newX = movingRoom.position.x;
+      let newZ = movingRoom.position.z;
+
+      if (dir === 'right') {
+        newX = targetRoom.position.x + targetRoom.width / 2 + movingRoom.width / 2;
+        const zOverlapMin = Math.max(targetRoom.position.z - targetRoom.depth / 2, movingRoom.position.z - movingRoom.depth / 2);
+        const zOverlapMax = Math.min(targetRoom.position.z + targetRoom.depth / 2, movingRoom.position.z + movingRoom.depth / 2);
+        newZ = zOverlapMax - zOverlapMin > 1 ? movingRoom.position.z : targetRoom.position.z;
+      } else if (dir === 'left') {
+        newX = targetRoom.position.x - targetRoom.width / 2 - movingRoom.width / 2;
+        const zOverlapMin = Math.max(targetRoom.position.z - targetRoom.depth / 2, movingRoom.position.z - movingRoom.depth / 2);
+        const zOverlapMax = Math.min(targetRoom.position.z + targetRoom.depth / 2, movingRoom.position.z + movingRoom.depth / 2);
+        newZ = zOverlapMax - zOverlapMin > 1 ? movingRoom.position.z : targetRoom.position.z;
+      } else if (dir === 'above') {
+        newZ = targetRoom.position.z - targetRoom.depth / 2 - movingRoom.depth / 2;
+        const xOverlapMin = Math.max(targetRoom.position.x - targetRoom.width / 2, movingRoom.position.x - movingRoom.width / 2);
+        const xOverlapMax = Math.min(targetRoom.position.x + targetRoom.width / 2, movingRoom.position.x + movingRoom.width / 2);
+        newX = xOverlapMax - xOverlapMin > 1 ? movingRoom.position.x : targetRoom.position.x;
+      } else if (dir === 'below') {
+        newZ = targetRoom.position.z + targetRoom.depth / 2 + movingRoom.depth / 2;
+        const xOverlapMin = Math.max(targetRoom.position.x - targetRoom.width / 2, movingRoom.position.x - movingRoom.width / 2);
+        const xOverlapMax = Math.min(targetRoom.position.x + targetRoom.width / 2, movingRoom.position.x + movingRoom.width / 2);
+        newX = xOverlapMax - xOverlapMin > 1 ? movingRoom.position.x : targetRoom.position.x;
+      }
+
+      const deltaX = newX - movingRoom.position.x;
+      const deltaZ = newZ - movingRoom.position.z;
+
+      const snappedRoom: Room = {
+        ...movingRoom,
+        position: { x: newX, y: 0, z: newZ }
+      };
+
+      updatedRooms = updatedRooms.map(r => (r.id === movingRoom.id ? snappedRoom : r));
+
+      // Translate furniture inside moving room
+      if (deltaX !== 0 || deltaZ !== 0) {
+        updatedFurniture = updatedFurniture.map(f =>
+          f.roomId === movingRoom.id
+            ? { ...f, position: { x: f.position.x + deltaX, y: f.position.y, z: f.position.z + deltaZ } }
+            : f
+        );
+      }
+
+      // Re-assign local room references after snap
+      roomA = updatedRooms.find(r => r.id === roomIdA)!;
+      roomB = updatedRooms.find(r => r.id === roomIdB)!;
+
+      // Re-evaluate overlap with the newly snapped rooms
+      overlap = findSharedWallOverlap(roomA, roomB, wallDirection) || findSharedWallOverlap(roomA, roomB);
+    }
 
     let gatePos: Vector3D;
     let sharedLen: number;
@@ -390,7 +464,7 @@ class SceneStore {
       position: gatePos
     };
 
-    const updatedRooms = this.data.rooms.map(r => {
+    updatedRooms = updatedRooms.map(r => {
       if (r.id === roomIdA && !r.connections.includes(roomIdB)) {
         return { ...r, connections: [...r.connections, roomIdB] };
       }
@@ -410,6 +484,7 @@ class SceneStore {
     this.data = {
       ...this.data,
       rooms: updatedRooms,
+      furniture: updatedFurniture,
       gates: updatedGates
     };
     this.notify();
@@ -423,7 +498,8 @@ class SceneStore {
     name: string,
     width: number = 12,
     depth: number = 12,
-    floorMaterial?: RoomFloorMaterial
+    floorMaterial?: RoomFloorMaterial,
+    openingWidth: number = 4
   ): Room | null {
     const ref = this.data.rooms.find(r => r.id === referenceRoomId);
     if (!ref) return null;
@@ -451,8 +527,41 @@ class SceneStore {
       wallColor: ref.wallColor
     });
 
-    this.connectRooms(ref.id, newRoom.id, direction, 4);
+    this.connectRooms(ref.id, newRoom.id, direction, openingWidth);
     return newRoom;
+  }
+
+  public disconnectRooms(
+    roomIdA: string,
+    roomIdB: string
+  ): boolean {
+    const roomA = this.data.rooms.find(r => r.id === roomIdA);
+    const roomB = this.data.rooms.find(r => r.id === roomIdB);
+    if (!roomA || !roomB) return false;
+
+    this.saveSnapshot();
+
+    const updatedGates = this.data.gates.filter(
+      g => !((g.roomIdA === roomIdA && g.roomIdB === roomIdB) || (g.roomIdA === roomIdB && g.roomIdB === roomIdA))
+    );
+
+    const updatedRooms = this.data.rooms.map(r => {
+      if (r.id === roomIdA) {
+        return { ...r, connections: r.connections.filter(id => id !== roomIdB) };
+      }
+      if (r.id === roomIdB) {
+        return { ...r, connections: r.connections.filter(id => id !== roomIdA) };
+      }
+      return r;
+    });
+
+    this.data = {
+      ...this.data,
+      rooms: updatedRooms,
+      gates: updatedGates
+    };
+    this.notify();
+    return true;
   }
 
   // --- Furniture & Objects Management ---

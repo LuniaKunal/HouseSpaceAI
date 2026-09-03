@@ -1,7 +1,7 @@
-import { projectStore } from './src/state/projectStore';
-import { projectStorage } from './src/storage/indexedDBStorage';
-import { sceneStore } from './src/state/sceneStore';
-import { uiStore } from './src/state/uiStore';
+import { projectStore } from '../src/state/projectStore';
+import { projectStorage } from '../src/storage/indexedDBStorage';
+import { sceneStore } from '../src/state/sceneStore';
+import { uiStore } from '../src/state/uiStore';
 
 async function runProjectSystemVerification() {
   console.log('====================================================');

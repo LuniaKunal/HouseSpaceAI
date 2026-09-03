@@ -223,8 +223,8 @@ export function findSharedWallOverlap(
       const isVertical = Math.abs(eA.start.x - eA.end.x) < 0.05 && Math.abs(eB.start.x - eB.end.x) < 0.05;
 
       if (isHorizontal) {
-        // Must be on the same Z plane (within 0.25ft tolerance)
-        if (Math.abs(eA.start.z - eB.start.z) < 0.25) {
+        // Must be on the same Z plane (within 0.6ft tolerance to cover 0.5ft wall thickness)
+        if (Math.abs(eA.start.z - eB.start.z) < 0.6) {
           const minXA = Math.min(eA.start.x, eA.end.x);
           const maxXA = Math.max(eA.start.x, eA.end.x);
           const minXB = Math.min(eB.start.x, eB.end.x);
@@ -249,8 +249,8 @@ export function findSharedWallOverlap(
           }
         }
       } else if (isVertical) {
-        // Must be on the same X plane (within 0.25ft tolerance)
-        if (Math.abs(eA.start.x - eB.start.x) < 0.25) {
+        // Must be on the same X plane (within 0.6ft tolerance to cover 0.5ft wall thickness)
+        if (Math.abs(eA.start.x - eB.start.x) < 0.6) {
           const minZA = Math.min(eA.start.z, eA.end.z);
           const maxZA = Math.max(eA.start.z, eA.end.z);
           const minZB = Math.min(eB.start.z, eB.end.z);
