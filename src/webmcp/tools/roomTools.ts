@@ -4,6 +4,7 @@ import {
   CreateRoomInput,
   AddConnectedRoomInput,
   FitRoomIntoNotchInput,
+  SetRoomNotchInput,
   AddWallAlcoveInput,
   RenameRoomInput,
   MoveRoomInput,
@@ -12,7 +13,7 @@ import {
   ConnectRoomsInput,
   DisconnectRoomsInput
 } from '../../types/webmcp';
-import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
+import { getRoomAreaSqFt, getRoomFootprint } from '../../geometry/roomGeometry';
 
 export const roomTools = {
   create_room: {
@@ -370,6 +371,146 @@ export const roomTools = {
         parentRoomId: input.parentRoomId,
         gateId: gate?.id,
         areaSqFt: getRoomAreaSqFt(room)
+      };
+    }
+  },
+
+  set_room_notch: {
+    name: 'set_room_notch',
+    title: 'Set or Adjust Room Notch (L-Shape)',
+    category: 'Rooms' as const,
+    description: 'Configures, adjusts, or removes the corner cutout notch of an architectural room to convert it into an L-shaped room, modify cutout dimensions/corner, or revert to a standard rectangle. Optionally nests an attached space (e.g. bathroom/closet) inside the notch.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        roomId: { type: 'string', description: 'ID of the room to configure or adjust' },
+        enabled: {
+          type: 'boolean',
+          description: 'Set to false to remove notch and convert room back to a rectangle (default: true)'
+        },
+        corner: {
+          type: 'string',
+          enum: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+          description: 'Which corner of the room is cut out to form the L-shape (default: bottom-right or existing)'
+        },
+        width: {
+          type: 'number',
+          description: 'Width of cutout in feet (must be less than room width)'
+        },
+        depth: {
+          type: 'number',
+          description: 'Depth of cutout in feet (must be less than room depth)'
+        },
+        nestAttachedSpace: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Name of the space to automatically nest inside the notch (e.g. Ensuite Bath)' },
+            floorMaterial: {
+              type: 'string',
+              enum: [
+                'hardwood_oak',
+                'hardwood_walnut',
+                'marble_carrara',
+                'marble_nero',
+                'terrazzo',
+                'concrete_polished',
+                'ceramic_tile',
+                'carpet_plush',
+                'herringbone_wood'
+              ],
+              description: 'Floor material for the nested space'
+            },
+            openingWidth: { type: 'number', description: 'Doorway opening width in feet (default: 2.5)' }
+          },
+          required: ['name'],
+          description: 'Optional attached room to automatically fit inside the newly configured notch'
+        }
+      },
+      required: ['roomId']
+    },
+    execute: async (input: SetRoomNotchInput) => {
+      const room = sceneStore.getData().rooms.find(r => r.id === input.roomId);
+      if (!room) {
+        throw new Error(`Room with ID "${input.roomId}" not found.`);
+      }
+
+      // Revert to rectangle if enabled is explicitly false
+      if (input.enabled === false) {
+        const ok = sceneStore.setRoomNotch(room.id, null);
+        if (!ok) throw new Error(`Failed to remove notch from room "${room.name}".`);
+        const updated = sceneStore.getData().rooms.find(r => r.id === room.id)!;
+        uiStore.setSelected(updated.id, 'room');
+        uiStore.recordAgentAction('set_room_notch', `Reverted room "${updated.name}" to rectangular shape`, updated.id);
+        return {
+          success: true,
+          roomId: updated.id,
+          name: updated.name,
+          isLShaped: false,
+          notch: null,
+          footprint: getRoomFootprint(updated),
+          dimensions: { width: updated.width, depth: updated.depth, height: updated.height },
+          areaSqFt: getRoomAreaSqFt(updated)
+        };
+      }
+
+      // Compute or merge notch settings
+      const corner = input.corner || room.notch?.corner || 'bottom-right';
+      const defaultW = Math.min(6, Math.max(2, Math.floor(room.width / 2)));
+      const defaultD = Math.min(6, Math.max(2, Math.floor(room.depth / 2)));
+      const notchW = input.width !== undefined ? input.width : (room.notch ? room.notch.width : defaultW);
+      const notchD = input.depth !== undefined ? input.depth : (room.notch ? room.notch.depth : defaultD);
+
+      if (notchW <= 0 || notchW >= room.width) {
+        throw new Error(`Cutout width (${notchW}ft) must be greater than 0 and less than room width (${room.width}ft).`);
+      }
+      if (notchD <= 0 || notchD >= room.depth) {
+        throw new Error(`Cutout depth (${notchD}ft) must be greater than 0 and less than room depth (${room.depth}ft).`);
+      }
+
+      const ok = sceneStore.setRoomNotch(room.id, {
+        corner,
+        width: notchW,
+        depth: notchD
+      });
+      if (!ok) {
+        throw new Error(`Failed to update notch on room "${room.name}".`);
+      }
+
+      let nestedRoom = null;
+      if (input.nestAttachedSpace) {
+        nestedRoom = sceneStore.nestRoomInNotch(
+          room.id,
+          input.nestAttachedSpace.name,
+          input.nestAttachedSpace.floorMaterial,
+          input.nestAttachedSpace.openingWidth || 2.5
+        );
+      }
+
+      const updated = sceneStore.getData().rooms.find(r => r.id === room.id)!;
+      uiStore.setSelected(updated.id, 'room');
+      uiStore.recordAgentAction(
+        'set_room_notch',
+        `Configured L-shaped notch (${corner}, ${notchW}x${notchD} ft) on "${updated.name}"`,
+        updated.id
+      );
+
+      return {
+        success: true,
+        roomId: updated.id,
+        name: updated.name,
+        isLShaped: true,
+        notch: updated.notch,
+        footprint: updated.footprint,
+        dimensions: { width: updated.width, depth: updated.depth, height: updated.height },
+        areaSqFt: getRoomAreaSqFt(updated),
+        nestedRoom: nestedRoom ? {
+          id: nestedRoom.id,
+          name: nestedRoom.name,
+          dimensions: { width: nestedRoom.width, depth: nestedRoom.depth, height: nestedRoom.height },
+          position: nestedRoom.position,
+          areaSqFt: getRoomAreaSqFt(nestedRoom)
+        } : undefined
       };
     }
   },

@@ -58,13 +58,13 @@ Open [http://localhost:4173/](http://localhost:4173/) in your browser.
 
 ---
 
-## WebMCP Tools (45 Tools)
+## WebMCP Tools (46 Tools)
 
-HouseSpace exposes 45 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
+HouseSpace exposes 46 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
 
 | Category | Count | Example Tools |
 | :--- | :---: | :--- |
-| **Rooms** | 9 | `create_room`, `add_connected_room`, `fit_room_into_notch`, `set_room_dimensions`, `delete_room` |
+| **Rooms** | 11 | `create_room`, `add_connected_room`, `set_room_notch`, `fit_room_into_notch`, `add_wall_alcove`, `delete_room` |
 | **Structure** | 5 | `add_wall`, `place_door`, `place_window`, `change_ceiling_height` |
 | **Objects** | 10 | `add_furniture`, `move_object`, `rotate_object`, `fit_furniture_to_wall`, `auto_fit_room_furniture` |
 | **Materials** | 2 | `apply_material`, `change_texture` |

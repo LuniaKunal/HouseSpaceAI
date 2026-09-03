@@ -101,21 +101,22 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-## 3. Master WebMCP Tool Catalog Summary (45 Tools)
+## 3. Master WebMCP Tool Catalog Summary (46 Tools)
 
 | # | Category | Tool Name | Human Confirmation | Description Summary |
 |---|:---|:---|:---:|:---|
 | 1 | **Rooms** | `create_room` | No | Creates a new rectangular, L-shaped, or alcove room space |
 | 2 | **Rooms** | `add_connected_room` | No | Adds room snapped to an existing room with alignment & doorway gate |
 | 3 | **Rooms** | `add_wall_alcove` | No | Adds middle-wall alcove (inward recess or outward wing) to room |
-| 4 | **Rooms** | `fit_room_into_notch` | No | Nests ensuite/closet into the cutout notch of an L-room |
-| 5 | **Rooms** | `rename_room` | No | Updates display label of a room |
-| 6 | **Rooms** | `move_room` | No | Translates room and enclosed objects to new (x, z) coordinates |
-| 7 | **Rooms** | `set_room_dimensions` | No | Resizes width, depth, height, or notch parameters |
-| 8 | **Rooms** | `delete_room` | ⚠️ **Required** | Deletes room, openings, and enclosed furniture |
-| 9 | **Rooms** | `connect_rooms` | No | Snaps rooms flush and cuts shared doorway opening |
-| 10 | **Rooms** | `disconnect_rooms` | No | Removes shared opening and restores solid partition wall |
-| 10 | **Structure** | `add_wall` | No | Creates interior partition wall segment {start, end} |
+| 4 | **Rooms** | `set_room_notch` | No | Configures, adjusts corner/dimensions, or unsets L-shaped notch |
+| 5 | **Rooms** | `fit_room_into_notch` | No | Nests ensuite/closet into the cutout notch of an L-room |
+| 6 | **Rooms** | `rename_room` | No | Updates display label of a room |
+| 7 | **Rooms** | `move_room` | No | Translates room and enclosed objects to new (x, z) coordinates |
+| 8 | **Rooms** | `set_room_dimensions` | No | Resizes width, depth, height, or notch parameters |
+| 9 | **Rooms** | `delete_room` | ⚠️ **Required** | Deletes room, openings, and enclosed furniture |
+| 10 | **Rooms** | `connect_rooms` | No | Snaps rooms flush and cuts shared doorway opening |
+| 11 | **Rooms** | `disconnect_rooms` | No | Removes shared opening and restores solid partition wall |
+| 12 | **Structure** | `add_wall` | No | Creates interior partition wall segment {start, end} |
 | 11 | **Structure** | `set_wall_dimensions` | No | Adjusts wall thickness, length, or height |
 | 12 | **Structure** | `place_door` | No | Places standard, sliding, double, pocket, or arch door |
 | 13 | **Structure** | `place_window` | No | Places glazed exterior/interior window with sill elevation |
@@ -155,7 +156,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ## 4. Comprehensive Tool Reference by Category
 
-### Category 1: Rooms (10 Tools)
+### Category 1: Rooms (11 Tools)
 
 #### `create_room`
 * **Title:** Create Room
@@ -241,6 +242,36 @@ window.addEventListener('housespace:agent-result', (event) => {
   | `floorMaterial` | `enum` | No | `ceramic_tile` | Floor surface material texture |
   | `openingWidth` | `number` | No | `2.5` | Doorway gate opening width in feet |
 * **Output:** `{ success: true, roomId, name, dimensions, position, parentRoomId, gateId, areaSqFt }`
+
+---
+
+#### `set_room_notch`
+* **Title:** Set or Adjust Room Notch (L-Shape)
+* **Requires Confirmation:** `false`
+* **Description:** Configures, adjusts, or removes the corner cutout notch of an architectural room to convert it into an L-shaped room, adjust cutout dimensions/corner, or revert to a standard rectangle. Optionally nests an attached space (e.g. bathroom/closet) inside the newly configured notch.
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `roomId` | `string` | Yes | — | ID of the room to configure or adjust |
+  | `enabled` | `boolean` | No | `true` | Set to `false` to remove notch and convert room back to rectangle |
+  | `corner` | `enum` | No | `'bottom-right'` | Cutout corner: `'top-left'`, `'top-right'`, `'bottom-left'`, `'bottom-right'` |
+  | `width` | `number` | No | `w / 2` | Width of cutout in feet (must be less than room width) |
+  | `depth` | `number` | No | `d / 2` | Depth of cutout in feet (must be less than room depth) |
+  | `nestAttachedSpace` | `object` | No | `null` | Optional child space to automatically fit inside cutout `{ name, floorMaterial?, openingWidth? }` |
+* **Output:** `{ success: true, roomId, name, isLShaped, notch, footprint, dimensions, areaSqFt, nestedRoom? }`
+* **Example:**
+  ```json
+  {
+    "roomId": "room-master",
+    "corner": "top-right",
+    "width": 5,
+    "depth": 6,
+    "nestAttachedSpace": {
+      "name": "Ensuite Bath",
+      "floorMaterial": "ceramic_tile"
+    }
+  }
+  ```
 
 ---
 

@@ -313,6 +313,42 @@ class SceneStore {
     return true;
   }
 
+  /**
+   * Sets, adjusts, or removes the corner cutout notch on an existing room,
+   * dynamically updating its 6-vertex polygon footprint and resyncing gates.
+   */
+  public setRoomNotch(roomId: string, notch: CornerNotch | null): boolean {
+    const room = this.data.rooms.find(r => r.id === roomId);
+    if (!room || room.locked) return false;
+    this.saveSnapshot();
+
+    const activeNotch = notch !== null ? notch : undefined;
+    const footprint = activeNotch
+      ? createNotchFootprint(room.width, room.depth, activeNotch)
+      : room.alcove
+      ? createAlcoveFootprint(room.width, room.depth, room.alcove)
+      : undefined;
+
+    const updatedRooms = this.data.rooms.map(r => {
+      if (r.id === roomId) {
+        return {
+          ...r,
+          notch: activeNotch,
+          footprint
+        };
+      }
+      return r;
+    });
+
+    this.data = {
+      ...this.data,
+      rooms: updatedRooms,
+      gates: this.syncGatesForRoom(roomId, updatedRooms)
+    };
+    this.notify();
+    return true;
+  }
+
   public deleteRoom(roomId: string): boolean {
     const room = this.data.rooms.find(r => r.id === roomId);
     if (!room) return false;

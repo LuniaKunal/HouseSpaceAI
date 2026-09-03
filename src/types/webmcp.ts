@@ -99,6 +99,19 @@ export interface FitRoomIntoNotchInput {
   openingWidth?: number;
 }
 
+export interface SetRoomNotchInput {
+  roomId: string;
+  enabled?: boolean; // if false, removes notch and reverts room to rectangle
+  corner?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  width?: number; // width of cutout in feet
+  depth?: number; // depth of cutout in feet
+  nestAttachedSpace?: {
+    name: string;
+    floorMaterial?: RoomFloorMaterial;
+    openingWidth?: number;
+  };
+}
+
 export interface RenameRoomInput {
   roomId: string;
   newName: string;

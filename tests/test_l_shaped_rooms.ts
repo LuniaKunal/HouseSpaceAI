@@ -358,6 +358,62 @@ async function runLShapedRoomsVerification() {
   }
   console.log('   ✅ Successfully converted L-shaped room back to rectangle!\n');
 
+  // Test 12: Dedicated WebMCP set_room_notch Tool
+  console.log('12. Testing Dedicated WebMCP set_room_notch Tool...');
+  // A. Convert standard rectangular room to L-shaped
+  const notchSetRes = await roomTools.set_room_notch.execute({
+    roomId: parentRes.roomId,
+    corner: 'bottom-left',
+    width: 6,
+    depth: 5
+  });
+
+  console.log(`   Room L-shape status: ${notchSetRes.isLShaped}`);
+  console.log(`   Configured notch: ${JSON.stringify(notchSetRes.notch)}`);
+  console.log(`   Polygon vertices count: ${notchSetRes.footprint?.length} (Expected: 6)`);
+  console.log(`   Net Area: ${notchSetRes.areaSqFt} sq ft (Expected: 194)`);
+
+  if (!notchSetRes.isLShaped || notchSetRes.notch?.corner !== 'bottom-left') {
+    throw new Error('set_room_notch failed to configure bottom-left cutout');
+  }
+  if (notchSetRes.areaSqFt !== 16 * 14 - 6 * 5) {
+    throw new Error(`Expected area 194, got ${notchSetRes.areaSqFt}`);
+  }
+
+  // B. Adjust cutout settings and automatically nest an attached space
+  const adjustedRes = await roomTools.set_room_notch.execute({
+    roomId: parentRes.roomId,
+    corner: 'top-left',
+    width: 5,
+    depth: 4,
+    nestAttachedSpace: {
+      name: 'Private Study',
+      floorMaterial: 'hardwood_walnut'
+    }
+  });
+
+  console.log(`   Adjusted notch: ${JSON.stringify(adjustedRes.notch)}`);
+  console.log(`   Nested room created: ${adjustedRes.nestedRoom?.name} (${adjustedRes.nestedRoom?.dimensions.width}x${adjustedRes.nestedRoom?.dimensions.depth} ft)`);
+  if (adjustedRes.notch?.corner !== 'top-left' || adjustedRes.notch?.width !== 5) {
+    throw new Error('set_room_notch failed to adjust cutout corner to top-left');
+  }
+  if (!adjustedRes.nestedRoom || adjustedRes.nestedRoom.name !== 'Private Study') {
+    throw new Error('set_room_notch failed to auto-nest attached space');
+  }
+
+  // C. Revert room to rectangle using enabled: false
+  const revertedRes = await roomTools.set_room_notch.execute({
+    roomId: parentRes.roomId,
+    enabled: false
+  });
+
+  console.log(`   Reverted to rectangle: isLShaped = ${revertedRes.isLShaped}, notch = ${revertedRes.notch}`);
+  console.log(`   Reverted vertices: ${revertedRes.footprint?.length} (Expected: 4)`);
+  if (revertedRes.isLShaped || revertedRes.notch !== null || revertedRes.footprint?.length !== 4) {
+    throw new Error('set_room_notch with enabled: false failed to revert room to rectangle');
+  }
+  console.log('   ✅ set_room_notch successfully configured, adjusted, nested space, and reverted room!\n');
+
   console.log('================================================================');
   console.log('🎉 ALL L-SHAPED ROOMS TESTS PASSED (100%)!');
   console.log('================================================================\n');
