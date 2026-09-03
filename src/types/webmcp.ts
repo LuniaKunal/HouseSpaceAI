@@ -243,6 +243,30 @@ export interface AutoFitRoomFurnitureInput {
   category?: 'storage' | 'bedroom' | 'seating' | 'tables' | 'all';
 }
 
+export interface AutofitHumanCirculationInput {
+  roomId?: string; // Optional: specific room or whole residence
+  minWalkwayWidth?: number; // in feet (default 3.0)
+  doorwayClearance?: number; // in feet (default 3.0)
+  bedSideClearance?: number; // in feet (default 2.5)
+  resolveOverlaps?: boolean; // whether to shift overlapping furniture (default true)
+  alignToWalls?: boolean; // snap wardrobes, desks, beds to walls (default true)
+}
+
+export interface AutofitRoomForHumansInput {
+  roomId: string;
+  optimizeCirculation?: boolean;
+  fitWardrobes?: boolean;
+  ensureDoorClearance?: boolean;
+}
+
+export interface AutofitViewInput {
+  target?: 'scene' | 'room' | 'selection';
+  roomId?: string;
+  viewMode?: CameraViewMode;
+  framing?: 'overview' | 'close_up' | 'human_eye';
+  padding?: number; // in feet (default 4.0)
+}
+
 export interface GetFurnitureCatalogInput {
   category?: string;
   searchQuery?: string;

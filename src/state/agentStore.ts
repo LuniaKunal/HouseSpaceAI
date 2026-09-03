@@ -42,6 +42,9 @@ class AgentStore {
       'set_furniture_dimensions',
       'fit_furniture_to_wall',
       'auto_fit_room_furniture',
+      'autofit_human_circulation',
+      'autofit_room_for_humans',
+      'autofit_view',
       'undo',
       'redo'
     ],

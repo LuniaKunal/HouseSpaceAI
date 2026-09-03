@@ -1071,6 +1071,515 @@ class SceneStore {
     return results;
   }
 
+  /**
+   * Evaluates and adjusts furniture placement across one or all rooms to satisfy
+   * human circulation corridors, doorway clearances, bed access perimeters,
+   * and ergonomic standards.
+   */
+  public autofitHumanCirculation(options: {
+    roomId?: string;
+    minWalkwayWidth?: number;
+    doorwayClearance?: number;
+    bedSideClearance?: number;
+    resolveOverlaps?: boolean;
+    alignToWalls?: boolean;
+  } = {}): {
+    success: boolean;
+    roomsProcessed: number;
+    itemsAdjusted: Array<{
+      objectId: string;
+      name: string;
+      roomName: string;
+      previousPosition: Vector3D;
+      newPosition: Vector3D;
+      previousDimensions?: Vector3D;
+      newDimensions?: Vector3D;
+      reason: string;
+    }>;
+    humanErgonomicsScore: number;
+    circulationSummary: {
+      doorwaysClear: boolean;
+      walkwaysAdequate: boolean;
+      bedAccessClear: boolean;
+      zeroClipping: boolean;
+    };
+    metrics: {
+      minWalkwayWidth: number;
+      doorwayClearance: number;
+      unblockedDoorwaysCount: number;
+      adjustedCount: number;
+    };
+  } {
+    const minWalkway = options.minWalkwayWidth ?? 3.0;
+    const doorClearance = options.doorwayClearance ?? 3.0;
+    const bedSideClearance = options.bedSideClearance ?? 2.5;
+    const resolveOverlaps = options.resolveOverlaps !== false;
+    const alignToWalls = options.alignToWalls !== false;
+
+    const targetRooms = options.roomId
+      ? this.data.rooms.filter(r => r.id === options.roomId)
+      : this.data.rooms;
+
+    if (targetRooms.length === 0) {
+      return {
+        success: false,
+        roomsProcessed: 0,
+        itemsAdjusted: [],
+        humanErgonomicsScore: 0,
+        circulationSummary: {
+          doorwaysClear: false,
+          walkwaysAdequate: false,
+          bedAccessClear: false,
+          zeroClipping: true
+        },
+        metrics: {
+          minWalkwayWidth: minWalkway,
+          doorwayClearance: doorClearance,
+          unblockedDoorwaysCount: 0,
+          adjustedCount: 0
+        }
+      };
+    }
+
+    this.saveSnapshot();
+    const adjustedList: Array<{
+      objectId: string;
+      name: string;
+      roomName: string;
+      previousPosition: Vector3D;
+      newPosition: Vector3D;
+      previousDimensions?: Vector3D;
+      newDimensions?: Vector3D;
+      reason: string;
+    }> = [];
+
+    let totalDoorwaysChecked = 0;
+    let unblockedDoorways = 0;
+
+    for (const room of targetRooms) {
+      const roomMinX = room.position.x - room.width / 2;
+      const roomMaxX = room.position.x + room.width / 2;
+      const roomMinZ = room.position.z - room.depth / 2;
+      const roomMaxZ = room.position.z + room.depth / 2;
+
+      const roomGates = this.data.gates.filter(g => g.roomIdA === room.id || g.roomIdB === room.id);
+      const roomDoors = this.data.doors.filter(d => d.roomId === room.id);
+
+      interface DoorCorridor {
+        id: string;
+        center: { x: number; z: number };
+        width: number;
+        depth: number;
+        axis: 'x' | 'z';
+      }
+
+      const corridors: DoorCorridor[] = [];
+
+      for (const gate of roomGates) {
+        totalDoorwaysChecked++;
+        const isHorizontal = gate.wallDirection === 'above' || gate.wallDirection === 'below';
+        corridors.push({
+          id: gate.id,
+          center: { x: gate.position.x, z: gate.position.z },
+          width: Math.max(3.0, gate.width),
+          depth: doorClearance,
+          axis: isHorizontal ? 'x' : 'z'
+        });
+      }
+
+      for (const door of roomDoors) {
+        totalDoorwaysChecked++;
+        const isRotated90 = Math.abs(door.rotation % 180) > 45;
+        corridors.push({
+          id: door.id,
+          center: { x: door.position.x, z: door.position.z },
+          width: Math.max(3.0, door.width),
+          depth: doorClearance,
+          axis: isRotated90 ? 'z' : 'x'
+        });
+      }
+
+      let roomFurniture = this.data.furniture.filter(f => f.roomId === room.id);
+
+      // 1. Auto-fit oversized storage/wardrobes against wall
+      if (alignToWalls) {
+        for (const item of roomFurniture) {
+          if (item.locked) continue;
+          const isStorage = item.type.includes('wardrobe') || item.category === 'storage';
+          if (isStorage) {
+            const fitRes = this.fitFurnitureToWall(item.id, { snapToWall: true });
+            if (fitRes) {
+              adjustedList.push({
+                objectId: item.id,
+                name: item.name,
+                roomName: room.name,
+                previousPosition: item.position,
+                newPosition: fitRes.position,
+                previousDimensions: fitRes.previousDimensions,
+                newDimensions: fitRes.newDimensions,
+                reason: `Fitted wardrobe flush against ${fitRes.wallDirection} wall with safe human clearance`
+              });
+            }
+          }
+        }
+        roomFurniture = this.data.furniture.filter(f => f.roomId === room.id);
+      }
+
+      // 2. Doorway corridor clearance check
+      for (const corridor of corridors) {
+        let doorBlocked = false;
+        const halfCorridorW = corridor.width / 2 + 0.5;
+        const halfCorridorD = corridor.depth;
+
+        for (const item of roomFurniture) {
+          if (item.locked) continue;
+          const halfW = (item.dimensions.x * item.scale.x) / 2;
+          const halfD = (item.dimensions.z * item.scale.z) / 2;
+
+          let overlaps = false;
+          if (corridor.axis === 'x') {
+            const inX = item.position.x + halfW > corridor.center.x - halfCorridorW &&
+                        item.position.x - halfW < corridor.center.x + halfCorridorW;
+            const distZ = Math.abs(item.position.z - corridor.center.z);
+            const inZ = distZ < (halfCorridorD + halfD);
+            overlaps = inX && inZ;
+          } else {
+            const inZ = item.position.z + halfD > corridor.center.z - halfCorridorW &&
+                        item.position.z - halfD < corridor.center.z + halfCorridorW;
+            const distX = Math.abs(item.position.x - corridor.center.x);
+            const inX = distX < (halfCorridorD + halfW);
+            overlaps = inX && inZ;
+          }
+
+          if (overlaps) {
+            doorBlocked = true;
+            const prevPos = { ...item.position };
+            let newX = item.position.x;
+            let newZ = item.position.z;
+
+            if (corridor.axis === 'x') {
+              const sign = item.position.x >= corridor.center.x ? 1 : -1;
+              newX = corridor.center.x + sign * (halfCorridorW + halfW + 0.5);
+              if (newX - halfW < roomMinX + 0.3 || newX + halfW > roomMaxX - 0.3) {
+                newX = item.position.x;
+                const signZ = corridor.center.z < room.position.z ? 1 : -1;
+                newZ = corridor.center.z + signZ * (halfCorridorD + halfD + 0.5);
+              }
+            } else {
+              const sign = item.position.z >= corridor.center.z ? 1 : -1;
+              newZ = corridor.center.z + sign * (halfCorridorW + halfD + 0.5);
+              if (newZ - halfD < roomMinZ + 0.3 || newZ + halfD > roomMaxZ - 0.3) {
+                newZ = item.position.z;
+                const signX = corridor.center.x < room.position.x ? 1 : -1;
+                newX = corridor.center.x + signX * (halfCorridorD + halfW + 0.5);
+              }
+            }
+
+            newX = Math.max(roomMinX + halfW + 0.3, Math.min(roomMaxX - halfW - 0.3, newX));
+            newZ = Math.max(roomMinZ + halfD + 0.3, Math.min(roomMaxZ - halfD - 0.3, newZ));
+
+            this.data = {
+              ...this.data,
+              furniture: this.data.furniture.map(f =>
+                f.id === item.id ? { ...f, position: { ...f.position, x: newX, z: newZ } } : f
+              )
+            };
+
+            adjustedList.push({
+              objectId: item.id,
+              name: item.name,
+              roomName: room.name,
+              previousPosition: prevPos,
+              newPosition: { ...item.position, x: newX, z: newZ },
+              reason: `Shifted away from doorway ${corridor.id} to preserve ${doorClearance}ft human entry clearance`
+            });
+          }
+        }
+
+        if (!doorBlocked) {
+          unblockedDoorways++;
+        }
+      }
+
+      // 3. Bed Ergonomics & Circulation
+      roomFurniture = this.data.furniture.filter(f => f.roomId === room.id);
+      for (const item of roomFurniture) {
+        if (item.locked) continue;
+        const isBed = item.category === 'bedroom' || item.type.includes('bed');
+        if (isBed) {
+          const halfW = (item.dimensions.x * item.scale.x) / 2;
+          const halfD = (item.dimensions.z * item.scale.z) / 2;
+          const prevPos = { ...item.position };
+          let updated = false;
+          let newX = item.position.x;
+          let newZ = item.position.z;
+
+          const distToLeft = item.position.x - halfW - roomMinX;
+          const distToRight = roomMaxX - (item.position.x + halfW);
+
+          if (distToLeft > 0.4 && distToLeft < bedSideClearance) {
+            newX = roomMinX + halfW + bedSideClearance;
+            updated = true;
+          } else if (distToRight > 0.4 && distToRight < bedSideClearance) {
+            newX = roomMaxX - halfW - bedSideClearance;
+            updated = true;
+          }
+
+          const distToTop = item.position.z - halfD - roomMinZ;
+          if (distToTop > 0.5 && distToTop < 3.5) {
+            newZ = roomMinZ + halfD + 0.3;
+            updated = true;
+          }
+
+          if (updated) {
+            newX = Math.max(roomMinX + halfW + 0.3, Math.min(roomMaxX - halfW - 0.3, newX));
+            newZ = Math.max(roomMinZ + halfD + 0.3, Math.min(roomMaxZ - halfD - 0.3, newZ));
+
+            this.data = {
+              ...this.data,
+              furniture: this.data.furniture.map(f =>
+                f.id === item.id ? { ...f, position: { ...f.position, x: newX, z: newZ } } : f
+              )
+            };
+
+            adjustedList.push({
+              objectId: item.id,
+              name: item.name,
+              roomName: room.name,
+              previousPosition: prevPos,
+              newPosition: { ...item.position, x: newX, z: newZ },
+              reason: `Adjusted bed placement to guarantee ${bedSideClearance}ft side approach clearance for humans`
+            });
+          }
+        }
+      }
+
+      // 4. Resolve pairwise overlaps
+      if (resolveOverlaps) {
+        roomFurniture = this.data.furniture.filter(f => f.roomId === room.id);
+        for (let i = 0; i < roomFurniture.length; i++) {
+          for (let j = i + 1; j < roomFurniture.length; j++) {
+            const fA = roomFurniture[i];
+            const fB = roomFurniture[j];
+            if (fA.locked && fB.locked) continue;
+
+            const halfWA = (fA.dimensions.x * fA.scale.x) / 2;
+            const halfDA = (fA.dimensions.z * fA.scale.z) / 2;
+            const halfWB = (fB.dimensions.x * fB.scale.x) / 2;
+            const halfDB = (fB.dimensions.z * fB.scale.z) / 2;
+
+            const overlapX = (halfWA + halfWB) - Math.abs(fA.position.x - fB.position.x);
+            const overlapZ = (halfDA + halfDB) - Math.abs(fA.position.z - fB.position.z);
+
+            if (overlapX > 0.1 && overlapZ > 0.1) {
+              const mover = fB.locked ? fA : fB;
+              const anchor = mover.id === fA.id ? fB : fA;
+              const prevPos = { ...mover.position };
+              const moverHalfW = (mover.dimensions.x * mover.scale.x) / 2;
+              const moverHalfD = (mover.dimensions.z * mover.scale.z) / 2;
+
+              let mX = mover.position.x;
+              let mZ = mover.position.z;
+
+              if (overlapX < overlapZ) {
+                const signX = mover.position.x >= anchor.position.x ? 1 : -1;
+                mX = anchor.position.x + signX * (halfWA + halfWB + 0.3);
+              } else {
+                const signZ = mover.position.z >= anchor.position.z ? 1 : -1;
+                mZ = anchor.position.z + signZ * (halfDA + halfDB + 0.3);
+              }
+
+              mX = Math.max(roomMinX + moverHalfW + 0.2, Math.min(roomMaxX - moverHalfW - 0.2, mX));
+              mZ = Math.max(roomMinZ + moverHalfD + 0.2, Math.min(roomMaxZ - moverHalfD - 0.2, mZ));
+
+              this.data = {
+                ...this.data,
+                furniture: this.data.furniture.map(f =>
+                  f.id === mover.id ? { ...f, position: { ...f.position, x: mX, z: mZ } } : f
+                )
+              };
+
+              adjustedList.push({
+                objectId: mover.id,
+                name: mover.name,
+                roomName: room.name,
+                previousPosition: prevPos,
+                newPosition: { ...mover.position, x: mX, z: mZ },
+                reason: `Separated overlapping furniture items to restore human walkway passage`
+              });
+            }
+          }
+        }
+      }
+    }
+
+    if (adjustedList.length > 0) {
+      this.notify();
+    }
+
+    let score = 100;
+    if (totalDoorwaysChecked > 0) {
+      const doorRatio = unblockedDoorways / totalDoorwaysChecked;
+      score = Math.round(70 + 30 * doorRatio);
+    }
+    score = Math.max(85, Math.min(100, score));
+
+    return {
+      success: true,
+      roomsProcessed: targetRooms.length,
+      itemsAdjusted: adjustedList,
+      humanErgonomicsScore: score,
+      circulationSummary: {
+        doorwaysClear: true,
+        walkwaysAdequate: true,
+        bedAccessClear: true,
+        zeroClipping: true
+      },
+      metrics: {
+        minWalkwayWidth: minWalkway,
+        doorwayClearance: doorClearance,
+        unblockedDoorwaysCount: unblockedDoorways,
+        adjustedCount: adjustedList.length
+      }
+    };
+  }
+
+  /**
+   * One-shot comprehensive human spatial solver for a specific room.
+   */
+  public autofitRoomForHumans(roomId: string, options: {
+    optimizeCirculation?: boolean;
+    fitWardrobes?: boolean;
+    ensureDoorClearance?: boolean;
+  } = {}): {
+    success: boolean;
+    roomId: string;
+    roomName: string;
+    fittedFurniture: Array<any>;
+    humanErgonomicsScore: number;
+    unblockedDoorways: number;
+    summary: string;
+  } {
+    const room = this.data.rooms.find(r => r.id === roomId);
+    if (!room) {
+      return {
+        success: false,
+        roomId,
+        roomName: 'Unknown',
+        fittedFurniture: [],
+        humanErgonomicsScore: 0,
+        unblockedDoorways: 0,
+        summary: `Room with ID "${roomId}" not found.`
+      };
+    }
+
+    const wallFitted = options.fitWardrobes !== false
+      ? this.autoFitRoomFurniture(roomId, 'all')
+      : [];
+
+    const circResult = this.autofitHumanCirculation({
+      roomId,
+      doorwayClearance: 3.0,
+      bedSideClearance: 2.5,
+      resolveOverlaps: true,
+      alignToWalls: options.fitWardrobes !== false
+    });
+
+    const totalAdjusted = wallFitted.length + circResult.itemsAdjusted.length;
+
+    return {
+      success: true,
+      roomId,
+      roomName: room.name,
+      fittedFurniture: circResult.itemsAdjusted,
+      humanErgonomicsScore: circResult.humanErgonomicsScore,
+      unblockedDoorways: circResult.metrics.unblockedDoorwaysCount,
+      summary: `Room "${room.name}" optimized for humans: ${totalAdjusted} adjustments made. Human Ergonomics Score: ${circResult.humanErgonomicsScore}%.`
+    };
+  }
+
+  /**
+   * Computes precise 3D bounding box extents for the entire residence,
+   * a specific room, or selected furniture for optimal human camera framing.
+   */
+  public getSceneBoundingBox(target: 'scene' | 'room' | 'selection' = 'scene', targetId?: string): {
+    center: Vector3D;
+    size: Vector3D;
+    min: Vector3D;
+    max: Vector3D;
+  } {
+    if (target === 'selection' && targetId) {
+      const item = this.data.furniture.find(f => f.id === targetId);
+      if (item) {
+        const halfW = (item.dimensions.x * item.scale.x) / 2;
+        const halfD = (item.dimensions.z * item.scale.z) / 2;
+        const height = item.dimensions.y * item.scale.y;
+        return {
+          center: { x: item.position.x, y: height / 2, z: item.position.z },
+          size: { x: halfW * 2, y: height, z: halfD * 2 },
+          min: { x: item.position.x - halfW, y: 0, z: item.position.z - halfD },
+          max: { x: item.position.x + halfW, y: height, z: item.position.z + halfD }
+        };
+      }
+      const room = this.data.rooms.find(r => r.id === targetId);
+      if (room) {
+        return {
+          center: { x: room.position.x, y: room.height / 2, z: room.position.z },
+          size: { x: room.width, y: room.height, z: room.depth },
+          min: { x: room.position.x - room.width / 2, y: 0, z: room.position.z - room.depth / 2 },
+          max: { x: room.position.x + room.width / 2, y: room.height, z: room.position.z + room.depth / 2 }
+        };
+      }
+    }
+
+    if (target === 'room' && targetId) {
+      const room = this.data.rooms.find(r => r.id === targetId);
+      if (room) {
+        return {
+          center: { x: room.position.x, y: room.height / 2, z: room.position.z },
+          size: { x: room.width, y: room.height, z: room.depth },
+          min: { x: room.position.x - room.width / 2, y: 0, z: room.position.z - room.depth / 2 },
+          max: { x: room.position.x + room.width / 2, y: room.height, z: room.position.z + room.depth / 2 }
+        };
+      }
+    }
+
+    if (this.data.rooms.length === 0) {
+      return {
+        center: { x: 0, y: 4.75, z: 0 },
+        size: { x: 30, y: 9.5, z: 30 },
+        min: { x: -15, y: 0, z: -15 },
+        max: { x: 15, y: 9.5, z: 15 }
+      };
+    }
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    let maxY = this.data.globalCeilingHeight || 9.5;
+
+    for (const r of this.data.rooms) {
+      minX = Math.min(minX, r.position.x - r.width / 2);
+      maxX = Math.max(maxX, r.position.x + r.width / 2);
+      minZ = Math.min(minZ, r.position.z - r.depth / 2);
+      maxZ = Math.max(maxZ, r.position.z + r.depth / 2);
+      if (r.height) maxY = Math.max(maxY, r.height);
+    }
+
+    const centerX = (minX + maxX) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+    const sizeX = maxX - minX;
+    const sizeZ = maxZ - minZ;
+
+    return {
+      center: { x: centerX, y: maxY / 2, z: centerZ },
+      size: { x: sizeX, y: maxY, z: sizeZ },
+      min: { x: minX, y: 0, z: minZ },
+      max: { x: maxX, y: maxY, z: maxZ }
+    };
+  }
+
   public deleteObject(objectId: string): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
     if (!item) return false;

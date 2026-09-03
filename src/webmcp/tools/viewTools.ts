@@ -6,7 +6,8 @@ import {
   TakeScreenshotInput,
   GetSceneStateInput,
   SelectItemInput,
-  SetGridSnapInput
+  SetGridSnapInput,
+  AutofitViewInput
 } from '../../types/webmcp';
 
 export const viewTools = {
@@ -192,6 +193,127 @@ export const viewTools = {
         `Grid snap ${input.enabled ? 'enabled' : 'disabled'}${input.size ? ` (${input.size} ft)` : ''}`
       );
       return { success: true, enabled: input.enabled, size: input.size || uiStore.getState().gridSnapSize };
+    }
+  },
+
+  autofit_view: {
+    name: 'autofit_view',
+    title: 'Auto-Fit View',
+    category: 'Scene / View' as const,
+    description: 'Auto-fits camera viewport framing for human visual inspection, centering on the entire residence floor plan, a designated room, or a selected furniture element with optimal human eye height and perspective.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        target: {
+          type: 'string',
+          enum: ['scene', 'room', 'selection'],
+          description: 'Framing focus target (default "scene")'
+        },
+        roomId: {
+          type: 'string',
+          description: 'Room ID to focus on when target is "room"'
+        },
+        viewMode: {
+          type: 'string',
+          enum: ['3d', '2d', 'walk'],
+          description: 'Optional view mode override'
+        },
+        framing: {
+          type: 'string',
+          enum: ['overview', 'close_up', 'human_eye'],
+          description: 'Camera framing style (default "overview")'
+        },
+        padding: {
+          type: 'number',
+          description: 'Clearance padding around target in feet (default 4.0)'
+        }
+      }
+    },
+    execute: async (input: AutofitViewInput = {}) => {
+      const target = input.target || 'scene';
+      const framing = input.framing || 'overview';
+      const padding = input.padding ?? 4.0;
+
+      if (input.viewMode) {
+        uiStore.setCameraMode(input.viewMode);
+      }
+
+      const activeUI = uiStore.getState();
+      let targetId = input.roomId;
+      if (target === 'selection') {
+        targetId = activeUI.selectedId || undefined;
+      } else if (target === 'room' && !targetId) {
+        targetId = activeUI.selectedId || undefined;
+      }
+
+      const bbox = sceneStore.getSceneBoundingBox(target, targetId);
+      const maxSpan = Math.max(bbox.size.x, bbox.size.z) + padding;
+      const cameraMode = input.viewMode || activeUI.cameraMode;
+
+      let cameraPos: { x: number; y: number; z: number };
+      let cameraLookTarget: { x: number; y: number; z: number };
+      let fov = 45;
+
+      if (framing === 'human_eye' || cameraMode === 'walk') {
+        cameraPos = {
+          x: bbox.center.x,
+          y: 5.5,
+          z: bbox.center.z + bbox.size.z * 0.45
+        };
+        cameraLookTarget = {
+          x: bbox.center.x,
+          y: 4.5,
+          z: bbox.center.z - bbox.size.z * 0.25
+        };
+        fov = 72;
+      } else if (cameraMode === '2d') {
+        cameraPos = {
+          x: bbox.center.x,
+          y: Math.max(35, maxSpan * 1.5),
+          z: bbox.center.z + 0.001
+        };
+        cameraLookTarget = {
+          x: bbox.center.x,
+          y: 0,
+          z: bbox.center.z
+        };
+      } else {
+        const mult = framing === 'close_up' ? 0.9 : 1.35;
+        cameraPos = {
+          x: bbox.center.x,
+          y: Math.max(18, maxSpan * mult * 0.8),
+          z: bbox.center.z + Math.max(22, maxSpan * mult)
+        };
+        cameraLookTarget = {
+          x: bbox.center.x,
+          y: bbox.center.y * 0.5,
+          z: bbox.center.z
+        };
+      }
+
+      uiStore.autofitCamera({
+        position: cameraPos,
+        target: cameraLookTarget,
+        fov
+      });
+
+      uiStore.recordAgentAction(
+        'autofit_view',
+        `Auto-fitted camera view on ${target}${targetId ? ` ("${targetId}")` : ''} for human inspection (${framing})`
+      );
+
+      return {
+        success: true,
+        target,
+        targetId: targetId || null,
+        framing,
+        cameraMode,
+        boundingCenter: bbox.center,
+        boundingSize: bbox.size,
+        cameraPosition: cameraPos,
+        cameraLookTarget
+      };
     }
   }
 };

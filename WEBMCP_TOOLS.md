@@ -1,7 +1,7 @@
 # HouseSpace WebMCP Tools Reference Guide
 
 > **W3C WebMCP Specification & Agent Interoperability Guide**  
-> **Total Available Tools:** 44 Executable Tools  
+> **Total Available Tools:** 49 Executable Tools  
 > **Categories:** 7 (Rooms, Structure, Objects, Materials, Scene / View, Workflow, CAD Synthesis)  
 > **Canonical Spatial Units:** Feet (Imperial) for dimensions and coordinates; degrees for Euler rotation; Three.js converts to SI metres internally ($1\text{ ft} = 0.3048\text{ m}$).
 
@@ -22,7 +22,7 @@ HouseSpace is built from the ground up to support collaborative spatial design w
                └───────────────────┼───────────────────┘
                                    ▼
                     WebMCP Central Tool Registry
-                     (44 Schema-Validated Tools)
+                     (49 Schema-Validated Tools)
                                    │
                ┌───────────────────┴───────────────────┐
                ▼                                       ▼
@@ -101,7 +101,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-## 3. Master WebMCP Tool Catalog Summary (46 Tools)
+## 3. Master WebMCP Tool Catalog Summary (49 Tools)
 
 | # | Category | Tool Name | Human Confirmation | Description Summary |
 |---|:---|:---|:---:|:---|
@@ -117,40 +117,43 @@ window.addEventListener('housespace:agent-result', (event) => {
 | 10 | **Rooms** | `connect_rooms` | No | Snaps rooms flush and cuts shared doorway opening |
 | 11 | **Rooms** | `disconnect_rooms` | No | Removes shared opening and restores solid partition wall |
 | 12 | **Structure** | `add_wall` | No | Creates interior partition wall segment {start, end} |
-| 11 | **Structure** | `set_wall_dimensions` | No | Adjusts wall thickness, length, or height |
-| 12 | **Structure** | `place_door` | No | Places standard, sliding, double, pocket, or arch door |
-| 13 | **Structure** | `place_window` | No | Places glazed exterior/interior window with sill elevation |
-| 14 | **Structure** | `change_ceiling_height` | No | Adjusts ceiling height globally or for a specific room |
-| 15 | **Objects** | `add_furniture` | No | Places 3D furniture item at coordinates with validation |
-| 16 | **Objects** | `move_object` | No | Translates furniture piece in scene feet |
-| 17 | **Objects** | `rotate_object` | No | Rotates furniture piece (Euler degrees, yaw on Y) |
-| 18 | **Objects** | `scale_object` | No | Scales object along {x, y, z} axes |
-| 19 | **Objects** | `delete_object` | No | Deletes specific furniture item from scene |
-| 20 | **Objects** | `set_transform_lock` | No | Locks/unlocks room or furniture against accidental edits |
-| 21 | **Objects** | `set_furniture_dimensions` | No | Sets precise width, height, and depth dimensions in feet |
-| 22 | **Objects** | `fit_furniture_to_wall` | No | Resizes/snaps oversized furniture flush against adjacent wall |
-| 23 | **Objects** | `auto_fit_room_furniture` | No | Batch detects & auto-resizes oversized furniture in a room |
-| 24 | **Objects** | `get_furniture_catalog` | No | Discovers all 32 human catalog items, dimensions, and materials |
-| 25 | **Materials** | `apply_material` | No | Applies architectural material/color to floor, wall, or object |
-| 26 | **Materials** | `change_texture` | No | Updates PBR texture mapping (roughness, scale, metalness) |
-| 27 | **Scene / View** | `generate_floor_plan` | No | Switches to 2D CAD blueprint view with dimensions |
-| 28 | **Scene / View** | `switch_view` | No | Switches viewport camera between 3D, 2D, and Walk modes |
-| 29 | **Scene / View** | `take_screenshot` | No | Captures viewport canvas as high-res PNG or JPEG |
-| 30 | **Scene / View** | `get_scene_state` | No | Grounding query returning all rooms, objects, and metrics |
-| 31 | **Scene / View** | `select_item` | No | Selects item in viewport and opens property inspector |
-| 32 | **Scene / View** | `set_grid_snap` | No | Configures grid snapping state and increment in feet |
-| 33 | **Workflow** | `undo` | No | Reverts last design modification |
-| 34 | **Workflow** | `redo` | No | Re-applies undone design modification |
-| 35 | **Workflow** | `export_model` | ⚠️ **Required** | Exports scene to GLB, OBJ, IFC4 (BIM), or JSON format |
-| 36 | **Workflow** | `set_confirmation_policy` | No | Configures human-in-the-loop trust boundary & whitelists |
-| 37 | **Workflow** | `create_project` | No | Creates new blank project workspace |
-| 38 | **Workflow** | `open_project` | No | Loads existing project workspace by ID |
-| 39 | **Workflow** | `list_projects` | No | Lists all saved user projects with metadata |
-| 40 | **Workflow** | `delete_project` | ⚠️ **Required** | Permanently deletes project workspace |
-| 41 | **Workflow** | `duplicate_project` | No | Clones current project into duplicate copy |
-| 42 | **Workflow** | `load_sample_project` | No | Loads pre-built '3BHK_Sample' or '4BHK_Sample' |
-| 43 | **Workflow** | `clear_scene` | ⚠️ **Required** | Clears all rooms, walls, and furniture from canvas |
-| 44 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from benchmark CAD blueprint (Upload coming soon) |
+| 13 | **Structure** | `set_wall_dimensions` | No | Adjusts wall thickness, length, or height |
+| 14 | **Structure** | `place_door` | No | Places standard, sliding, double, pocket, or arch door |
+| 15 | **Structure** | `place_window` | No | Places glazed exterior/interior window with sill elevation |
+| 16 | **Structure** | `change_ceiling_height` | No | Adjusts ceiling height globally or for a specific room |
+| 17 | **Objects** | `add_furniture` | No | Places 3D furniture item at coordinates with validation |
+| 18 | **Objects** | `move_object` | No | Translates furniture piece in scene feet |
+| 19 | **Objects** | `rotate_object` | No | Rotates furniture piece (Euler degrees, yaw on Y) |
+| 20 | **Objects** | `scale_object` | No | Scales object along {x, y, z} axes |
+| 21 | **Objects** | `delete_object` | No | Deletes specific furniture item from scene |
+| 22 | **Objects** | `set_transform_lock` | No | Locks/unlocks room or furniture against accidental edits |
+| 23 | **Objects** | `set_furniture_dimensions` | No | Sets precise width, height, and depth dimensions in feet |
+| 24 | **Objects** | `fit_furniture_to_wall` | No | Resizes/snaps oversized furniture flush against adjacent wall |
+| 25 | **Objects** | `auto_fit_room_furniture` | No | Batch detects & auto-resizes oversized furniture in a room |
+| 26 | **Objects** | `autofit_human_circulation` | No | Solves doorway corridors, walkways, and human circulation clearances |
+| 27 | **Objects** | `autofit_room_for_humans` | No | Comprehensive one-shot human spatial and ergonomic room solver |
+| 28 | **Objects** | `get_furniture_catalog` | No | Discovers all 32 human catalog items, dimensions, and materials |
+| 29 | **Materials** | `apply_material` | No | Applies architectural material/color to floor, wall, or object |
+| 30 | **Materials** | `change_texture` | No | Updates PBR texture mapping (roughness, scale, metalness) |
+| 31 | **Scene / View** | `generate_floor_plan` | No | Switches to 2D CAD blueprint view with dimensions |
+| 32 | **Scene / View** | `switch_view` | No | Switches viewport camera between 3D, 2D, and Walk modes |
+| 33 | **Scene / View** | `autofit_view` | No | Auto-frames viewport for human eyes (scene, room, or selection) |
+| 34 | **Scene / View** | `take_screenshot` | No | Captures viewport canvas as high-res PNG or JPEG |
+| 35 | **Scene / View** | `get_scene_state` | No | Grounding query returning all rooms, objects, and metrics |
+| 36 | **Scene / View** | `select_item` | No | Selects item in viewport and opens property inspector |
+| 37 | **Scene / View** | `set_grid_snap` | No | Configures grid snapping state and increment in feet |
+| 38 | **Workflow** | `undo` | No | Reverts last design modification |
+| 39 | **Workflow** | `redo` | No | Re-applies undone design modification |
+| 40 | **Workflow** | `export_model` | ⚠️ **Required** | Exports scene to GLB, OBJ, IFC4 (BIM), or JSON format |
+| 41 | **Workflow** | `set_confirmation_policy` | No | Configures human-in-the-loop trust boundary & whitelists |
+| 42 | **Workflow** | `create_project` | No | Creates new blank project workspace |
+| 43 | **Workflow** | `open_project` | No | Loads existing project workspace by ID |
+| 44 | **Workflow** | `list_projects` | No | Lists all saved user projects with metadata |
+| 45 | **Workflow** | `delete_project` | ⚠️ **Required** | Permanently deletes project workspace |
+| 46 | **Workflow** | `duplicate_project` | No | Clones current project into duplicate copy |
+| 47 | **Workflow** | `load_sample_project` | No | Loads pre-built '3BHK_Sample' or '4BHK_Sample' |
+| 48 | **Workflow** | `clear_scene` | ⚠️ **Required** | Clears all rooms, walls, and furniture from canvas |
+| 49 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from benchmark CAD blueprint (Upload coming soon) |
 
 ---
 
@@ -438,7 +441,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-### Category 3: Objects / Furniture (10 Tools)
+### Category 3: Objects / Furniture (12 Tools)
 
 #### `add_furniture`
 * **Title:** Add Furniture
@@ -608,6 +611,67 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
+#### `autofit_human_circulation`
+* **Title:** Auto-Fit Human Circulation
+* **Requires Confirmation:** `false`
+* **Description:** Evaluates and automatically adjusts furniture layouts to enforce human ergonomic anthropometric standards: preserves a minimum 3.0 ft unblocked doorway corridor in front of every threshold, ensures 2.5 ft bed access clearance, eliminates furniture overlaps, and clamps pieces within safe wall clearances.
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `roomId` | `string` | No | All rooms | Optional room ID filter. If omitted, solves circulation across the entire residence |
+  | `minWalkwayWidth` | `number` | No | `3.0` | Minimum main walkway passage width in feet |
+  | `doorwayClearance` | `number` | No | `3.0` | Clearance corridor depth in front of doors and gates in feet |
+  | `bedSideClearance` | `number` | No | `2.5` | Clearance on accessible bed sides in feet |
+  | `resolveOverlaps` | `boolean` | No | `true` | Whether to automatically shift overlapping furniture items |
+  | `alignToWalls` | `boolean` | No | `true` | Whether to snap wardrobes, storage, and beds to adjacent walls |
+* **Output:**
+  ```json
+  {
+    "success": true,
+    "roomsProcessed": 5,
+    "itemsAdjusted": [
+      {
+        "objectId": "obj-wardrobe-01",
+        "name": "Sliding Wardrobe",
+        "roomName": "Master Bedroom",
+        "previousPosition": { "x": 4.5, "y": 0, "z": 8.2 },
+        "newPosition": { "x": 7.1, "y": 0, "z": 8.2 },
+        "reason": "Shifted away from doorway gate-mb-01 to preserve 3ft human entry clearance"
+      }
+    ],
+    "humanErgonomicsScore": 98,
+    "circulationSummary": {
+      "doorwaysClear": true,
+      "walkwaysAdequate": true,
+      "bedAccessClear": true,
+      "zeroClipping": true
+    },
+    "metrics": {
+      "minWalkwayWidth": 3.0,
+      "doorwayClearance": 3.0,
+      "unblockedDoorwaysCount": 8,
+      "adjustedCount": 3
+    }
+  }
+  ```
+
+---
+
+#### `autofit_room_for_humans`
+* **Title:** Auto-Fit Room for Humans
+* **Requires Confirmation:** `false`
+* **Description:** Comprehensive one-shot human spatial solver for a single room. Resizes oversized wardrobes/beds against walls, clears doorway entrance zones, separates overlapping furniture, and validates human circulation comfort.
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `roomId` | `string` | Yes | — | ID of the target room |
+  | `optimizeCirculation` | `boolean` | No | `true` | Whether to solve human walkways and doorway corridors |
+  | `fitWardrobes` | `boolean` | No | `true` | Whether to resize oversized storage and snap to wall |
+  | `ensureDoorClearance` | `boolean` | No | `true` | Whether to unblock entry door swing zones |
+* **Output:** `{ success: true, roomId, roomName, fittedFurniture, humanErgonomicsScore, unblockedDoorways, summary }`
+
+---
+
 #### `get_furniture_catalog`
 * **Title:** Get Furniture Catalog
 * **Requires Confirmation:** `false`
@@ -672,7 +736,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-### Category 5: Scene / View (6 Tools)
+### Category 5: Scene / View (7 Tools)
 
 #### `generate_floor_plan`
 * **Title:** Generate Floor Plan
@@ -698,6 +762,34 @@ window.addEventListener('housespace:agent-result', (event) => {
   | `angle` | `enum` | No | `'perspective'` | View angle: `'perspective'`, `'top'`, `'north'`, `'east'`, `'south'`, `'west'`, `'inside'` |
   | `targetRoomId` | `string` | No | — | Focus camera on a specific room ID |
 * **Output:** `{ success: true, mode, angle, targetRoomId }`
+
+---
+
+#### `autofit_view`
+* **Title:** Auto-Fit View
+* **Requires Confirmation:** `false`
+* **Description:** Auto-fits camera viewport framing for human visual inspection. Calculates the exact 3D extents of the entire residence floor plan, a designated room, or a selected furniture element, and positions the camera with optimal human eye height, angle, and padding.
+* **Input Schema:**
+  | Property | Type | Required | Default | Description |
+  |---|---|:---:|---|---|
+  | `target` | `enum` | No | `'scene'` | Framing focus target: `'scene'` \| `'room'` \| `'selection'` |
+  | `roomId` | `string` | No | Active selection | Specific room ID when target is `'room'` |
+  | `viewMode` | `enum` | No | Current | View mode override: `'3d'` \| `'2d'` \| `'walk'` |
+  | `framing` | `enum` | No | `'overview'` | Framing style: `'overview'` (full scene), `'close_up'` (focused), `'human_eye'` (eye-level 5.5ft height) |
+  | `padding` | `number` | No | `4.0` | Perimeter clearance padding in feet |
+* **Output:**
+  ```json
+  {
+    "success": true,
+    "target": "scene",
+    "framing": "overview",
+    "cameraMode": "3d",
+    "boundingCenter": { "x": 0, "y": 4.75, "z": 0 },
+    "boundingSize": { "x": 48.0, "y": 9.5, "z": 42.0 },
+    "cameraPosition": { "x": 0, "y": 38.5, "z": 52.0 },
+    "cameraLookTarget": { "x": 0, "y": 2.375, "z": 0 }
+  }
+  ```
 
 ---
 

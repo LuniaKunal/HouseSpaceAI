@@ -10,6 +10,8 @@ import {
   SetFurnitureDimensionsInput,
   FitFurnitureToWallInput,
   AutoFitRoomFurnitureInput,
+  AutofitHumanCirculationInput,
+  AutofitRoomForHumansInput,
   GetFurnitureCatalogInput
 } from '../../types/webmcp';
 import { isPointInRoom } from '../../geometry/roomGeometry';
@@ -377,6 +379,98 @@ export const objectTools = {
         fittedCount: results.length,
         items: results
       };
+    }
+  },
+
+  autofit_human_circulation: {
+    name: 'autofit_human_circulation',
+    title: 'Auto-Fit Human Circulation',
+    category: 'Objects' as const,
+    description: 'Evaluates and auto-adjusts furniture arrangements for human ergonomics, anthropometric comfort, and unobstructed circulation corridors (doorway clearances, bed approach paths, dining perimeter, and minimum 3ft walkways).',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        roomId: {
+          type: 'string',
+          description: 'Optional room ID filter. If omitted, optimizes circulation for all rooms across the whole residence.'
+        },
+        minWalkwayWidth: {
+          type: 'number',
+          description: 'Minimum walkway width in feet (default 3.0)'
+        },
+        doorwayClearance: {
+          type: 'number',
+          description: 'Clearance in front of doors and gates in feet (default 3.0)'
+        },
+        bedSideClearance: {
+          type: 'number',
+          description: 'Clearance on accessible bed sides in feet (default 2.5)'
+        },
+        resolveOverlaps: {
+          type: 'boolean',
+          description: 'Whether to shift overlapping furniture items (default true)'
+        },
+        alignToWalls: {
+          type: 'boolean',
+          description: 'Whether to snap wardrobes, storage, and beds to adjacent walls (default true)'
+        }
+      }
+    },
+    execute: async (input: AutofitHumanCirculationInput = {}) => {
+      const res = sceneStore.autofitHumanCirculation(input);
+      uiStore.recordAgentAction(
+        'autofit_human_circulation',
+        `Auto-fitted human circulation: ${res.itemsAdjusted.length} items adjusted across ${res.roomsProcessed} room(s). Human Ergonomics Score: ${res.humanErgonomicsScore}%`,
+        input.roomId
+      );
+      return res;
+    }
+  },
+
+  autofit_room_for_humans: {
+    name: 'autofit_room_for_humans',
+    title: 'Auto-Fit Room for Humans',
+    category: 'Objects' as const,
+    description: 'Comprehensive one-shot human spatial solver for a designated room: fits wardrobes to walls, ensures 3ft doorway swing clearances, and resolves human circulation.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        roomId: {
+          type: 'string',
+          description: 'ID of the room to optimize for human occupants'
+        },
+        optimizeCirculation: {
+          type: 'boolean',
+          description: 'Whether to resolve human walkway and doorway clearances (default true)'
+        },
+        fitWardrobes: {
+          type: 'boolean',
+          description: 'Whether to resize oversized storage and snap to wall (default true)'
+        },
+        ensureDoorClearance: {
+          type: 'boolean',
+          description: 'Whether to unblock entry door swing corridors (default true)'
+        }
+      },
+      required: ['roomId']
+    },
+    execute: async (input: AutofitRoomForHumansInput) => {
+      const res = sceneStore.autofitRoomForHumans(input.roomId, {
+        optimizeCirculation: input.optimizeCirculation,
+        fitWardrobes: input.fitWardrobes,
+        ensureDoorClearance: input.ensureDoorClearance
+      });
+      if (!res.success) {
+        throw new Error(res.summary);
+      }
+      uiStore.recordAgentAction(
+        'autofit_room_for_humans',
+        res.summary,
+        input.roomId
+      );
+      return res;
     }
   },
 

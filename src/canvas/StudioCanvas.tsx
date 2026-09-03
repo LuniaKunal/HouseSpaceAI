@@ -588,6 +588,24 @@ export const StudioCanvas: React.FC = () => {
     }
   }, [uiState.walkTargetPosition, sceneData.rooms]);
 
+  // Handle Auto-Fit Camera Framing for Human View
+  useEffect(() => {
+    if (uiState.cameraFrameTarget && cameraRef.current && orbitControlsRef.current) {
+      const { position, target, fov } = uiState.cameraFrameTarget;
+      const camera = cameraRef.current;
+      const orbit = orbitControlsRef.current;
+
+      camera.position.set(position.x * FT_TO_M, position.y * FT_TO_M, position.z * FT_TO_M);
+      orbit.target.set(target.x * FT_TO_M, target.y * FT_TO_M, target.z * FT_TO_M);
+      if (fov && fov > 10 && fov < 120) {
+        camera.fov = fov;
+        camera.updateProjectionMatrix();
+      }
+      orbit.update();
+      uiStore.clearCameraFrameTarget();
+    }
+  }, [uiState.cameraFrameTarget]);
+
   const handleMiniMapTeleport = (ftX: number, ftZ: number, roomId?: string) => {
     const targetMetersX = ftX * FT_TO_M;
     const targetMetersZ = ftZ * FT_TO_M;

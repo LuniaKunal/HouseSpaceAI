@@ -75,6 +75,13 @@ export const AgentBridgeModal: React.FC<AgentBridgeModalProps> = ({ isOpen, onCl
         setToolInputJson(JSON.stringify({ objectId: 'obj-sofa-sectional-01', position: { x: -3, y: 0, z: 3 } }, null, 2));
       } else if (toolName === 'switch_view') {
         setToolInputJson(JSON.stringify({ mode: '2d', angle: 'top' }, null, 2));
+      } else if (toolName === 'autofit_human_circulation') {
+        setToolInputJson(JSON.stringify({ minWalkwayWidth: 3.0, doorwayClearance: 3.0, bedSideClearance: 2.5, resolveOverlaps: true, alignToWalls: true }, null, 2));
+      } else if (toolName === 'autofit_room_for_humans') {
+        const r1 = sceneStore.getData().rooms[0]?.id || 'room-living';
+        setToolInputJson(JSON.stringify({ roomId: r1, optimizeCirculation: true, fitWardrobes: true, ensureDoorClearance: true }, null, 2));
+      } else if (toolName === 'autofit_view') {
+        setToolInputJson(JSON.stringify({ target: 'scene', framing: 'overview', padding: 4.0 }, null, 2));
       } else {
         setToolInputJson(JSON.stringify(defaultArgs, null, 2));
       }

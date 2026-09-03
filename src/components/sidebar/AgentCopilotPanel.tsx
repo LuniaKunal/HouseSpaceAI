@@ -70,7 +70,7 @@ export const AgentCopilotPanel: React.FC = () => {
   ];
 
   const milestones = [
-    { phase: 'Phase 1', title: 'WebMCP Open Tool Protocol', status: 'Completed', detail: '44 deterministic spatial manipulation tools on live scene graph.' },
+    { phase: 'Phase 1', title: 'WebMCP Open Tool Protocol', status: 'Completed', detail: '49 deterministic spatial manipulation tools on live scene graph.' },
     { phase: 'Phase 2', title: 'Multimodal Spatial Reasoning Model', status: 'In Training', detail: 'Fine-tuning architectural LLM on interior layouts and ergonomics.' },
     { phase: 'Phase 3', title: 'Human-in-the-Loop Co-Creation', status: 'Upcoming', detail: 'Real-time collaborative suggestions with interactive approvals.' },
     { phase: 'Phase 4', title: 'Studio Early Access Beta', status: 'Coming Soon', detail: 'Private beta rollout for HouseSpace designers and architects.' }

@@ -24,7 +24,8 @@ import {
   Edit2,
   Trash2,
   Copy,
-  MoreHorizontal
+  MoreHorizontal,
+  Focus
 } from 'lucide-react';
 import { CameraViewMode, CameraAngle } from '../../types/scene';
 
@@ -77,6 +78,14 @@ export const Header: React.FC = () => {
     if (tempProjectName.trim() && projectState.activeProject) {
       projectStore.renameProject(projectState.activeProject.metadata.id, tempProjectName);
     }
+  };
+
+  const handleAutoFitCamera = () => {
+    executeWebMCPTool(
+      'autofit_view',
+      { target: uiState.selectedId ? 'room' : 'scene', framing: 'overview' },
+      'user'
+    );
   };
 
   return (
@@ -341,6 +350,16 @@ export const Header: React.FC = () => {
             }`}
           >
             <Maximize2 size={15} />
+          </button>
+          <div className="h-4 w-[1px] bg-white/[0.08] mx-0.5" />
+          <button
+            onClick={handleAutoFitCamera}
+            title="Auto-Fit View for Human Eye (Frame whole floor plan or active space)"
+            aria-label="Auto-Fit View"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-600/15 transition active:scale-95"
+          >
+            <Focus size={13} className="text-blue-400" />
+            <span className="hidden md:inline font-sans text-[11px]">Fit View</span>
           </button>
         </div>
       </div>

@@ -27,6 +27,12 @@ export interface UIState {
   isAgentBridgeModalOpen: boolean;
   confirmationRequest: ConfirmationRequest | null;
   walkTargetPosition: { x: number; z: number } | null;
+  cameraFrameTarget: {
+    position: { x: number; y: number; z: number };
+    target: { x: number; y: number; z: number };
+    fov?: number;
+    timestamp: number;
+  } | null;
   toasts: ToastMessage[];
   lastAgentAction: {
     toolName: string;
@@ -54,6 +60,7 @@ class UIStore {
     isAgentBridgeModalOpen: false,
     confirmationRequest: null,
     walkTargetPosition: null,
+    cameraFrameTarget: null,
     toasts: [],
     lastAgentAction: null
   };
@@ -113,6 +120,31 @@ class UIStore {
       this.state = {
         ...this.state,
         walkTargetPosition: null
+      };
+      this.notify();
+    }
+  }
+
+  public autofitCamera(target: {
+    position: { x: number; y: number; z: number };
+    target: { x: number; y: number; z: number };
+    fov?: number;
+  }) {
+    this.state = {
+      ...this.state,
+      cameraFrameTarget: {
+        ...target,
+        timestamp: Date.now()
+      }
+    };
+    this.notify();
+  }
+
+  public clearCameraFrameTarget() {
+    if (this.state.cameraFrameTarget) {
+      this.state = {
+        ...this.state,
+        cameraFrameTarget: null
       };
       this.notify();
     }

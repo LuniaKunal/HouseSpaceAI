@@ -25,7 +25,8 @@ import {
   ArrowUp,
   ArrowRight,
   ArrowDown,
-  ArrowLeft
+  ArrowLeft,
+  Users
 } from 'lucide-react';
 import { CornerNotch, WallAlcove } from '../../types/scene';
 import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
@@ -187,6 +188,85 @@ export const InspectorPanel: React.FC = () => {
       );
       sceneStore.highlightObject(selectedFurniture.id, 2000);
     }
+  };
+
+  // Auto-fit human circulation and ergonomics for a room
+  const handleAutoFitHumanCirculation = (roomId?: string) => {
+    const res = sceneStore.autofitHumanCirculation({
+      roomId,
+      minWalkwayWidth: 3.0,
+      doorwayClearance: 3.0,
+      bedSideClearance: 2.5,
+      resolveOverlaps: true,
+      alignToWalls: true
+    });
+    if (res.success) {
+      uiStore.addToast(
+        'Human Ergonomics Auto-Fit',
+        `Adjusted ${res.itemsAdjusted.length} item(s). Human Circulation Score: ${res.humanErgonomicsScore}%`,
+        'success'
+      );
+    }
+  };
+
+  // Auto-fit room for humans
+  const handleAutoFitRoomForHumans = (roomId: string) => {
+    const res = sceneStore.autofitRoomForHumans(roomId);
+    if (res.success) {
+      uiStore.addToast(
+        'Room Auto-Fitted for Humans',
+        res.summary,
+        'success'
+      );
+    }
+  };
+
+  // Auto-fit all rooms
+  const handleAutoFitAllForHumans = () => {
+    const res = sceneStore.autofitHumanCirculation({
+      minWalkwayWidth: 3.0,
+      doorwayClearance: 3.0,
+      bedSideClearance: 2.5,
+      resolveOverlaps: true,
+      alignToWalls: true
+    });
+    if (res.success) {
+      uiStore.addToast(
+        'Whole Residence Auto-Fit',
+        `Optimized all ${res.roomsProcessed} space(s) for human occupants. Score: ${res.humanErgonomicsScore}%`,
+        'success'
+      );
+    }
+  };
+
+  // Auto-fit camera view
+  const handleAutoFitView = (target: 'scene' | 'room' | 'selection' = 'scene', id?: string) => {
+    const bbox = sceneStore.getSceneBoundingBox(target, id);
+    const maxSpan = Math.max(bbox.size.x, bbox.size.z) + 4.0;
+    const is2D = uiState.cameraMode === '2d';
+
+    const cameraPos = {
+      x: bbox.center.x,
+      y: is2D ? Math.max(35, maxSpan * 1.5) : Math.max(18, maxSpan * 1.1),
+      z: is2D ? bbox.center.z + 0.001 : bbox.center.z + Math.max(22, maxSpan * 1.35)
+    };
+    const cameraLookTarget = {
+      x: bbox.center.x,
+      y: is2D ? 0 : bbox.center.y * 0.5,
+      z: bbox.center.z
+    };
+
+    uiStore.autofitCamera({
+      position: cameraPos,
+      target: cameraLookTarget,
+      fov: 45
+    });
+
+    uiStore.addToast(
+      'Camera Auto-Fitted',
+      `Framed ${target} optimally for visual inspection`,
+      'info'
+    );
   };
 
   // Quick preset dimensions
@@ -1100,6 +1180,37 @@ export const InspectorPanel: React.FC = () => {
               )}
             </div>
 
+            {/* Auto-Fit for Humans (Ergonomics & Circulation) */}
+            <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-blue-950/40 border border-emerald-500/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-300 flex items-center gap-1.5">
+                  <Users size={13} className="text-emerald-400" /> Human Ergonomics & Auto-Fit
+                </span>
+                <span className="text-[9px] text-emerald-300 font-mono bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.5 rounded flex items-center gap-1">
+                  <Sparkles size={10} className="text-emerald-400" /> WebMCP
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-300 leading-snug">
+                One-click spatial solver: unblocks 3ft doorway corridors, aligns wardrobes flush to walls, and optimizes furniture for human movement.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleAutoFitRoomForHumans(selectedRoom.id)}
+                  className="px-2.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow"
+                >
+                  <Users size={12} /> Auto-Fit Room
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoFitHumanCirculation(selectedRoom.id)}
+                  className="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition"
+                >
+                  <Sparkles size={12} className="text-emerald-400" /> Circulation
+                </button>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="pt-2 border-t border-slate-800 space-y-2">
               <button
@@ -1122,6 +1233,37 @@ export const InspectorPanel: React.FC = () => {
         ) : (
           /* General Scene Info */
           <div className="space-y-4 py-2">
+            {/* Whole Residence Auto-Fit Card */}
+            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-purple-950/40 border border-blue-500/30 space-y-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-blue-300 flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-blue-400" /> Whole Residence Auto-Fit
+                </span>
+                <span className="text-[9px] text-emerald-400 font-mono bg-emerald-950/50 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                  For Humans
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-300 leading-snug">
+                Automatically optimize human clearances, doorway walkways, bed perimeters, and camera framing across all rooms.
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleAutoFitAllForHumans()}
+                  className="py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow"
+                >
+                  <Users size={12} /> Auto-Fit All Rooms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoFitView('scene')}
+                  className="py-2 px-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+                >
+                  <Maximize2 size={12} /> Auto-Fit Camera
+                </button>
+              </div>
+            </div>
+
             <div className="p-3 bg-blue-950/20 border border-blue-500/30 rounded-xl text-xs text-blue-300 flex items-center gap-2.5 shadow-sm">
               <Info size={16} className="text-blue-400 shrink-0" />
               <span className="text-pretty">Click any furniture item or room on the 3D canvas or spaces panel to inspect and edit dimensions.</span>
