@@ -76,6 +76,14 @@ export interface AddConnectedRoomInput {
   depth?: number; // in feet (default 12)
   floorMaterial?: RoomFloorMaterial;
   openingWidth?: number; // in feet (default 4)
+  notch?: CornerNotch;
+}
+
+export interface FitRoomIntoNotchInput {
+  parentRoomId: string;
+  name: string;
+  floorMaterial?: RoomFloorMaterial;
+  openingWidth?: number;
 }
 
 export interface RenameRoomInput {
@@ -93,7 +101,7 @@ export interface SetRoomDimensionsInput {
   width: number;
   depth: number;
   height?: number;
-  notch?: CornerNotch;
+  notch?: CornerNotch | null;
 }
 
 export interface DeleteRoomInput {

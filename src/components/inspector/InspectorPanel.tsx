@@ -27,6 +27,8 @@ import {
   ArrowDown,
   ArrowLeft
 } from 'lucide-react';
+import { CornerNotch } from '../../types/scene';
+import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
 
 export const InspectorPanel: React.FC = () => {
   const [uiState, setUiState] = useState<UIState>(uiStore.getState());
@@ -81,8 +83,8 @@ export const InspectorPanel: React.FC = () => {
   // Dimensions change
   const handleDimensionChange = (dim: 'w' | 'h' | 'd', value: number) => {
     if (selectedRoom) {
-      if (dim === 'w') sceneStore.setRoomDimensions(selectedRoom.id, value, selectedRoom.depth);
-      if (dim === 'd') sceneStore.setRoomDimensions(selectedRoom.id, selectedRoom.width, value);
+      if (dim === 'w') sceneStore.setRoomDimensions(selectedRoom.id, value, selectedRoom.depth, selectedRoom.height, selectedRoom.notch);
+      if (dim === 'd') sceneStore.setRoomDimensions(selectedRoom.id, selectedRoom.width, value, selectedRoom.height, selectedRoom.notch);
       if (dim === 'h') sceneStore.changeCeilingHeight(value, selectedRoom.id);
     } else if (selectedFurniture) {
       const natural = selectedFurniture.dimensions;
@@ -95,6 +97,39 @@ export const InspectorPanel: React.FC = () => {
       if (dim === 'd' && natural.z > 0) scaleZ = value / natural.z;
 
       sceneStore.scaleObject(selectedFurniture.id, { x: scaleX, y: scaleY, z: scaleZ });
+    }
+  };
+
+  // Notch toggle and modification
+  const handleToggleNotch = (enable: boolean) => {
+    if (!selectedRoom) return;
+    if (enable) {
+      const defaultNotch: CornerNotch = {
+        corner: 'bottom-right',
+        width: Math.min(4, Math.max(2, Math.floor(selectedRoom.width / 2))),
+        depth: Math.min(4, Math.max(2, Math.floor(selectedRoom.depth / 2)))
+      };
+      sceneStore.setRoomDimensions(selectedRoom.id, selectedRoom.width, selectedRoom.depth, selectedRoom.height, defaultNotch);
+    } else {
+      sceneStore.setRoomDimensions(selectedRoom.id, selectedRoom.width, selectedRoom.depth, selectedRoom.height, null);
+    }
+  };
+
+  const handleUpdateNotch = (patch: Partial<CornerNotch>) => {
+    if (!selectedRoom || !selectedRoom.notch) return;
+    const updated: CornerNotch = {
+      ...selectedRoom.notch,
+      ...patch
+    };
+    sceneStore.setRoomDimensions(selectedRoom.id, selectedRoom.width, selectedRoom.depth, selectedRoom.height, updated);
+  };
+
+  const handleNestSpaceInNotch = () => {
+    if (!selectedRoom || !selectedRoom.notch) return;
+    const child = sceneStore.nestRoomInNotch(selectedRoom.id, `${selectedRoom.name} Bath`);
+    if (child) {
+      uiStore.setSelected(child.id, 'room');
+      uiStore.addToast('Space Nested', `Added "${child.name}" inside cutout notch`, 'success');
     }
   };
 
@@ -557,7 +592,7 @@ export const InspectorPanel: React.FC = () => {
               </span>
               <h3 className="text-sm font-semibold text-white">{selectedRoom.name}</h3>
               <p className="text-[11px] text-slate-400 font-mono">
-                Floor Area: <strong className="text-blue-400">{selectedRoom.width * selectedRoom.depth} sq.ft</strong>
+                Floor Area: <strong className="text-blue-400">{getRoomAreaSqFt(selectedRoom)} sq.ft</strong>
               </p>
             </div>
 
@@ -596,6 +631,109 @@ export const InspectorPanel: React.FC = () => {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Room Shape & Notch Section */}
+            <div className="space-y-2 p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                  <span className="text-amber-400 font-bold">⬑</span> Room Shape
+                </label>
+                <span className="text-[10px] font-mono text-blue-400">
+                  {selectedRoom.notch ? 'L-Shaped' : 'Rectangular'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 p-0.5 bg-[#141724] rounded-lg border border-slate-800 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => handleToggleNotch(false)}
+                  className={`flex items-center justify-center gap-1.5 py-1 rounded-md transition ${
+                    !selectedRoom.notch
+                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>■</span> Rectangle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleNotch(true)}
+                  className={`flex items-center justify-center gap-1.5 py-1 rounded-md transition ${
+                    selectedRoom.notch
+                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="font-bold">⬑</span> L-Shaped
+                </button>
+              </div>
+
+              {selectedRoom.notch && (
+                <div className="space-y-2 pt-1 border-t border-slate-800/80 animate-in fade-in">
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Cutout Corner</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[
+                        { id: 'top-left', label: 'Top-Left', icon: '◤' },
+                        { id: 'top-right', label: 'Top-Right', icon: '◥' },
+                        { id: 'bottom-left', label: 'Btm-Left', icon: '◣' },
+                        { id: 'bottom-right', label: 'Btm-Right', icon: '◢' }
+                      ].map(c => {
+                        const isSel = selectedRoom.notch?.corner === c.id;
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() => handleUpdateNotch({ corner: c.id as any })}
+                            className={`flex flex-col items-center justify-center py-1 rounded border text-[10px] font-mono transition ${
+                              isSel
+                                ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-sm'
+                                : 'bg-[#181c28] border-slate-700 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <span className="text-sm leading-none">{c.icon}</span>
+                            <span className="text-[9px] mt-0.5">{c.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
+                      <span className="text-[10px] text-slate-400 block font-mono">Cutout Width (ft)</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={selectedRoom.width - 1}
+                        value={selectedRoom.notch.width}
+                        onChange={e => handleUpdateNotch({ width: Math.max(1, Number(e.target.value)) })}
+                        className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      />
+                    </div>
+                    <div className="bg-[#181c28] border border-slate-700/80 rounded-lg p-1.5">
+                      <span className="text-[10px] text-slate-400 block font-mono">Cutout Depth (ft)</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={selectedRoom.depth - 1}
+                        value={selectedRoom.notch.depth}
+                        onChange={e => handleUpdateNotch({ depth: Math.max(1, Number(e.target.value)) })}
+                        className="w-full bg-transparent text-xs text-white font-mono focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleNestSpaceInNotch}
+                    className="w-full py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Sparkles size={12} /> Fit Attached Space in Notch
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Position */}

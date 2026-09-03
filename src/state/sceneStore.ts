@@ -272,7 +272,7 @@ class SceneStore {
     width: number,
     depth: number,
     height?: number,
-    notch?: CornerNotch
+    notch?: CornerNotch | null
   ): boolean {
     const room = this.data.rooms.find(r => r.id === roomId);
     if (!room || room.locked) return false;
@@ -280,7 +280,7 @@ class SceneStore {
 
     const w = Math.max(3, width);
     const d = Math.max(3, depth);
-    const activeNotch = notch !== undefined ? notch : room.notch;
+    const activeNotch = notch !== undefined ? (notch === null ? undefined : notch) : room.notch;
     const footprint = createNotchFootprint(w, d, activeNotch);
 
     const updatedRooms = this.data.rooms.map(r => {
@@ -499,7 +499,8 @@ class SceneStore {
     width: number = 12,
     depth: number = 12,
     floorMaterial?: RoomFloorMaterial,
-    openingWidth: number = 4
+    openingWidth: number = 4,
+    notch?: CornerNotch
   ): Room | null {
     const ref = this.data.rooms.find(r => r.id === referenceRoomId);
     if (!ref) return null;
@@ -524,11 +525,75 @@ class SceneStore {
       height: ref.height,
       position: { x: targetX, y: 0, z: targetZ },
       floorMaterial: floorMaterial || ref.floorMaterial,
-      wallColor: ref.wallColor
+      wallColor: ref.wallColor,
+      notch
     });
 
     this.connectRooms(ref.id, newRoom.id, direction, openingWidth);
     return newRoom;
+  }
+
+  /**
+   * Spawns a new secondary room (e.g. ensuite bathroom, walk-in closet, pantry)
+   * that snugly fills the corner cutout notch of an L-shaped parent room,
+   * and connects them via an interior doorway gate.
+   */
+  public nestRoomInNotch(
+    parentRoomId: string,
+    name: string,
+    floorMaterial?: RoomFloorMaterial,
+    openingWidth: number = 2.5
+  ): Room | null {
+    const parent = this.data.rooms.find(r => r.id === parentRoomId);
+    if (!parent || !parent.notch || parent.notch.width <= 0 || parent.notch.depth <= 0) {
+      return null;
+    }
+
+    const { corner, width: nw, depth: nd } = parent.notch;
+    const x0 = parent.position.x;
+    const z0 = parent.position.z;
+    const halfW = parent.width / 2;
+    const halfD = parent.depth / 2;
+
+    let childX = 0;
+    let childZ = 0;
+    let preferredDir: 'above' | 'right' | 'below' | 'left' = 'right';
+
+    switch (corner) {
+      case 'top-left':
+        childX = Number((x0 - halfW + nw / 2).toFixed(3));
+        childZ = Number((z0 - halfD + nd / 2).toFixed(3));
+        preferredDir = 'left';
+        break;
+      case 'top-right':
+        childX = Number((x0 + halfW - nw / 2).toFixed(3));
+        childZ = Number((z0 - halfD + nd / 2).toFixed(3));
+        preferredDir = 'right';
+        break;
+      case 'bottom-right':
+        childX = Number((x0 + halfW - nw / 2).toFixed(3));
+        childZ = Number((z0 + halfD - nd / 2).toFixed(3));
+        preferredDir = 'right';
+        break;
+      case 'bottom-left':
+        childX = Number((x0 - halfW + nw / 2).toFixed(3));
+        childZ = Number((z0 + halfD - nd / 2).toFixed(3));
+        preferredDir = 'left';
+        break;
+    }
+
+    const childRoom = this.createRoom({
+      name,
+      width: nw,
+      depth: nd,
+      height: parent.height,
+      position: { x: childX, y: 0, z: childZ },
+      floorMaterial: floorMaterial || 'ceramic_tile',
+      wallColor: parent.wallColor
+    });
+
+    this.connectRooms(parent.id, childRoom.id, preferredDir, openingWidth);
+    return childRoom;
   }
 
   public disconnectRooms(

@@ -19,18 +19,21 @@ import {
   ArrowLeft,
   Sparkles
 } from 'lucide-react';
-import { Room, RoomFloorMaterial } from '../../types/scene';
+import { Room, RoomFloorMaterial, CornerNotch } from '../../types/scene';
+import { getRoomAreaSqFt } from '../../geometry/roomGeometry';
 
 interface RoomPreset {
   name: string;
   w: number;
   d: number;
   material: RoomFloorMaterial;
+  notch?: CornerNotch;
 }
 
 const ROOM_PRESETS: RoomPreset[] = [
   { name: 'Living Room', w: 18, d: 16, material: 'hardwood_oak' },
   { name: 'Master Bedroom', w: 16, d: 14, material: 'hardwood_walnut' },
+  { name: 'L-Shaped Suite', w: 16, d: 14, material: 'hardwood_walnut', notch: { corner: 'bottom-right', width: 5, depth: 6 } },
   { name: 'Bedroom', w: 12, d: 12, material: 'hardwood_oak' },
   { name: 'Kitchen', w: 12, d: 10, material: 'ceramic_tile' },
   { name: 'Bathroom', w: 8, d: 8, material: 'marble_carrara' },
@@ -64,6 +67,12 @@ export const SpacesPanel: React.FC = () => {
   const [newRoomDepth, setNewRoomDepth] = useState(14);
   const [connectionDirection, setConnectionDirection] = useState<'above' | 'right' | 'below' | 'left'>('right');
   const [selectedMaterial, setSelectedMaterial] = useState<RoomFloorMaterial>('hardwood_oak');
+
+  // L-Shaped Room Form State
+  const [roomShape, setRoomShape] = useState<'rectangle' | 'l-shape'>('rectangle');
+  const [notchCorner, setNotchCorner] = useState<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('bottom-right');
+  const [notchWidth, setNotchWidth] = useState(5);
+  const [notchDepth, setNotchDepth] = useState(6);
 
   // Inline rename state
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
@@ -187,6 +196,14 @@ export const SpacesPanel: React.FC = () => {
     setNewRoomWidth(preset.w);
     setNewRoomDepth(preset.d);
     setSelectedMaterial(preset.material);
+    if (preset.notch) {
+      setRoomShape('l-shape');
+      setNotchCorner(preset.notch.corner);
+      setNotchWidth(preset.notch.width);
+      setNotchDepth(preset.notch.depth);
+    } else {
+      setRoomShape('rectangle');
+    }
   };
 
   const handleCreateRoom = (e?: React.FormEvent) => {
@@ -195,6 +212,15 @@ export const SpacesPanel: React.FC = () => {
     const trimmedName = newRoomName.trim() || (sceneData.rooms.length === 0 ? 'Living Room' : `Room ${sceneData.rooms.length + 1}`);
     const w = Math.max(4, Math.min(80, Number(newRoomWidth) || 12));
     const d = Math.max(4, Math.min(80, Number(newRoomDepth) || 12));
+
+    const notch: CornerNotch | undefined =
+      roomShape === 'l-shape'
+        ? {
+            corner: notchCorner,
+            width: Math.min(Math.max(1, Number(notchWidth) || 4), w - 1),
+            depth: Math.min(Math.max(1, Number(notchDepth) || 4), d - 1)
+          }
+        : undefined;
 
     const isInitialRoom = sceneData.rooms.length === 0;
     const isStandalone = isInitialRoom || creationMode === 'standalone';
@@ -216,17 +242,19 @@ export const SpacesPanel: React.FC = () => {
         width: w,
         depth: d,
         position: { x: posX, y: 0, z: posZ },
-        floorMaterial: selectedMaterial
+        floorMaterial: selectedMaterial,
+        notch
       });
 
       if (newRoom) {
         uiStore.setSelected(newRoom.id, 'room');
         setIsAddingRoom(false);
+        const shapeStr = notch ? `L-shaped space (${w}×${d} ft with ${notch.corner} cutout)` : `space (${w}×${d} ft)`;
         uiStore.addToast(
           'Room Created',
           isInitialRoom
-            ? `Created primary space "${newRoom.name}" (${w}×${d} ft)`
-            : `Created standalone space "${newRoom.name}" (${w}×${d} ft)`,
+            ? `Created primary ${shapeStr} "${newRoom.name}"`
+            : `Created standalone ${shapeStr} "${newRoom.name}"`,
           'success'
         );
       }
@@ -240,7 +268,8 @@ export const SpacesPanel: React.FC = () => {
           width: w,
           depth: d,
           position: { x: 0, y: 0, z: 0 },
-          floorMaterial: selectedMaterial
+          floorMaterial: selectedMaterial,
+          notch
         });
         if (newRoom) {
           uiStore.setSelected(newRoom.id, 'room');
@@ -256,18 +285,21 @@ export const SpacesPanel: React.FC = () => {
         trimmedName,
         w,
         d,
-        selectedMaterial
+        selectedMaterial,
+        4,
+        notch
       );
 
       if (newRoom) {
         uiStore.setSelected(newRoom.id, 'room');
         setIsAddingRoom(false);
-        uiStore.addToast('Room Created', `Added "${newRoom.name}" connected to ${refRoom.name}`, 'success');
+        const shapeStr = notch ? `L-shaped "${newRoom.name}"` : `"${newRoom.name}"`;
+        uiStore.addToast('Room Created', `Added ${shapeStr} connected to ${refRoom.name}`, 'success');
       }
     }
   };
 
-  const totalArea = sceneData.rooms.reduce((acc, r) => acc + r.width * r.depth, 0);
+  const totalArea = sceneData.rooms.reduce((acc, r) => acc + getRoomAreaSqFt(r), 0);
   const resolvedTargetRoom = sceneData.rooms.find(r => r.id === targetRoomId) || selectedRoom || sceneData.rooms[0];
 
   return (
@@ -422,6 +454,110 @@ export const SpacesPanel: React.FC = () => {
               </div>
             </div>
 
+            {/* Shape Selector (Rectangle vs L-Shape) */}
+            <div className="pt-1">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-medium text-slate-300">Room Shape</label>
+                <span className="text-[10px] font-mono text-blue-400">
+                  {roomShape === 'l-shape'
+                    ? `${newRoomWidth * newRoomDepth - Math.min(notchWidth, newRoomWidth - 1) * Math.min(notchDepth, newRoomDepth - 1)} sq.ft net`
+                    : `${newRoomWidth * newRoomDepth} sq.ft`}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 p-0.5 bg-[#11131a] rounded-lg border border-slate-800 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setRoomShape('rectangle')}
+                  className={`flex items-center justify-center gap-1.5 py-1 rounded-md transition ${
+                    roomShape === 'rectangle'
+                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-xs">■</span> Rectangle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoomShape('l-shape')}
+                  className={`flex items-center justify-center gap-1.5 py-1 rounded-md transition ${
+                    roomShape === 'l-shape'
+                      ? 'bg-blue-600 text-white font-medium shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-xs font-bold">⬑</span> L-Shaped
+                </button>
+              </div>
+            </div>
+
+            {/* L-Shape Cutout Notch Settings */}
+            {roomShape === 'l-shape' && (
+              <div className="p-2.5 bg-blue-950/20 border border-blue-900/40 rounded-xl space-y-2.5 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-blue-300 flex items-center gap-1">
+                    <span className="font-mono">⬑</span> Corner Cutout (Notch)
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-medium">L-Shape</span>
+                </div>
+
+                {/* 4 Quadrants Visual Selector */}
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1">Indented Corner</label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { id: 'top-left', label: 'Top-Left', icon: '◤' },
+                      { id: 'top-right', label: 'Top-Right', icon: '◥' },
+                      { id: 'bottom-left', label: 'Btm-Left', icon: '◣' },
+                      { id: 'bottom-right', label: 'Btm-Right', icon: '◢' }
+                    ].map(c => {
+                      const isSel = notchCorner === c.id;
+                      return (
+                        <button
+                          type="button"
+                          key={c.id}
+                          onClick={() => setNotchCorner(c.id as any)}
+                          className={`flex flex-col items-center justify-center py-1 rounded border text-[10px] font-mono transition ${
+                            isSel
+                              ? 'bg-blue-600 text-white border-blue-500 font-semibold shadow-sm'
+                              : 'bg-[#11131a] border-slate-700 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          <span className="text-sm leading-none">{c.icon}</span>
+                          <span className="text-[9px] mt-0.5">{c.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Notch Dimensions */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Cutout Width (ft)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(1, newRoomWidth - 1)}
+                      value={notchWidth}
+                      onChange={e => setNotchWidth(Number(e.target.value))}
+                      className="w-full bg-[#11131a] border border-slate-700 rounded-md px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Cutout Depth (ft)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={Math.max(1, newRoomDepth - 1)}
+                      value={notchDepth}
+                      onChange={e => setNotchDepth(Number(e.target.value))}
+                      className="w-full bg-[#11131a] border border-slate-700 rounded-md px-2 py-1 text-xs text-white font-mono focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Connection Settings (Only in Connected Mode with existing rooms) */}
             {sceneData.rooms.length > 0 && creationMode === 'connected' ? (
               <div className="space-y-2 pt-1 border-t border-slate-800/80">
@@ -554,7 +690,7 @@ export const SpacesPanel: React.FC = () => {
         {sceneData.rooms.map(room => {
           const isSelected = uiState.selectedId === room.id;
           const roomFurniture = sceneData.furniture.filter(f => f.roomId === room.id);
-          const area = room.width * room.depth;
+          const area = getRoomAreaSqFt(room);
 
           return (
             <div
@@ -587,11 +723,34 @@ export const SpacesPanel: React.FC = () => {
                       </button>
                     </form>
                   ) : (
-                    <span className="text-xs font-semibold text-white truncate">{room.name}</span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-xs font-semibold text-white truncate">{room.name}</span>
+                      {room.notch && (
+                        <span className="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[9px] font-mono shrink-0">
+                          L-Shape
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0 ml-2">
+                  {room.notch && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        const child = sceneStore.nestRoomInNotch(room.id, `${room.name} Bath`);
+                        if (child) {
+                          uiStore.setSelected(child.id, 'room');
+                          uiStore.addToast('Space Nested', `Added "${child.name}" inside cutout notch`, 'success');
+                        }
+                      }}
+                      className="p-1 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 rounded transition"
+                      title="Nest Ensuite Bath / Space into Cutout Notch"
+                    >
+                      <Sparkles size={12} />
+                    </button>
+                  )}
                   {sceneData.rooms.length > 1 && (
                     <button
                       onClick={e => handleStartConnect(room, e)}

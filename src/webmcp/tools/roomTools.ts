@@ -3,6 +3,7 @@ import { uiStore } from '../../state/uiStore';
 import {
   CreateRoomInput,
   AddConnectedRoomInput,
+  FitRoomIntoNotchInput,
   RenameRoomInput,
   MoveRoomInput,
   SetRoomDimensionsInput,
@@ -29,11 +30,12 @@ export const roomTools = {
         position: {
           type: 'object',
           properties: {
-            x: { type: 'number' },
-            y: { type: 'number' },
-            z: { type: 'number' }
+            x: { type: 'number', description: 'Center X coordinate in feet' },
+            y: { type: 'number', description: 'Floor elevation Y (default 0)' },
+            z: { type: 'number', description: 'Center Z coordinate in feet' }
           },
-          description: 'Center coordinates of the room in feet {x, y, z}'
+          required: ['x', 'z'],
+          description: 'Center point position of the room in 3D scene feet'
         },
         floorMaterial: {
           type: 'string',
@@ -91,7 +93,8 @@ export const roomTools = {
           input.width,
           input.depth,
           input.floorMaterial,
-          input.connectedTo.openingWidth || 4
+          input.connectedTo.openingWidth || 4,
+          input.notch
         );
         if (!connected) throw new Error(`Could not connect room to "${input.connectedTo.roomId}". Reference room not found.`);
         uiStore.setSelected(connected.id, 'room');
@@ -144,7 +147,7 @@ export const roomTools = {
     name: 'add_connected_room',
     title: 'Add Connected Room',
     category: 'Rooms' as const,
-    description: 'Creates a new room attached directly to an existing reference room in a cardinal direction (above, right, below, left) with automatic shared wall alignment and a connecting doorway gate.',
+    description: 'Creates a new room attached directly to an existing reference room in a cardinal direction (above, right, below, left) with automatic shared wall alignment, doorway gate, and optional corner notch cutout.',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
@@ -173,7 +176,21 @@ export const roomTools = {
           ],
           description: 'Floor surface material texture'
         },
-        openingWidth: { type: 'number', description: 'Doorway gate opening width in feet (default 4)' }
+        openingWidth: { type: 'number', description: 'Doorway gate opening width in feet (default 4)' },
+        notch: {
+          type: 'object',
+          properties: {
+            corner: {
+              type: 'string',
+              enum: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+              description: 'Which corner of the room is cut out to form the L-shape'
+            },
+            width: { type: 'number', description: 'Width of cutout in feet' },
+            depth: { type: 'number', description: 'Depth of cutout in feet' }
+          },
+          required: ['corner', 'width', 'depth'],
+          description: 'Optional corner notch cutout parameterizing an L-shaped room'
+        }
       },
       required: ['referenceRoomId', 'direction', 'name']
     },
@@ -185,22 +202,82 @@ export const roomTools = {
         input.width || 12,
         input.depth || 12,
         input.floorMaterial,
-        input.openingWidth || 4
+        input.openingWidth || 4,
+        input.notch
       );
       if (!room) {
         throw new Error(`Failed to add connected room. Reference room "${input.referenceRoomId}" not found.`);
       }
       uiStore.setSelected(room.id, 'room');
       const gate = sceneStore.getData().gates.find(g => (g.roomIdA === room.id || g.roomIdB === room.id));
-      uiStore.recordAgentAction('add_connected_room', `Added "${room.name}" connected ${input.direction} of ${input.referenceRoomId}`, room.id);
+      const shapeDesc = room.notch ? `L-shaped ${room.width}x${room.depth} ft` : `${room.width}x${room.depth} ft`;
+      uiStore.recordAgentAction('add_connected_room', `Added ${shapeDesc} "${room.name}" connected ${input.direction} of ${input.referenceRoomId}`, room.id);
       return {
         success: true,
         roomId: room.id,
         name: room.name,
         dimensions: { width: room.width, depth: room.depth, height: room.height },
         position: room.position,
+        notch: room.notch,
+        footprint: room.footprint,
         connectedTo: input.referenceRoomId,
         direction: input.direction,
+        gateId: gate?.id,
+        areaSqFt: getRoomAreaSqFt(room)
+      };
+    }
+  },
+
+  fit_room_into_notch: {
+    name: 'fit_room_into_notch',
+    title: 'Fit Room into Cutout Notch',
+    category: 'Rooms' as const,
+    description: 'Creates a secondary room (e.g. ensuite bathroom, walk-in closet, pantry) that snugly fits inside the corner notch cutout of an L-shaped parent room, and connects them with an interior doorway gate.',
+    requiresConfirmation: false,
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        parentRoomId: { type: 'string', description: 'ID of the L-shaped parent room containing the cutout notch' },
+        name: { type: 'string', description: 'Display name for the nested room (e.g. Master Bath, Ensuite, Walk-in Closet)' },
+        floorMaterial: {
+          type: 'string',
+          enum: [
+            'hardwood_oak',
+            'hardwood_walnut',
+            'marble_carrara',
+            'marble_nero',
+            'terrazzo',
+            'concrete_polished',
+            'ceramic_tile',
+            'carpet_plush',
+            'herringbone_wood'
+          ],
+          description: 'Floor surface material texture (default: ceramic_tile)'
+        },
+        openingWidth: { type: 'number', description: 'Doorway gate opening width in feet (default: 2.5)' }
+      },
+      required: ['parentRoomId', 'name']
+    },
+    execute: async (input: FitRoomIntoNotchInput) => {
+      const room = sceneStore.nestRoomInNotch(
+        input.parentRoomId,
+        input.name,
+        input.floorMaterial,
+        input.openingWidth || 2.5
+      );
+      if (!room) {
+        throw new Error(`Failed to fit room into notch. Parent room "${input.parentRoomId}" not found or does not have a valid cutout notch.`);
+      }
+      uiStore.setSelected(room.id, 'room');
+      const gate = sceneStore.getData().gates.find(g => (g.roomIdA === room.id || g.roomIdB === room.id));
+      uiStore.recordAgentAction('fit_room_into_notch', `Nested "${room.name}" (${room.width}x${room.depth} ft) into cutout notch of parent room`, room.id);
+      return {
+        success: true,
+        roomId: room.id,
+        name: room.name,
+        dimensions: { width: room.width, depth: room.depth, height: room.height },
+        position: room.position,
+        parentRoomId: input.parentRoomId,
         gateId: gate?.id,
         areaSqFt: getRoomAreaSqFt(room)
       };

@@ -277,6 +277,87 @@ async function runLShapedRoomsVerification() {
   }
   console.log('   ✅ 3D Wall meshes successfully generated along all 6 perimeter edges!\n');
 
+  // Test 9: WebMCP add_connected_room with notch
+  console.log('9. Testing WebMCP add_connected_room with Notch Cutout...');
+  const connectedLRes = await roomTools.add_connected_room.execute({
+    referenceRoomId: createBedRes.roomId,
+    direction: 'left',
+    name: 'Attached Study',
+    width: 14,
+    depth: 12,
+    notch: {
+      corner: 'top-left',
+      width: 4,
+      depth: 4
+    }
+  });
+
+  console.log(`   Connected Room ID: ${connectedLRes.roomId}`);
+  console.log(`   Connected Room Notch: ${JSON.stringify(connectedLRes.notch)}`);
+  console.log(`   Connected Room Area: ${connectedLRes.areaSqFt} sq ft (Expected: 152)`);
+  if (!connectedLRes.notch || connectedLRes.notch.corner !== 'top-left') {
+    throw new Error('add_connected_room must persist notch configuration');
+  }
+  if (connectedLRes.areaSqFt !== 14 * 12 - 4 * 4) {
+    throw new Error(`Expected area 152, got ${connectedLRes.areaSqFt}`);
+  }
+  console.log('   ✅ add_connected_room correctly supports L-shaped notch configuration!\n');
+
+  // Test 10: WebMCP fit_room_into_notch (Auto-nesting child room inside parent notch)
+  console.log('10. Testing WebMCP fit_room_into_notch (Auto-Nesting in Notch Cutout)...');
+  // Create a parent room with top-right notch: 16x14 ft, notch: top-right 5x6 ft at (20, 0, 20)
+  const parentRes = await roomTools.create_room.execute({
+    name: 'Executive Suite',
+    width: 16,
+    depth: 14,
+    position: { x: 20, y: 0, z: 20 },
+    notch: {
+      corner: 'top-right',
+      width: 5,
+      depth: 6
+    }
+  });
+
+  const nestedRes = await roomTools.fit_room_into_notch.execute({
+    parentRoomId: parentRes.roomId,
+    name: 'Executive Bath',
+    floorMaterial: 'marble_carrara'
+  });
+
+  console.log(`   Nested Room ID: ${nestedRes.roomId}`);
+  console.log(`   Nested Dimensions: ${nestedRes.dimensions.width}x${nestedRes.dimensions.depth} ft (Expected: 5x6)`);
+  console.log(`   Nested Position: (${nestedRes.position.x}, ${nestedRes.position.z})`);
+  console.log(`   Doorway Gate ID: ${nestedRes.gateId}`);
+
+  // Expected position for top-right cutout of 16x14 room at (20, 20):
+  // X = 20 + 16/2 - 5/2 = 20 + 8 - 2.5 = 25.5
+  // Z = 20 - 14/2 + 6/2 = 20 - 7 + 3 = 16
+  if (Math.abs(nestedRes.position.x - 25.5) > 0.01 || Math.abs(nestedRes.position.z - 16) > 0.01) {
+    throw new Error(`Expected nested position (25.5, 16), got (${nestedRes.position.x}, ${nestedRes.position.z})`);
+  }
+  if (nestedRes.dimensions.width !== 5 || nestedRes.dimensions.depth !== 6) {
+    throw new Error(`Expected dimensions 5x6, got ${nestedRes.dimensions.width}x${nestedRes.dimensions.depth}`);
+  }
+  if (!nestedRes.gateId) {
+    throw new Error('fit_room_into_notch must create a doorway connection gate');
+  }
+  console.log('   ✅ fit_room_into_notch automatically nested room with exact bounds & gate!\n');
+
+  // Test 11: Converting L-Shaped Room back to Rectangular
+  console.log('11. Testing Unsetting Notch (Convert L-Shape back to Rectangle)...');
+  const unsetOk = sceneStore.setRoomDimensions(parentRes.roomId, 16, 14, undefined, null);
+  if (!unsetOk) throw new Error('Failed to unset notch in setRoomDimensions');
+  const updatedParent = sceneStore.getData().rooms.find(r => r.id === parentRes.roomId);
+  console.log(`   Parent room notch after clearing: ${updatedParent?.notch}`);
+  console.log(`   Parent room footprint vertices: ${updatedParent?.footprint?.length}`);
+  if (updatedParent?.notch !== undefined) {
+    throw new Error('Expected notch to be undefined after passing null');
+  }
+  if (updatedParent?.footprint?.length !== 4) {
+    throw new Error(`Expected 4 rectangular vertices, got ${updatedParent?.footprint?.length}`);
+  }
+  console.log('   ✅ Successfully converted L-shaped room back to rectangle!\n');
+
   console.log('================================================================');
   console.log('🎉 ALL L-SHAPED ROOMS TESTS PASSED (100%)!');
   console.log('================================================================\n');
