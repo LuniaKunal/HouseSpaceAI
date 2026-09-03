@@ -137,7 +137,7 @@ export const workflowTools = {
     name: 'create_project',
     title: 'Create Project',
     category: 'Workflow' as const,
-    description: 'Creates a new project workspace. Supports importing a 2D CAD blueprint image and user prompt instructions to automatically synthesize a 3D architectural plan.',
+    description: 'Creates a new blank project workspace. (2D CAD upload and automated floor plan import is Coming Soon).',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,

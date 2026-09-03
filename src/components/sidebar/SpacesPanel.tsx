@@ -712,7 +712,7 @@ export const SpacesPanel: React.FC = () => {
             </div>
             <p className="text-xs font-semibold text-white mb-1">No spaces created yet</p>
             <p className="text-[11px] text-slate-400 mb-3.5 leading-relaxed text-pretty">
-              Start building your floor plan by adding your primary space or importing a 2D CAD blueprint.
+              Start building your floor plan by adding your primary architectural space.
             </p>
             <button
               onClick={handleOpenAddRoom}

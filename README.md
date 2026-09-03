@@ -51,7 +51,7 @@ Open [http://localhost:4173/](http://localhost:4173/) in your browser.
   - **2D CAD Orthographic:** Top-down plan view and directional elevations (North, East, South, West).
   - **First-Person Walk:** Immersive walkthrough mode with WASD controls and collision-aware navigation.
 - **Polygonal & L-Shaped Architecture:** Build rectangular rooms, 6- to 8-vertex L-shaped rooms with corner notches (NW, NE, SW, SE), and automatic shared-wall gateway openings.
-- **CAD Blueprint Calibration:** Overlay 2D blueprints directly onto the 3D grid, calibrate scale to real-world feet, and toggle view modes (`Combined`, `Geometry Only`, `Blueprint Only`).
+- **CAD Blueprint Inspection & Calibration:** Inspect pre-loaded benchmark blueprints (Sample 1: 4BHK, Sample 2: 3BHK) directly on the 3D grid, calibrate scale to real-world feet, and toggle view modes (`Combined`, `Geometry Only`, `Blueprint Only`). *(2D Floor Plan upload & automated CAD import coming soon)*.
 - **Procedural PBR Furniture & Wall Snapping:** Smart placement with automatic wall clearance snapping (`fit_furniture_to_wall`) and room-wide layout solving.
 - **Project Manager:** Browser-local IndexedDB storage supporting multiple projects, templates, quick search (`Ctrl+K`), and instant project duplication.
 - **BIM & CAD Export:** Export scenes to **GLB / OBJ** (3D rendering) or **IFC4** (BIM for Revit / Archicad).

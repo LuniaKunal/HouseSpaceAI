@@ -246,7 +246,7 @@ export const ProjectsDashboard: React.FC = () => {
               New Project
             </h4>
             <p className="text-xs text-slate-400 mt-1 max-w-[190px] leading-relaxed text-pretty">
-              Create a blank design canvas or import an architectural floor plan
+              Create a blank design canvas to draft your architectural spaces
             </p>
           </button>
 

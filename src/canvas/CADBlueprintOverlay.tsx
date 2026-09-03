@@ -16,8 +16,7 @@ import {
   Footprints,
   Lock,
   Unlock,
-  Info,
-  Upload
+  Info
 } from 'lucide-react';
 
 interface Props {
@@ -26,7 +25,6 @@ interface Props {
 
 export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [sceneData, setSceneData] = useState<SceneData>(sceneStore.getData());
   const [uiState, setUiState] = useState<UIState>(uiStore.getState());
   const [projectState, setProjectState] = useState<ProjectStoreState>(projectStore.getState());
@@ -172,37 +170,6 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
     downloadLink.click();
     document.body.removeChild(downloadLink);
     URL.revokeObjectURL(svgUrl);
-  };
-
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      if (projectState.activeProject) {
-        projectState.activeProject.cadData = {
-          fileName: file.name,
-          fileSize: file.size,
-          uploadedAt: Date.now(),
-          dataUrl,
-          opacity: 0.75,
-          visible: true
-        };
-      }
-      uiStore.showToast('CAD Blueprint Loaded', `Loaded "${file.name}". AI Agent ready to synthesize 3D plan.`, 'info');
-      // If AI agent is connected, immediately start building the 3D plan!
-      await triggerCadAutoBuildIfConnected({
-        cadDataUrl: dataUrl,
-        blueprintName: file.name,
-        projectName: projectState.activeProject?.metadata.name,
-        description: projectState.activeProject?.metadata.description,
-        userPrompt: projectState.activeProject?.metadata.description || projectState.activeProject?.metadata.name
-      });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
   const handleAutoBuild = async () => {
@@ -386,24 +353,6 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
               </>
             )}
           </button>
-
-          {/* Import 2D Blueprint Button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 glass-toolbar hover:bg-studio-card border border-white/[0.08] text-slate-200 text-xs font-semibold rounded-2xl shadow-xl transition active:scale-95"
-            title="Import 2D CAD Blueprint or Floor Plan Image"
-            aria-label="Import Blueprint"
-          >
-            <Upload size={13} />
-            <span>Import</span>
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileInputChange}
-            accept="image/*, .svg, .pdf, .dxf"
-            className="hidden"
-          />
 
           {/* Autonomous AI 3D Build Trigger Button */}
           <button

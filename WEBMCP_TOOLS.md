@@ -143,14 +143,14 @@ window.addEventListener('housespace:agent-result', (event) => {
 | 34 | **Workflow** | `redo` | No | Re-applies undone design modification |
 | 35 | **Workflow** | `export_model` | ⚠️ **Required** | Exports scene to GLB, OBJ, IFC4 (BIM), or JSON format |
 | 36 | **Workflow** | `set_confirmation_policy` | No | Configures human-in-the-loop trust boundary & whitelists |
-| 37 | **Workflow** | `create_project` | No | Creates new workspace with optional CAD upload & synthesis |
+| 37 | **Workflow** | `create_project` | No | Creates new blank project workspace |
 | 38 | **Workflow** | `open_project` | No | Loads existing project workspace by ID |
 | 39 | **Workflow** | `list_projects` | No | Lists all saved user projects with metadata |
 | 40 | **Workflow** | `delete_project` | ⚠️ **Required** | Permanently deletes project workspace |
 | 41 | **Workflow** | `duplicate_project` | No | Clones current project into duplicate copy |
 | 42 | **Workflow** | `load_sample_project` | No | Loads pre-built '3BHK_Sample' or '4BHK_Sample' |
 | 43 | **Workflow** | `clear_scene` | ⚠️ **Required** | Clears all rooms, walls, and furniture from canvas |
-| 44 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from 2D CAD blueprint image |
+| 44 | **CAD** | `build_3d_from_cad` | No | Deterministic 3D reconstruction from benchmark CAD blueprint (Upload coming soon) |
 
 ---
 
@@ -804,7 +804,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 #### `create_project`
 * **Title:** Create Project
 * **Requires Confirmation:** `false`
-* **Description:** Creates a new project workspace. Supports importing a 2D CAD blueprint image and user prompt instructions to automatically synthesize a 3D architectural plan.
+* **Description:** Creates a new blank project workspace. *(2D floor plan upload and automated CAD import coming soon)*.
 * **Input Schema:**
   | Property | Type | Required | Default | Description |
   |---|---|:---:|---|---|
@@ -895,7 +895,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 #### `build_3d_from_cad`
 * **Title:** Build 3D Plan from CAD
 * **Requires Confirmation:** `false`
-* **Description:** Synthesizes a 2D CAD architectural blueprint image into a fully structured 3D interior plan with deterministic walls, doors, gates, and furniture matching the image and user instructions.
+* **Description:** Synthesizes a 2D CAD architectural blueprint into a fully structured 3D interior plan with deterministic walls, doors, gates, and furniture. Currently supported for verified benchmark residences (Sample 1: 4BHK and Sample 2: 3BHK); arbitrary 2D floor plan upload is Coming Soon.
 * **Input Schema:**
   | Property | Type | Required | Default | Description |
   |---|---|:---:|---|---|
