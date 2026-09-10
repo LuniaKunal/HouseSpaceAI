@@ -109,8 +109,8 @@ class ProjectStore {
       };
       this.notify();
 
-      // Open Studio View directly so user sees workspace
-      uiStore.setActiveView('studio');
+      // Keep the current navigation surface intact. The landing page owns the
+      // first visit; opening or creating a project moves into the studio.
       uiStore.setCameraMode('3d', 'perspective');
     } catch (err) {
       console.error('Failed to initialize project store:', err);

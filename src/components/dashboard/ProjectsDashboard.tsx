@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { projectStore, ProjectStoreState } from '../../state/projectStore';
+import { uiStore } from '../../state/uiStore';
 import { ProjectMetadata } from '../../types/project';
 import { ProjectCard } from './ProjectCard';
 import { NewProjectModal } from './NewProjectModal';
@@ -99,11 +100,11 @@ export const ProjectsDashboard: React.FC = () => {
   const totalSqFt = projectState.projects.reduce((acc, p) => acc + (p.totalAreaSqFt || 0), 0);
 
   return (
-    <div className="flex-1 w-full h-full bg-studio-canvas text-slate-100 flex flex-col overflow-y-auto font-sans select-none">
+    <div className="projects-dashboard flex-1 w-full h-full bg-studio-canvas text-slate-100 flex flex-col overflow-y-auto font-sans select-none">
       {/* Top Dashboard Navigation Bar */}
-      <header className="sticky top-0 z-20 glass-toolbar px-8 py-3.5 flex items-center justify-between border-b border-white/[0.08]">
-        <div className="flex items-center gap-3.5">
-          <div className="size-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-glow-blue text-white shrink-0">
+      <header className="projects-header sticky top-0 z-20 glass-toolbar px-8 py-3.5 flex items-center justify-between border-b border-white/[0.08]">
+        <button onClick={() => uiStore.setActiveView('landing')} className="flex items-center gap-3.5 text-left" aria-label="Return to HouseSpace home">
+          <div className="projects-brand-mark size-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-glow-blue text-white shrink-0">
             <Box size={20} />
           </div>
           <div>
@@ -119,15 +120,21 @@ export const ProjectsDashboard: React.FC = () => {
               <span className="font-mono tabular-nums text-slate-300 font-medium">{Math.round(totalSqFt).toLocaleString()}</span> sq ft total area
             </p>
           </div>
-        </div>
+        </button>
 
         {/* Action Controls */}
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => uiStore.setActiveView('pricing')}
+            className="projects-pricing-link px-3 py-2 text-xs font-semibold"
+          >
+            Pricing
+          </button>
           {/* Import JSON Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             aria-label="Import Project JSON"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-300 hover:text-white text-xs font-medium transition active:scale-[0.98]"
+            className="import-project-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-300 hover:text-white text-xs font-medium transition active:scale-[0.98]"
           >
             <Upload size={14} className="text-slate-400" />
             <span>Import Project</span>
@@ -144,7 +151,7 @@ export const ProjectsDashboard: React.FC = () => {
           <button
             onClick={() => setIsNewProjectModalOpen(true)}
             aria-label="Create New Project"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold transition shadow-glow-blue active:scale-[0.98]"
+            className="new-project-button flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold transition shadow-glow-blue active:scale-[0.98]"
           >
             <Plus size={15} strokeWidth={2.5} />
             <span>New Project</span>
@@ -153,7 +160,11 @@ export const ProjectsDashboard: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
+      <main className="projects-main flex-1 max-w-7xl w-full mx-auto p-8 space-y-6">
+        <div className="projects-intro">
+          <p>Project library</p>
+          <h2>Where do you want to begin?</h2>
+        </div>
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Search Box */}
@@ -232,12 +243,12 @@ export const ProjectsDashboard: React.FC = () => {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="projects-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {/* Create New Project Shortcut Card */}
           <button
             onClick={() => setIsNewProjectModalOpen(true)}
             aria-label="Create New Empty Project"
-            className="group h-[310px] border-2 border-dashed border-white/[0.08] hover:border-blue-500/60 rounded-2xl bg-studio-surface/50 hover:bg-blue-600/[0.04] transition-all duration-200 flex flex-col items-center justify-center p-6 text-center focus-ring"
+            className="new-project-card group h-[310px] border-2 border-dashed border-white/[0.08] hover:border-blue-500/60 rounded-2xl bg-studio-surface/50 hover:bg-blue-600/[0.04] transition-all duration-200 flex flex-col items-center justify-center p-6 text-center focus-ring"
           >
             <div className="size-12 rounded-2xl bg-studio-card border border-white/[0.08] group-hover:border-blue-500/50 group-hover:bg-blue-600/10 text-slate-400 group-hover:text-blue-400 flex items-center justify-center transition-all duration-200 shadow-sm mb-3">
               <Plus size={22} />
@@ -254,7 +265,7 @@ export const ProjectsDashboard: React.FC = () => {
           <button
             onClick={() => projectStore.load4BHKSampleProject()}
             aria-label="Load 4BHK Luxury Residence Sample"
-            className="group h-[310px] glass-card hover:border-blue-500/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-200 focus-ring"
+            className="sample-project-card group h-[310px] glass-card hover:border-blue-500/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-200 focus-ring"
           >
             <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-[10px] font-mono font-semibold text-blue-300 flex items-center gap-1">
               <Sparkles size={10} /> 4BHK
@@ -277,7 +288,7 @@ export const ProjectsDashboard: React.FC = () => {
           <button
             onClick={() => projectStore.load3BHKSampleProject()}
             aria-label="Load 3BHK Contemporary Residence Sample"
-            className="group h-[310px] glass-card hover:border-indigo-500/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-200 focus-ring"
+            className="sample-project-card group h-[310px] glass-card hover:border-indigo-500/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-200 focus-ring"
           >
             <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-[10px] font-mono font-semibold text-indigo-300 flex items-center gap-1">
               <Sparkles size={10} /> 3BHK

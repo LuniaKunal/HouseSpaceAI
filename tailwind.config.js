@@ -9,24 +9,24 @@ export default {
     extend: {
       colors: {
         studio: {
-          bg: '#0f1117',
-          canvas: '#090b10',
-          surface: '#111420',
-          panel: '#161a28',
-          card: '#1c2236',
-          elevated: '#242b44',
+          bg: '#17201d',
+          canvas: '#111714',
+          surface: '#1b2521',
+          panel: '#202c27',
+          card: '#293630',
+          elevated: '#34433c',
           border: 'rgba(255, 255, 255, 0.08)',
           borderHover: 'rgba(255, 255, 255, 0.16)',
           hover: '#252c42',
-          accent: '#3b82f6',
-          accentHover: '#2563eb',
+          accent: '#b8d34a',
+          accentHover: '#c7df68',
           gold: '#f59e0b',
           emerald: '#10b981',
           rose: '#f43f5e'
         }
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Manrope', 'Avenir Next', 'Segoe UI', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace']
       },
       boxShadow: {

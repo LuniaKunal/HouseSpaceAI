@@ -10,7 +10,21 @@ export interface ToastMessage {
 }
 
 export type ActiveSidebarTab = 'catalog' | 'spaces' | 'materials' | 'copilot' | 'none';
-export type ActiveView = 'dashboard' | 'studio';
+export type ActiveView = 'landing' | 'dashboard' | 'pricing' | 'studio';
+
+const viewFromPath = (pathname: string): ActiveView => {
+  if (pathname.startsWith('/pricing')) return 'pricing';
+  if (pathname.startsWith('/projects')) return 'dashboard';
+  if (pathname.startsWith('/studio')) return 'studio';
+  return 'landing';
+};
+
+const pathForView: Record<ActiveView, string> = {
+  landing: '/',
+  dashboard: '/projects',
+  pricing: '/pricing',
+  studio: '/studio'
+};
 
 export interface UIState {
   activeView: ActiveView;
@@ -46,7 +60,7 @@ type UIListener = (state: UIState) => void;
 
 class UIStore {
   private state: UIState = {
-    activeView: 'studio',
+    activeView: typeof window === 'undefined' ? 'landing' : viewFromPath(window.location.pathname),
     selectedId: 'room-living',
     selectedType: 'room',
     cameraMode: '3d',
@@ -71,9 +85,19 @@ class UIStore {
     return this.state;
   }
 
-  public setActiveView(view: ActiveView) {
+  public setActiveView(view: ActiveView, options?: { replace?: boolean; fromHistory?: boolean }) {
     this.state = { ...this.state, activeView: view };
+    if (typeof window !== 'undefined' && !options?.fromHistory) {
+      const path = pathForView[view];
+      if (window.location.pathname !== path) {
+        window.history[options?.replace ? 'replaceState' : 'pushState']({ view }, '', path);
+      }
+    }
     this.notify();
+  }
+
+  public syncViewFromLocation() {
+    this.setActiveView(viewFromPath(window.location.pathname), { fromHistory: true });
   }
 
   public subscribe(listener: UIListener): () => void {

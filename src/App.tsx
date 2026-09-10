@@ -8,6 +8,8 @@ import { AgentBridgeModal } from './components/header/AgentBridgeModal';
 import { ConfirmationDialog } from './components/confirmation/ConfirmationDialog';
 import { AgentActionFeed } from './components/toast/AgentActionFeed';
 import { ProjectsDashboard } from './components/dashboard/ProjectsDashboard';
+import { LandingPage } from './components/landing/LandingPage';
+import { PricingPage } from './components/pricing/PricingPage';
 import { uiStore, UIState } from './state/uiStore';
 import { projectStore } from './state/projectStore';
 import { initializeWebMCPBridge } from './webmcp/bridge';
@@ -24,12 +26,32 @@ export const App: React.FC = () => {
       console.error('[WebMCP] Bridge registration error after app initialization:', err);
     });
 
-    return () => unsub();
+    const handlePopState = () => uiStore.syncViewFromLocation();
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      unsub();
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
+  useEffect(() => {
+    const titles: Record<UIState['activeView'], string> = {
+      landing: 'HouseSpace — Plan a home you can step into',
+      dashboard: 'Projects — HouseSpace',
+      pricing: 'Pricing — HouseSpace',
+      studio: 'Design Studio — HouseSpace'
+    };
+    document.title = titles[uiState.activeView];
+  }, [uiState.activeView]);
+
   return (
-    <div className="flex flex-col w-full h-dvh overflow-hidden bg-studio-canvas text-slate-100 font-sans">
-      {uiState.activeView === 'dashboard' ? (
+    <div className={`flex flex-col w-full h-dvh overflow-hidden font-sans ${uiState.activeView === 'studio' ? 'studio-workspace bg-studio-canvas text-slate-100' : ''}`}>
+      {uiState.activeView === 'landing' ? (
+        <LandingPage />
+      ) : uiState.activeView === 'pricing' ? (
+        <PricingPage />
+      ) : uiState.activeView === 'dashboard' ? (
         /* Workspace Projects Dashboard */
         <ProjectsDashboard />
       ) : (

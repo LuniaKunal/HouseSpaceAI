@@ -37,7 +37,7 @@ export const LeftSidebar: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-full border-r border-white/[0.08] bg-studio-surface z-20 select-none">
+    <div className="studio-sidebar flex h-full border-r border-white/[0.08] bg-studio-surface z-20 select-none">
       {/* Icon Rail */}
       <div className="w-14 bg-studio-canvas/90 border-r border-white/[0.08] flex flex-col items-center py-3 justify-between shrink-0">
         <div className="space-y-2.5 flex flex-col items-center w-full">

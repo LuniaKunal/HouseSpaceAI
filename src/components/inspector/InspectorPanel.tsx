@@ -414,7 +414,7 @@ export const InspectorPanel: React.FC = () => {
   ];
 
   return (
-    <div className="w-80 h-full bg-studio-panel border-l border-white/[0.08] flex flex-col z-20 select-none overflow-hidden">
+    <div className="studio-inspector w-80 h-full bg-studio-panel border-l border-white/[0.08] flex flex-col z-20 select-none overflow-hidden">
       {/* Inspector Header */}
       <div className="p-3 border-b border-white/[0.08] bg-studio-surface/80 flex items-center justify-between">
         <div className="flex items-center gap-2">

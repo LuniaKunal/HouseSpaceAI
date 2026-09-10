@@ -66,7 +66,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <div
       onDoubleClick={handleOpen}
-      className={`group relative glass-card border rounded-2xl transition-all duration-200 flex flex-col ${
+      className={`project-card group relative glass-card border rounded-2xl transition-all duration-200 flex flex-col ${
         menuOpen ? 'z-30' : 'z-10'
       } ${
         isActive

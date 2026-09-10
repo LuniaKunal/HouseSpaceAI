@@ -89,7 +89,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-14 glass-toolbar border-b border-white/[0.08] px-4 flex items-center justify-between select-none z-30 relative">
+    <header className="studio-header h-14 glass-toolbar border-b border-white/[0.08] px-4 flex items-center justify-between select-none z-30 relative">
       {/* Left: Branding, Workspace Switcher, Project Title & Undo/Redo */}
       <div className="flex items-center gap-3">
         {/* Return to Projects Dashboard Button */}
@@ -97,7 +97,7 @@ export const Header: React.FC = () => {
           onClick={() => uiStore.setActiveView('dashboard')}
           aria-label="Return to Projects Dashboard"
           title="Return to Projects Dashboard"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-300 hover:text-white text-xs font-medium transition shadow-sm group active:scale-95"
+          className="studio-projects-button flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-studio-surface hover:bg-studio-card border border-white/[0.08] hover:border-white/[0.16] text-slate-300 hover:text-white text-xs font-medium transition shadow-sm group active:scale-95"
         >
           <LayoutGrid size={14} className="text-blue-400 group-hover:scale-110 transition-transform" />
           <span className="hidden sm:inline">Projects</span>
