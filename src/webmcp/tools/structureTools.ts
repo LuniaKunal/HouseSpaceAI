@@ -81,13 +81,16 @@ export const structureTools = {
     name: 'place_door',
     title: 'Place Door',
     category: 'Structure' as const,
-    description: 'Places an architectural door opening with standard, double, sliding, or pocket style.',
+    description: 'Places a wall-aligned door using wallId and offset (feet from wall start), or an unambiguous near-wall position. Rejects overlaps and invalid dimensions. Furniture is never moved automatically.',
     requiresConfirmation: false,
     inputSchema: {
       type: 'object' as const,
       properties: {
         roomId: { type: 'string', description: 'Target room ID' },
         wallId: { type: 'string', description: 'Optional wall ID' },
+        offset: { type: 'number', minimum: 0, description: 'Opening start distance in feet from the listed wall start' },
+        hinge: { type: 'string', enum: ['left', 'right'] },
+        swing: { type: 'string', enum: ['inward', 'outward'] },
         position: {
           type: 'object',
           properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } },
@@ -102,7 +105,7 @@ export const structureTools = {
           description: 'Type of door construction'
         }
       },
-      required: ['roomId', 'position']
+      required: ['roomId']
     },
     execute: async (input: PlaceDoorInput) => {
       const door = sceneStore.placeDoor(input);
@@ -115,7 +118,9 @@ export const structureTools = {
         position: door.position,
         width: door.width,
         height: door.height,
-        doorType: door.doorType
+        doorType: door.doorType,
+        rotation: door.rotation, offset: door.offset, hinge: door.hinge, swing: door.swing,
+        validation: sceneStore.validateLayout()
       };
     }
   },

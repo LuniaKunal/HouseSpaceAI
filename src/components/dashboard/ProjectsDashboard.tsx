@@ -164,6 +164,7 @@ export const ProjectsDashboard: React.FC = () => {
         <div className="projects-intro">
           <p>Project library</p>
           <h2>Where do you want to begin?</h2>
+          <button className="text-cta" onClick={() => uiStore.setActiveView('photos')}>Design from a room photo</button>
         </div>
         {/* Filter & Search Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

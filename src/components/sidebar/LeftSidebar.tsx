@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { uiStore, UIState, ActiveSidebarTab } from '../../state/uiStore';
 import { CatalogPanel } from './CatalogPanel';
 import { SpacesPanel } from './SpacesPanel';
+import { OpeningsPanel } from './OpeningsPanel';
 import { MaterialsPanel } from './MaterialsPanel';
 import { AgentCopilotPanel } from './AgentCopilotPanel';
 import {
   Armchair,
   Home,
+  DoorOpen,
   Palette,
   Sparkles,
   ChevronLeft,
@@ -32,6 +34,7 @@ export const LeftSidebar: React.FC = () => {
   const tabs: Array<{ id: ActiveSidebarTab; label: string; icon: any; badge?: string }> = [
     { id: 'catalog', label: 'Catalog', icon: Armchair },
     { id: 'spaces', label: 'Spaces', icon: Home },
+    { id: 'openings', label: 'Walls & Openings', icon: DoorOpen },
     { id: 'materials', label: 'Materials', icon: Palette },
     { id: 'copilot', label: 'AI Co-Designer (Coming Soon)', icon: Sparkles, badge: 'Soon' }
   ];
@@ -82,6 +85,7 @@ export const LeftSidebar: React.FC = () => {
         <div className="w-[340px] h-full bg-studio-panel flex flex-col overflow-hidden border-r border-white/[0.08]">
           {activeTab === 'catalog' && <CatalogPanel />}
           {activeTab === 'spaces' && <SpacesPanel />}
+          {activeTab === 'openings' && <OpeningsPanel />}
           {activeTab === 'materials' && <MaterialsPanel />}
           {activeTab === 'copilot' && <AgentCopilotPanel />}
         </div>

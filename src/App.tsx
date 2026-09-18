@@ -1,30 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
-import { Header } from './components/header/Header';
-import { LeftSidebar } from './components/sidebar/LeftSidebar';
-import { StudioCanvas } from './canvas/StudioCanvas';
-import { InspectorPanel } from './components/inspector/InspectorPanel';
-import { AgentBridgeModal } from './components/header/AgentBridgeModal';
 import { ConfirmationDialog } from './components/confirmation/ConfirmationDialog';
 import { AgentActionFeed } from './components/toast/AgentActionFeed';
-import { ProjectsDashboard } from './components/dashboard/ProjectsDashboard';
 import { LandingPage } from './components/landing/LandingPage';
 import { PricingPage } from './components/pricing/PricingPage';
 import { uiStore, UIState } from './state/uiStore';
-import { projectStore } from './state/projectStore';
-import { initializeWebMCPBridge } from './webmcp/bridge';
+import { SiteSEO } from './seo';
+
+const StudioWorkspace = lazy(() => import('./components/StudioWorkspace'));
+const ProjectsDashboard = lazy(() => import('./components/dashboard/ProjectsDashboard').then(module => ({ default: module.ProjectsDashboard })));
+const PhotoWorkspace = lazy(() => import('./features/photo-design/PhotoWorkspace'));
+const AgentBridgeModal = lazy(() => import('./components/header/AgentBridgeModal').then(module => ({ default: module.AgentBridgeModal })));
+let startup: Promise<unknown> | undefined;
 
 export const App: React.FC = () => {
   const [uiState, setUiState] = useState<UIState>(uiStore.getState());
 
   useEffect(() => {
-    projectStore.init();
+    startup ??= Promise.all([
+      import('./state/projectStore').then(({ projectStore }) => projectStore.init()),
+      import('./webmcp/bridge').then(module => module.initializeWebMCPBridge()),
+    ]).catch(error => { startup = undefined; console.error('Unable to initialize the workspace', error); });
     const unsub = uiStore.subscribe(s => setUiState({ ...s }));
-
-    // Ensure WebMCP registration runs after the app is initialized and does not fail silently
-    initializeWebMCPBridge().catch(err => {
-      console.error('[WebMCP] Bridge registration error after app initialization:', err);
-    });
 
     const handlePopState = () => uiStore.syncViewFromLocation();
     window.addEventListener('popstate', handlePopState);
@@ -35,52 +32,29 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const titles: Record<UIState['activeView'], string> = {
-      landing: 'HouseSpace — Plan a home you can step into',
-      dashboard: 'Projects — HouseSpace',
-      pricing: 'Pricing — HouseSpace',
-      studio: 'Design Studio — HouseSpace'
-    };
-    document.title = titles[uiState.activeView];
-  }, [uiState.activeView]);
-
   return (
     <div className={`flex flex-col w-full h-dvh overflow-hidden font-sans ${uiState.activeView === 'studio' ? 'studio-workspace bg-studio-canvas text-slate-100' : ''}`}>
+      <SiteSEO view={uiState.activeView} />
+      <Suspense fallback={<div className="p-8" role="status">Opening your workspace...</div>}>
       {uiState.activeView === 'landing' ? (
         <LandingPage />
       ) : uiState.activeView === 'pricing' ? (
         <PricingPage />
+      ) : uiState.activeView === 'photos' ? (
+        <PhotoWorkspace />
       ) : uiState.activeView === 'dashboard' ? (
         /* Workspace Projects Dashboard */
         <ProjectsDashboard />
       ) : (
-        /* Active 3D CAD Design Studio Workspace */
-        <>
-          {/* Top Application Header */}
-          <Header />
-
-          {/* Main Studio Viewport Workspace */}
-          <div className="flex-1 flex overflow-hidden relative">
-            {/* Left Interactive Side Panels (Catalog, Spaces, Finishes, Copilot) */}
-            <LeftSidebar />
-
-            {/* Center 3D Three.js Studio Canvas */}
-            <main className="flex-1 h-full relative overflow-hidden bg-[#0a0c10]">
-              <StudioCanvas />
-            </main>
-
-            {/* Right Precision Inspector */}
-            <InspectorPanel />
-          </div>
-        </>
+        <StudioWorkspace />
       )}
+      </Suspense>
 
       {/* WebMCP Agent Bridge Modal */}
-      <AgentBridgeModal
+      {uiState.isAgentBridgeModalOpen && <Suspense fallback={null}><AgentBridgeModal
         isOpen={uiState.isAgentBridgeModalOpen}
         onClose={() => uiStore.setAgentBridgeModalOpen(false)}
-      />
+      /></Suspense>}
 
       {/* Trust Boundary Human-in-the-Loop Confirmation Gate */}
       <ConfirmationDialog request={uiState.confirmationRequest} />

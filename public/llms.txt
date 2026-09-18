@@ -1,0 +1,3 @@
+# HouseSpace
+
+The canonical AI-readable product guide is available at [/llm.txt](/llm.txt).

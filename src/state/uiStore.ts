@@ -9,10 +9,11 @@ export interface ToastMessage {
   timestamp: number;
 }
 
-export type ActiveSidebarTab = 'catalog' | 'spaces' | 'materials' | 'copilot' | 'none';
-export type ActiveView = 'landing' | 'dashboard' | 'pricing' | 'studio';
+export type ActiveSidebarTab = 'catalog' | 'spaces' | 'openings' | 'materials' | 'copilot' | 'none';
+export type ActiveView = 'landing' | 'dashboard' | 'pricing' | 'studio' | 'photos';
 
 const viewFromPath = (pathname: string): ActiveView => {
+  if (pathname === '/photos' || pathname.startsWith('/photos/')) return 'photos';
   if (pathname.startsWith('/pricing')) return 'pricing';
   if (pathname.startsWith('/projects')) return 'dashboard';
   if (pathname.startsWith('/studio')) return 'studio';
@@ -20,6 +21,7 @@ const viewFromPath = (pathname: string): ActiveView => {
 };
 
 const pathForView: Record<ActiveView, string> = {
+  photos: '/photos',
   landing: '/',
   dashboard: '/projects',
   pricing: '/pricing',

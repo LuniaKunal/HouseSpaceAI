@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /projects
+Disallow: /studio
+Disallow: /photos
+
+Sitemap: https://house-space-ai.vercel.app/sitemap.xml

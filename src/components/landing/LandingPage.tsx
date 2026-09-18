@@ -5,6 +5,7 @@ import {
   Compass,
   MousePointer2,
   MoveUpRight,
+  Share2,
   Sparkles,
   Waypoints
 } from 'lucide-react';
@@ -20,7 +21,29 @@ const planRooms = [
 ];
 
 export const LandingPage: React.FC = () => {
-  const enterStudio = () => uiStore.setActiveView('dashboard');
+  const trySample = async () => {
+    const { projectStore } = await import('../../state/projectStore');
+    await projectStore.load3BHKSampleProject();
+  };
+
+  const shareHouseSpace = async () => {
+    const shareData = {
+      title: 'HouseSpace',
+      text: 'Plan and walk through a home design for free with HouseSpace.',
+      url: window.location.origin
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await navigator.clipboard.writeText(shareData.url);
+      uiStore.showToast('Link copied', 'Share HouseSpace with someone planning a home.', 'success');
+    } catch {
+      // Cancelling a native share sheet is expected and should stay quiet.
+    }
+  };
 
   return (
     <div className="landing-page">
@@ -31,15 +54,18 @@ export const LandingPage: React.FC = () => {
       <main id="landing-main">
         <section className="landing-hero" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="hero-kicker">A spatial design workspace for people who think in rooms.</p>
-            <h1 id="hero-title">Plan a home<br />you can step into.</h1>
+            <p className="hero-kicker">A free home planning studio for your next move, remodel, or daydream.</p>
+            <h1 id="hero-title">See your home<br />before you build it.</h1>
             <p className="hero-summary">
-              Shape floor plans, furnish every room, and move from measured drawings to a walkable 3D home in one focused workspace.
+              Start with a furnished three bedroom sample, reshape every room, and walk through the result in 3D.
             </p>
-            <button className="primary-cta" onClick={enterStudio}>
-              Enter the studio <MoveUpRight size={18} />
-            </button>
-            <p className="hero-proof">No setup needed · Includes a furnished 3BHK sample</p>
+            <div className="hero-actions">
+              <button className="primary-cta" onClick={trySample}>
+                Try the furnished 3BHK <MoveUpRight size={18} />
+              </button>
+              <button className="text-cta" onClick={() => uiStore.setActiveView('dashboard')}>Start a blank plan <ArrowRight size={15} /></button>
+            </div>
+            <p className="hero-proof">Free to try. No account, card, or setup needed.</p>
           </div>
 
           <div className="hero-plan-wrap" aria-label="Interactive architectural plan preview">
@@ -57,8 +83,8 @@ export const LandingPage: React.FC = () => {
         </section>
 
         <section className="landing-statement" id="approach">
-          <p>Design should move at the speed of a conversation.</p>
-          <h2>Draw precisely. Adjust naturally. See every decision in context.</h2>
+          <p>See it before you commit.</p>
+          <h2>Make one change, then feel the whole home shift around it.</h2>
         </section>
 
         <section className="capability-story" id="capabilities" aria-label="Product capabilities">
@@ -86,12 +112,38 @@ export const LandingPage: React.FC = () => {
           </article>
         </section>
 
+        <section className="landing-steps" aria-labelledby="steps-title">
+          <p>From sketch to walk through</p>
+          <h2 id="steps-title">A home idea becomes easier to judge when you can move through it.</h2>
+          <ol>
+            <li><span>01</span><div><h3>Open a starting point</h3><p>Use the furnished 3BHK sample or begin with an empty plan.</p></div></li>
+            <li><span>02</span><div><h3>Shape the rooms</h3><p>Adjust room sizes, openings, furniture, finishes, and clearances.</p></div></li>
+            <li><span>03</span><div><h3>Walk it together</h3><p>Switch to 3D and first person view when a conversation needs a clearer answer.</p></div></li>
+          </ol>
+        </section>
+
+        <section className="landing-faq" aria-labelledby="faq-title">
+          <p>Questions, answered plainly.</p>
+          <h2 id="faq-title">Start with a plan, not a blank page.</h2>
+          <dl>
+            <div><dt>Is HouseSpace free?</dt><dd>Yes. The current preview is free to use and does not ask for a card.</dd></div>
+            <div><dt>Do I need design software experience?</dt><dd>No. Start with the sample, change one thing, and use the view that makes the next decision easiest.</dd></div>
+            <div><dt>Can I plan a three bedroom home?</dt><dd>Yes. The furnished 3BHK sample is ready to open, edit, and walk through.</dd></div>
+            <div><dt>Can I work from a floor plan?</dt><dd>Yes. You can build rooms from a plan and use measured dimensions while you work.</dd></div>
+            <div><dt>Can I see the design in 3D?</dt><dd>Yes. Move between plan, orbit, and walk views without rebuilding the layout.</dd></div>
+            <div><dt>Can I save my work?</dt><dd>Yes. Projects save in your browser and can be exported as a backup file.</dd></div>
+          </dl>
+        </section>
+
         <section className="landing-close">
           <div>
             <p>Your next home starts as a line.</p>
             <h2>Make the first move.</h2>
           </div>
-          <button className="primary-cta light" onClick={enterStudio}>Open your projects <ArrowRight size={18} /></button>
+          <div className="landing-close-actions">
+            <button className="primary-cta light" onClick={trySample}>Try the 3BHK sample <ArrowRight size={18} /></button>
+            <button className="share-cta" onClick={shareHouseSpace}>Share HouseSpace <Share2 size={17} /></button>
+          </div>
         </section>
       </main>
 

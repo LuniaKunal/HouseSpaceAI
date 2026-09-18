@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { WebGPURenderer } from 'three/webgpu';
+import { WebGPURenderer, PMREMGenerator as WebGPUPMREMGenerator } from 'three/webgpu';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { sceneStore, SceneData } from '../state/sceneStore';
 import { uiStore, UIState } from '../state/uiStore';
 import { createFurnitureMeshGroup } from './furnitureMeshes';
+import { createFurnitureEnvironment, disposeFurniture } from './furnitureRealism';
 import { getFloorMaterial, createRoomWallsGroup } from './roomAndWallHelpers';
+import { hasArchitectureEdits, listSpaceBoundaries, projectOnWall } from '../geometry/architecture';
+import { createArchitectureGroup, disposeArchitectureGroup } from './architectureMeshes';
 import { reconstruct3DFromFloorPlan } from '../geometry/deterministicReconstruction';
 import { getRoomFootprint } from '../geometry/roomGeometry';
 import { FT_TO_M, M_TO_FT, Room, FurnitureObject, WindowOpening } from '../types/scene';
@@ -347,6 +350,9 @@ export const StudioCanvas: React.FC = () => {
     // 1. Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0f1117);
+    const furnitureEnvironment = createFurnitureEnvironment();
+    let environmentTarget: { texture: THREE.Texture; dispose(): void } | undefined;
+    scene.environmentIntensity = 0.65;
     sceneRef.current = scene;
 
     // 2. Camera
@@ -374,14 +380,31 @@ export const StudioCanvas: React.FC = () => {
         renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
       }
 
-      if (isDisposed || !containerRef.current) return;
+      if (isDisposed || !containerRef.current) { renderer.dispose(); return; }
+
+      // Pre-filter once before the animation loop; concurrent first-frame PMREM
+      // generation can initialize the same WebGPU texture more than once.
+      if (renderer.isWebGPURenderer) {
+        // Installed Three.js implements the async method; its matching @types omits it.
+        const pmrem = new WebGPUPMREMGenerator(renderer) as WebGPUPMREMGenerator & {
+          fromEquirectangularAsync(texture: THREE.Texture): Promise<THREE.RenderTarget>;
+        };
+        environmentTarget = await pmrem.fromEquirectangularAsync(furnitureEnvironment);
+        pmrem.dispose();
+      } else {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        environmentTarget = pmrem.fromEquirectangular(furnitureEnvironment);
+        pmrem.dispose();
+      }
+      if (isDisposed || !containerRef.current) { environmentTarget?.dispose(); renderer.dispose(); return; }
+      scene.environment = environmentTarget!.texture;
 
       renderer.setSize(width, height);
       renderer.setPixelRatio(resolutionScale);
       renderer.shadowMap.enabled = shadowQuality !== 'low';
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
+      renderer.toneMappingExposure = 1.05;
 
       containerRef.current.innerHTML = '';
       containerRef.current.appendChild(renderer.domElement);
@@ -397,18 +420,18 @@ export const StudioCanvas: React.FC = () => {
       orbitControlsRef.current = orbit;
 
       // 5. Rich Multi-Tier Lighting
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1.15);
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.32);
       scene.add(ambientLight);
 
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.85);
+      const hemiLight = new THREE.HemisphereLight(0xe9f1ff, 0x8c7761, 0.6);
       hemiLight.position.set(0, 50, 0);
       scene.add(hemiLight);
 
-      const dirLight = new THREE.DirectionalLight(0xfffaed, 1.3);
+      const dirLight = new THREE.DirectionalLight(0xfff0da, 2.2);
       dirLight.position.set(25, 45, 20);
       dirLight.castShadow = shadowQuality !== 'low';
-      dirLight.shadow.mapSize.width = shadowQuality === 'ultra' ? 2048 : 1024;
-      dirLight.shadow.mapSize.height = shadowQuality === 'ultra' ? 2048 : 1024;
+      dirLight.shadow.mapSize.width = shadowQuality === 'ultra' ? 4096 : 2048;
+      dirLight.shadow.mapSize.height = shadowQuality === 'ultra' ? 4096 : 2048;
       dirLight.shadow.camera.near = 0.5;
       dirLight.shadow.camera.far = 140;
       dirLight.shadow.camera.left = -40;
@@ -416,9 +439,11 @@ export const StudioCanvas: React.FC = () => {
       dirLight.shadow.camera.top = 40;
       dirLight.shadow.camera.bottom = -40;
       dirLight.shadow.bias = -0.0001;
+      dirLight.shadow.normalBias = 0.025;
+      dirLight.shadow.radius = 3;
       scene.add(dirLight);
 
-      const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.6);
+      const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.45);
       fillLight.position.set(-25, 20, -20);
       scene.add(fillLight);
 
@@ -554,6 +579,9 @@ export const StudioCanvas: React.FC = () => {
 
     return () => {
       isDisposed = true;
+      scene.children.filter(child => child.name.startsWith('Furniture_')).forEach(disposeFurniture);
+      furnitureEnvironment.dispose();
+      environmentTarget?.dispose();
       window.removeEventListener('resize', handleResize);
       if (rendererRef.current) {
         if (rendererRef.current.setAnimationLoop) rendererRef.current.setAnimationLoop(null);
@@ -755,6 +783,8 @@ export const StudioCanvas: React.FC = () => {
     const toRemove: THREE.Object3D[] = [];
     scene.traverse(obj => {
       if (
+        obj.name.startsWith('Architecture_') ||
+        obj.name.startsWith('DeterministicFloorPlan_') ||
         obj.name.startsWith('Room_') ||
         obj.name.startsWith('RoomWalls_') ||
         obj.name.startsWith('Furniture_') ||
@@ -764,7 +794,11 @@ export const StudioCanvas: React.FC = () => {
         toRemove.push(obj);
       }
     });
-    toRemove.forEach(obj => scene.remove(obj));
+    toRemove.forEach(obj => {
+      if (obj.name.startsWith('Furniture_')) disposeFurniture(obj);
+      if (obj.name.startsWith('Architecture_')) disposeArchitectureGroup(obj);
+      scene.remove(obj);
+    });
 
     const isFullHeightWalls =
       (uiState.cameraMode === 'walk' && walkWallMode === 'full') ||
@@ -773,7 +807,8 @@ export const StudioCanvas: React.FC = () => {
     // 1. Render Rooms (Floors & Walls)
     if (sceneData.floorPlan && sceneData.floorPlan.walls.length > 0) {
       const deterministicGroup = reconstruct3DFromFloorPlan(sceneData.floorPlan, {
-        fullHeightWalls: isFullHeightWalls
+        fullHeightWalls: isFullHeightWalls,
+        skipWalls: hasArchitectureEdits(sceneData)
       });
       scene.add(deterministicGroup);
     } else {
@@ -822,7 +857,7 @@ export const StudioCanvas: React.FC = () => {
         roomGroup.add(borderLine);
 
         // Walls
-        const wallsGroup = createRoomWallsGroup(
+        const wallsGroup = hasArchitectureEdits(sceneData) ? new THREE.Group() : createRoomWallsGroup(
           room,
           sceneData.gates,
           sceneData.doors,
@@ -831,10 +866,21 @@ export const StudioCanvas: React.FC = () => {
           sceneData.rooms
         );
         roomGroup.add(wallsGroup);
+        if (!hasArchitectureEdits(sceneData)) {
+          const edges = listSpaceBoundaries(sceneData).filter(w => w.roomId === room.id);
+          wallsGroup.traverse(child => {
+            if (!(child instanceof THREE.Mesh)) return;
+            const p = { x: child.position.x / FT_TO_M + room.position.x, z: child.position.z / FT_TO_M + room.position.z };
+            const edge = edges.reduce<typeof edges[number] | undefined>((best, w) => !best || projectOnWall(w, p).distance < projectOnWall(best, p).distance ? w : best, undefined);
+            if (edge) child.userData = { id: edge.id, type: 'wall' };
+          });
+        }
 
         scene.add(roomGroup);
       });
     }
+
+    if (hasArchitectureEdits(sceneData)) scene.add(createArchitectureGroup(sceneData, isFullHeightWalls, uiState.selectedId));
 
     // 2. Render Furniture
     sceneData.furniture.forEach(item => {
@@ -964,6 +1010,7 @@ export const StudioCanvas: React.FC = () => {
       const data = hit.object.userData;
       if (data && data.id) {
         uiStore.setSelected(data.id, data.type);
+        if (data.type === 'wall' || data.type === 'door') uiStore.setActiveSidebarTab('openings');
 
         if (data.type === 'furniture') {
           isDraggingRef.current = true;

@@ -1,10 +1,12 @@
 import { roomTools } from './tools/roomTools';
 import { structureTools } from './tools/structureTools';
+import { architectureTools } from './tools/architectureTools';
 import { objectTools } from './tools/objectTools';
 import { materialTools } from './tools/materialTools';
 import { viewTools } from './tools/viewTools';
 import { workflowTools } from './tools/workflowTools';
 import { cadTools } from './tools/cadTools';
+import { photoDesignTools } from './tools/photoDesignTools';
 import { WebMCPToolDefinition } from '../types/webmcp';
 import { agentStore } from '../state/agentStore';
 import { uiStore } from '../state/uiStore';
@@ -16,11 +18,13 @@ export interface ExecutableTool extends WebMCPToolDefinition {
 export const ALL_TOOLS: Record<string, ExecutableTool> = {
   ...roomTools,
   ...structureTools,
+  ...architectureTools,
   ...objectTools,
   ...materialTools,
   ...viewTools,
   ...workflowTools,
-  ...cadTools
+  ...cadTools,
+  ...photoDesignTools
 };
 
 export const TOOL_LIST: WebMCPToolDefinition[] = Object.values(ALL_TOOLS).map(t => ({
@@ -102,16 +106,24 @@ export async function executeWebMCPTool(
   }
 
   const agentState = agentStore.getState();
+  // Photo data URLs can contain private home photos. Keep them out of telemetry.
+  const telemetry = (value: any): any => {
+    if (!(toolName in photoDesignTools) || value == null) return value;
+    if (typeof value === 'string') return value.startsWith('data:image/') ? '[photo bytes omitted]' : value;
+    if (Array.isArray(value)) return value.map(telemetry);
+    if (typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'dataUrl' ? '[photo bytes omitted]' : telemetry(item)]));
+    return value;
+  };
+  const loggedInput = telemetry(input);
   const needsConfirmation =
     tool.requiresConfirmation &&
-    agentState.requireConfirmation &&
-    !agentState.allowedActions.includes(toolName) &&
+    (toolName === 'generate_photo_design' || (agentState.requireConfirmation && !agentState.allowedActions.includes(toolName))) &&
     caller !== 'user';
 
   if (needsConfirmation) {
     const logEntry = agentStore.addLog({
       toolName,
-      input,
+      input: loggedInput,
       status: 'pending',
       caller
     });
@@ -121,7 +133,7 @@ export async function executeWebMCPTool(
         id: `conf-${Date.now()}`,
         toolName,
         input,
-        description: `Agent requested permission to execute "${toolName}". This will modify or export structural project assets.`,
+        description: toolName === 'generate_photo_design' ? 'Send this room photo to OpenAI and generate one draft image? OpenAI API usage is charged to the configured account.' : toolName === 'delete_photo_design' ? 'Permanently delete this photo design, its source photo and saved results?' : `Agent requested permission to execute "${toolName}". This will modify or export structural project assets.`,
         timestamp: Date.now(),
         resolve: (isApproved: boolean) => {
           uiStore.clearConfirmation();
@@ -141,7 +153,7 @@ export async function executeWebMCPTool(
 
   const logEntry = agentStore.addLog({
     toolName,
-    input,
+    input: loggedInput,
     status: 'pending',
     caller
   });
@@ -150,7 +162,7 @@ export async function executeWebMCPTool(
     const result = await tool.execute(input);
     agentStore.updateLog(logEntry.id, {
       status: 'success',
-      result
+      result: telemetry(result)
     });
     return result;
   } catch (err: any) {

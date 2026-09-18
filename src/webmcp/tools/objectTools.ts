@@ -18,6 +18,15 @@ import { isPointInRoom } from '../../geometry/roomGeometry';
 import { CATALOG_ITEMS } from '../../data/catalogData';
 
 export const objectTools = {
+  fix_furniture_overlaps: {
+    name: 'fix_furniture_overlaps',
+    title: 'Fix Furniture Overlaps',
+    category: 'Objects' as const,
+    description: 'Reposition and, if necessary, rotate furniture to clear other furniture and walls, using rendered model bounds. Preserves sizes and locked objects. Returns unresolved conflicts if the room is too full. Undo restores the previous layout.',
+    requiresConfirmation: false,
+    inputSchema: { type: 'object' as const, properties: { roomId: { type: 'string', description: 'Optional room to repair; otherwise repairs all rooms.' } }, additionalProperties: false },
+    execute: async (input: { roomId?: string }) => sceneStore.fixFurnitureOverlaps(input.roomId)
+  },
   add_furniture: {
     name: 'add_furniture',
     title: 'Add Furniture',
@@ -160,10 +169,11 @@ export const objectTools = {
     },
     execute: async (input: MoveObjectInput) => {
       const ok = sceneStore.moveObject(input.objectId, input.position);
-      if (!ok) throw new Error(`Could not move object "${input.objectId}". It may be locked or not found.`);
+      if (!ok) throw new Error(`Could not move object "${input.objectId}". It may be locked, missing, or have no collision-free space.`);
+      const position = sceneStore.getData().furniture.find(i => i.id === input.objectId)?.position ?? input.position;
       sceneStore.highlightObject(input.objectId, 2000);
-      uiStore.recordAgentAction('move_object', `Moved object to (${input.position.x}, ${input.position.z}) ft`, input.objectId);
-      return { success: true, objectId: input.objectId, position: input.position };
+      uiStore.recordAgentAction('move_object', `Moved object to (${position.x}, ${position.z}) ft`, input.objectId);
+      return { success: true, objectId: input.objectId, position };
     }
   },
 
@@ -193,10 +203,10 @@ export const objectTools = {
         z: input.rotation?.z || 0
       };
       const ok = sceneStore.rotateObject(input.objectId, rot);
-      if (!ok) throw new Error(`Could not rotate object "${input.objectId}". Object ID not found.`);
+      if (!ok) throw new Error(`Could not rotate object "${input.objectId}". It may be locked, missing, or have no collision-free space.`);
       sceneStore.highlightObject(input.objectId, 1500);
       uiStore.recordAgentAction('rotate_object', `Rotated object (Y: ${rot.y}°)`, input.objectId);
-      return { success: true, objectId: input.objectId, rotation: rot };
+      return { success: true, objectId: input.objectId, rotation: rot, position: sceneStore.getData().furniture.find(i => i.id === input.objectId)?.position };
     }
   },
 
@@ -221,10 +231,10 @@ export const objectTools = {
     },
     execute: async (input: ScaleObjectInput) => {
       const ok = sceneStore.scaleObject(input.objectId, input.scale);
-      if (!ok) throw new Error(`Could not scale object "${input.objectId}".`);
+      if (!ok) throw new Error(`Could not scale object "${input.objectId}". It may be locked, missing, or too large for the available space.`);
       sceneStore.highlightObject(input.objectId, 1500);
       uiStore.recordAgentAction('scale_object', `Scaled object [${input.scale.x}x, ${input.scale.y}x, ${input.scale.z}x]`, input.objectId);
-      return { success: true, objectId: input.objectId, scale: input.scale };
+      return { success: true, objectId: input.objectId, scale: input.scale, position: sceneStore.getData().furniture.find(i => i.id === input.objectId)?.position };
     }
   },
 
@@ -296,7 +306,7 @@ export const objectTools = {
         height: input.height,
         depth: input.depth
       });
-      if (!res) throw new Error(`Could not set dimensions for object "${input.objectId}".`);
+      if (!res?.success) throw new Error(`Could not set dimensions for object "${input.objectId}". It may be locked, missing, or too large for the available space.`);
       sceneStore.highlightObject(input.objectId, 1500);
       uiStore.recordAgentAction(
         'set_furniture_dimensions',
@@ -529,4 +539,3 @@ export const objectTools = {
     }
   }
 };
-

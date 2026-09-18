@@ -1,7 +1,7 @@
 # HouseSpace WebMCP Tools Reference Guide
 
 > **W3C WebMCP Specification & Agent Interoperability Guide**  
-> **Total Available Tools:** 50 Executable Tools  
+> **Total Available Tools:** 63 Executable Tools (including 13 photo-design tools)<br>
 > **Categories:** 7 (Rooms, Structure, Objects, Materials, Scene / View, Workflow, CAD Synthesis)  
 > **Canonical Spatial Units:** Feet (Imperial) for dimensions and coordinates; degrees for Euler rotation; Three.js converts to SI metres internally ($1\text{ ft} = 0.3048\text{ m}$).
 
@@ -21,8 +21,8 @@ HouseSpace is built from the ground up to support collaborative spatial design w
                │                   │                   │
                └───────────────────┼───────────────────┘
                                    ▼
-                    WebMCP Central Tool Registry
-                     (50 Schema-Validated Tools)
+                     WebMCP Central Tool Registry
+                     (63 Schema-Validated Tools)
                                    │
                ┌───────────────────┴───────────────────┐
                ▼                                       ▼
@@ -101,7 +101,7 @@ window.addEventListener('housespace:agent-result', (event) => {
 
 ---
 
-## 3. Master WebMCP Tool Catalog Summary (50 Tools)
+## 3. Master WebMCP Tool Catalog Summary (63 Tools)
 
 | # | Category | Tool Name | Human Confirmation | Description Summary |
 |---|:---|:---|:---:|:---|
@@ -1097,3 +1097,7 @@ const kitchen = await tools.fit_room_into_notch.execute({
   openingWidth: 6.0
 });
 ```
+
+## Photo design tools
+
+Photo design adds 13 tools to the existing registry, including image upload, settings, versioned briefs, OpenAI generation, status retrieval, local image access and deletion. See [PHOTO_DESIGN.md](PHOTO_DESIGN.md) for complete operations and an executable workflow. `generate_photo_design` is chargeable, requires explicit cost consent and prompts agent callers for approval. The server API key is never exposed to WebMCP clients.

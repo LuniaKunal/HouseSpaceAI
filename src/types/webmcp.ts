@@ -166,7 +166,10 @@ export interface SetWallDimensionsInput {
 export interface PlaceDoorInput {
   roomId: string;
   wallId?: string;
-  position: Vector3D;
+  position?: Vector3D;
+  offset?: number;
+  hinge?: 'left' | 'right';
+  swing?: 'inward' | 'outward';
   width?: number;
   height?: number;
   doorType?: DoorType;

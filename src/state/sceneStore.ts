@@ -15,6 +15,8 @@ import {
 
 import { historyManager, SceneHistorySnapshot } from './historyStore';
 import { CATALOG_ITEMS } from '../data/catalogData';
+import { auditFurniture, findFurniturePlacement, repairFurnitureLayout } from '../geometry/furniturePlacement';
+import { listSpaceBoundaries, validateOpening, prepareDoor, openingSpans, spansOnWall, resolveWallPieces, wallPoint, doorInteriorSide } from '../geometry/architecture';
 import { FloorPlan, GeometryValidation } from '../types/floorPlan';
 import {
   createNotchFootprint,
@@ -71,6 +73,20 @@ class SceneStore {
   }
 
   private notify() {
+    // Wall-relative anchors survive room moves without re-running placement searches.
+    const walls = listSpaceBoundaries(this.data);
+    let changed = false;
+    const doors = this.data.doors.map(d => {
+      if (!d.managed || d.offset === undefined) return d;
+      const w = walls.find(w => w.id === d.wallId);
+      if (!w) return d;
+      const p = wallPoint(w, d.offset + d.width / 2);
+      const rotation = -Math.atan2(w.end.z - w.start.z, w.end.x - w.start.x) * 180 / Math.PI;
+      const interiorSide = doorInteriorSide(w, p, this.data.rooms.find(r => r.id === d.roomId));
+      if (d.position.x === p.x && d.position.z === p.z && d.rotation === rotation && d.interiorSide === interiorSide) return d;
+      changed = true; return { ...d, position: { ...p, y: 0 }, rotation, interiorSide };
+    });
+    if (changed) this.data = { ...this.data, doors };
     this.listeners.forEach(l => l(this.data));
   }
 
@@ -83,7 +99,9 @@ class SceneStore {
       doors: this.data.doors,
       windows: this.data.windows,
       walls: this.data.customWalls,
-      ceilingHeight: this.data.globalCeilingHeight
+      ceilingHeight: this.data.globalCeilingHeight,
+      floorPlan: this.data.floorPlan,
+      validation: this.data.validation
     };
     historyManager.push(snapshot);
   }
@@ -96,7 +114,9 @@ class SceneStore {
       doors: this.data.doors,
       windows: this.data.windows,
       walls: this.data.customWalls,
-      ceilingHeight: this.data.globalCeilingHeight
+      ceilingHeight: this.data.globalCeilingHeight,
+      floorPlan: this.data.floorPlan,
+      validation: this.data.validation
     };
     const previous = historyManager.undo(currentSnapshot);
     if (!previous) return false;
@@ -107,7 +127,9 @@ class SceneStore {
       doors: previous.doors,
       windows: previous.windows,
       customWalls: previous.walls,
-      globalCeilingHeight: previous.ceilingHeight
+      globalCeilingHeight: previous.ceilingHeight,
+      floorPlan: previous.floorPlan,
+      validation: previous.validation
     };
     this.notify();
     return true;
@@ -121,7 +143,9 @@ class SceneStore {
       doors: this.data.doors,
       windows: this.data.windows,
       walls: this.data.customWalls,
-      ceilingHeight: this.data.globalCeilingHeight
+      ceilingHeight: this.data.globalCeilingHeight,
+      floorPlan: this.data.floorPlan,
+      validation: this.data.validation
     };
     const next = historyManager.redo(currentSnapshot);
     if (!next) return false;
@@ -132,7 +156,9 @@ class SceneStore {
       doors: next.doors,
       windows: next.windows,
       customWalls: next.walls,
-      globalCeilingHeight: next.ceilingHeight
+      globalCeilingHeight: next.ceilingHeight,
+      floorPlan: next.floorPlan,
+      validation: next.validation
     };
     this.notify();
     return true;
@@ -740,6 +766,25 @@ class SceneStore {
 
   // --- Furniture & Objects Management ---
 
+  private safeFurniturePlacement(item: FurnitureObject): FurnitureObject | null {
+    return findFurniturePlacement(item, this.data.rooms, this.data.furniture, this.data.customWalls, false, this.data);
+  }
+
+  public fixFurnitureOverlaps(roomId?: string) {
+    const before = this.data.furniture;
+    const result = repairFurnitureLayout(before, this.data.rooms, this.data.customWalls, roomId, this.data);
+    const adjusted = result.furniture.filter(item => {
+      const old = before.find(i => i.id === item.id)!;
+      return JSON.stringify([item.position, item.rotation, item.roomId]) !== JSON.stringify([old.position, old.rotation, old.roomId]);
+    });
+    if (adjusted.length) {
+      this.saveSnapshot();
+      this.data = { ...this.data, furniture: result.furniture };
+      this.notify();
+    }
+    return { success: result.unresolved.length === 0, itemsAdjusted: adjusted.map(i => ({ objectId: i.id, name: i.name, position: i.position, rotation: i.rotation })), unresolved: result.unresolved };
+  }
+
   public addFurniture(input: {
     type: string;
     roomId?: string;
@@ -750,7 +795,6 @@ class SceneStore {
     material?: string;
     color?: string;
   }): FurnitureObject {
-    this.saveSnapshot();
     const catalogItem = CATALOG_ITEMS.find(c => c.type === input.type);
     const id = `obj-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`;
 
@@ -769,39 +813,32 @@ class SceneStore {
       locked: false
     };
 
-    this.data = {
-      ...this.data,
-      furniture: [...this.data.furniture, newObject]
-    };
+    const placed = this.safeFurniturePlacement(newObject);
+    if (!placed) throw new Error('No collision-free space for this furniture. Try a smaller item or another room.');
+    this.saveSnapshot();
+    this.data = { ...this.data, furniture: [...this.data.furniture, placed] };
     this.notify();
-    return newObject;
+    return placed;
   }
 
   public moveObject(objectId: string, position: Vector3D): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
     if (item) {
       if (item.locked) return false;
-      this.saveSnapshot();
 
       // Auto-detect enclosing room if position moved
       let assignedRoomId = item.roomId;
       for (const r of this.data.rooms) {
-        const minX = r.position.x - r.width / 2;
-        const maxX = r.position.x + r.width / 2;
-        const minZ = r.position.z - r.depth / 2;
-        const maxZ = r.position.z + r.depth / 2;
-        if (position.x >= minX && position.x <= maxX && position.z >= minZ && position.z <= maxZ) {
+        if (isPointInRoom(position, r)) {
           assignedRoomId = r.id;
           break;
         }
       }
 
-      this.data = {
-        ...this.data,
-        furniture: this.data.furniture.map(f =>
-          f.id === objectId ? { ...f, position, roomId: assignedRoomId } : f
-        )
-      };
+      const placed = this.safeFurniturePlacement({ ...item, position, roomId: assignedRoomId });
+      if (!placed) return false;
+      this.saveSnapshot();
+      this.data = { ...this.data, furniture: this.data.furniture.map(f => f.id === objectId ? placed : f) };
       this.notify();
       return true;
     }
@@ -818,15 +855,14 @@ class SceneStore {
     const item = this.data.furniture.find(f => f.id === objectId);
     if (item) {
       if (item.locked) return false;
-      this.saveSnapshot();
       const rotVec: Vector3D = typeof rotation === 'number'
         ? { x: 0, y: rotation, z: 0 }
         : { x: (rotation as any).x || 0, y: (rotation as any).y || 0, z: (rotation as any).z || 0 };
 
-      this.data = {
-        ...this.data,
-        furniture: this.data.furniture.map(f => (f.id === objectId ? { ...f, rotation: rotVec } : f))
-      };
+      const placed = this.safeFurniturePlacement({ ...item, rotation: rotVec });
+      if (!placed) return false;
+      this.saveSnapshot();
+      this.data = { ...this.data, furniture: this.data.furniture.map(f => f.id === objectId ? placed : f) };
       this.notify();
       return true;
     }
@@ -839,6 +875,7 @@ class SceneStore {
 
     const door = this.data.doors.find(d => d.id === objectId);
     if (door) {
+      if (door.managed) return false; // Wall-aligned doors use updateDoor for hinge/swing, never free rotation.
       this.saveSnapshot();
       const yaw = typeof rotation === 'number' ? rotation : ((rotation as any).y ?? (rotation as any).x ?? 0);
       const normalizedYaw = ((yaw % 360) + 360) % 360;
@@ -856,12 +893,11 @@ class SceneStore {
   public scaleObject(objectId: string, scale: Vector3D): boolean {
     const item = this.data.furniture.find(f => f.id === objectId);
     if (!item || item.locked) return false;
-    this.saveSnapshot();
 
-    this.data = {
-      ...this.data,
-      furniture: this.data.furniture.map(f => (f.id === objectId ? { ...f, scale } : f))
-    };
+    const placed = this.safeFurniturePlacement({ ...item, scale });
+    if (!placed) return false;
+    this.saveSnapshot();
+    this.data = { ...this.data, furniture: this.data.furniture.map(f => f.id === objectId ? placed : f) };
     this.notify();
     return true;
   }
@@ -872,7 +908,6 @@ class SceneStore {
   ): { success: boolean; dimensions: Vector3D; scale: Vector3D } | null {
     const item = this.data.furniture.find(f => f.id === objectId);
     if (!item || item.locked) return null;
-    this.saveSnapshot();
 
     const natural = item.dimensions;
     let scaleX = item.scale.x;
@@ -896,10 +931,10 @@ class SceneStore {
       z: natural.z * scaleZ
     };
 
-    this.data = {
-      ...this.data,
-      furniture: this.data.furniture.map(f => (f.id === objectId ? { ...f, scale: newScale } : f))
-    };
+    const placed = this.safeFurniturePlacement({ ...item, scale: newScale });
+    if (!placed) return { success: false, dimensions: { x: natural.x * item.scale.x, y: natural.y * item.scale.y, z: natural.z * item.scale.z }, scale: item.scale };
+    this.saveSnapshot();
+    this.data = { ...this.data, furniture: this.data.furniture.map(f => f.id === objectId ? placed : f) };
     this.notify();
     return { success: true, dimensions: effectiveDims, scale: newScale };
   }
@@ -1063,10 +1098,13 @@ class SceneStore {
     const newScale: Vector3D = { x: scaleX, y: scaleY, z: scaleZ };
     const newPosition: Vector3D = { x: newPosX, y: item.position.y, z: newPosZ };
 
+    const placed = this.safeFurniturePlacement({ ...item, scale: newScale, position: newPosition, roomId: room.id });
+    if (!placed) return null;
+
     this.data = {
       ...this.data,
       furniture: this.data.furniture.map(f =>
-        f.id === objectId ? { ...f, scale: newScale, position: newPosition, roomId: room.id } : f
+        f.id === objectId ? placed : f
       )
     };
     this.notify();
@@ -1079,7 +1117,7 @@ class SceneStore {
       wallDirection: chosenWall,
       previousDimensions: prevDimensions,
       newDimensions: { x: newDimX, y: newDimY, z: newDimZ },
-      position: newPosition
+      position: placed.position
     };
   }
 
@@ -1448,6 +1486,22 @@ class SceneStore {
       }
     }
 
+    // Legacy circulation heuristics may introduce a new collision after moving
+    // an earlier item. Validate the complete result, using current geometry.
+    const collisionRepair = resolveOverlaps
+      ? repairFurnitureLayout(this.data.furniture, this.data.rooms, this.data.customWalls, options.roomId, this.data)
+      : { furniture: this.data.furniture, unresolved: auditFurniture(this.data.furniture, this.data.rooms, this.data.customWalls, this.data) };
+    for (const item of collisionRepair.furniture) {
+      const previous = this.data.furniture.find(f => f.id === item.id)!;
+      if (JSON.stringify([previous.position, previous.rotation]) !== JSON.stringify([item.position, item.rotation])) {
+        adjustedList.push({ objectId: item.id, name: item.name,
+          roomName: this.data.rooms.find(r => r.id === item.roomId)?.name ?? '',
+          previousPosition: previous.position, newPosition: item.position,
+          reason: 'Cleared furniture and wall collisions using rendered dimensions' });
+      }
+    }
+    this.data = { ...this.data, furniture: collisionRepair.furniture };
+
     if (adjustedList.length > 0) {
       this.notify();
     }
@@ -1460,7 +1514,7 @@ class SceneStore {
     score = Math.max(85, Math.min(100, score));
 
     return {
-      success: true,
+      success: collisionRepair.unresolved.length === 0,
       roomsProcessed: targetRooms.length,
       itemsAdjusted: adjustedList,
       humanErgonomicsScore: score,
@@ -1468,7 +1522,7 @@ class SceneStore {
         doorwaysClear: true,
         walkwaysAdequate: true,
         bedAccessClear: true,
-        zeroClipping: true
+        zeroClipping: collisionRepair.unresolved.length === 0
       },
       metrics: {
         minWalkwayWidth: minWalkway,
@@ -1734,29 +1788,96 @@ class SceneStore {
   public placeDoor(input: {
     roomId: string;
     wallId?: string;
-    position: Vector3D;
+    position?: Vector3D;
+    offset?: number;
+    hinge?: DoorOpening['hinge'];
+    swing?: DoorOpening['swing'];
     width?: number;
     height?: number;
-    doorType?: any;
+    doorType?: DoorOpening['doorType'];
   }): DoorOpening {
-    this.saveSnapshot();
     const id = `door-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`;
-    const newDoor: DoorOpening = {
-      id,
-      roomId: input.roomId,
-      wallId: input.wallId,
-      position: input.position,
-      width: input.width || 3.2,
-      height: input.height || 7.0,
-      doorType: input.doorType || 'standard',
-      rotation: 0
-    };
+    const newDoor = prepareDoor(this.data, input, id);
+    this.saveSnapshot();
     this.data = {
       ...this.data,
-      doors: [...this.data.doors, newDoor]
+      doors: [...this.data.doors, newDoor],
+      rooms: this.data.rooms.map(r => r.id === newDoor.roomId ? { ...r, architectureVersion: 1 } : r)
     };
     this.notify();
     return newDoor;
+  }
+
+  public listSpaceBoundaries(roomId?: string) {
+    return listSpaceBoundaries(this.data).filter(w => !roomId || w.roomIds.includes(roomId));
+  }
+
+  public setSpaceBoundary(input: { wallId: string; kind: 'open' | 'wall'; offset?: number; width?: number; openingId?: string }) {
+    if (!['open', 'wall'].includes(input.kind)) throw new Error('Choose open or wall.');
+    const wall = listSpaceBoundaries(this.data).find(w => w.id === input.wallId);
+    if (!wall) throw new Error('Wall not found.');
+    if (input.kind === 'wall') {
+      if (!input.openingId) throw new Error('Select the opening to close; other openings are preserved.');
+      const found = this.data.rooms.some(r => r.openConnections?.some(o => o.id === input.openingId && o.wallId === wall.id));
+      if (!found) throw new Error('Open connection not found on this wall.');
+      return this.removeOpening(input.openingId);
+    }
+    const offset = input.offset ?? 0, width = input.width ?? wall.length - offset;
+    if (input.openingId && !this.data.rooms.some(r => r.openConnections?.some(o => o.id === input.openingId && o.wallId === wall.id))) throw new Error('Open connection not found on this wall.');
+    validateOpening(this.data, wall.id, offset, width, undefined, input.openingId);
+    const opening = { id: input.openingId ?? `opening-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, wallId: wall.id, offset, width };
+    this.saveSnapshot();
+    this.data = { ...this.data, rooms: this.data.rooms.map(r => r.id === wall.roomId
+      ? { ...r, architectureVersion: 1, openConnections: [...(r.openConnections ?? []).filter(o => o.id !== opening.id), opening] } : r) };
+    this.notify();
+    return { success: true, opening };
+  }
+
+  public updateDoor(doorId: string, changes: Partial<Parameters<typeof prepareDoor>[1]>) {
+    const old = this.data.doors.find(d => d.id === doorId);
+    if (!old) throw new Error('Door not found.');
+    const door = prepareDoor(this.data, { ...old, ...changes }, doorId);
+    this.saveSnapshot();
+    this.data = { ...this.data, doors: this.data.doors.map(d => d.id === doorId ? door : d),
+      rooms: this.data.rooms.map(r => r.id === door.roomId ? { ...r, architectureVersion: 1 } : r) };
+    this.notify(); return door;
+  }
+
+  public removeOpening(openingId: string) {
+    const door = this.data.doors.find(d => d.id === openingId);
+    const owner = this.data.rooms.find(r => r.openConnections?.some(o => o.id === openingId));
+    if (!door && !owner) throw new Error('Opening not found.');
+    const wallId = door?.wallId ?? owner?.openConnections?.find(o => o.id === openingId)?.wallId;
+    const wall = listSpaceBoundaries(this.data).find(w => w.id === wallId);
+    if (this.data.rooms.some(r => (wall?.roomIds ?? [door?.roomId, owner?.id]).includes(r.id) && r.locked)) throw new Error('Unlock the adjoining rooms first.');
+    this.saveSnapshot();
+    this.data = { ...this.data, doors: this.data.doors.filter(d => d.id !== openingId), rooms: this.data.rooms.map(r =>
+      r === owner ? { ...r, openConnections: r.openConnections?.filter(o => o.id !== openingId) } : r) };
+    this.notify(); return { success: true, openingId };
+  }
+
+  public validateLayout() {
+    const issues = auditFurniture(this.data.furniture, this.data.rooms, this.data.customWalls, this.data);
+    const walls = listSpaceBoundaries(this.data);
+    const openings = openingSpans(this.data);
+    const invalidOpenings = openings.filter(o => {
+      const wall = walls.find(w => w.id === o.wallId);
+      return !wall || o.offset < 0 || o.offset + o.width > wall.length + 0.025 || o.top > wall.height;
+    }).map(o => ({ openingId: o.id, reason: 'Opening extends beyond its wall' }));
+    const managed = [...this.data.doors.filter(d => d.managed), ...this.data.rooms.flatMap(r => r.openConnections ?? [])];
+    for (const o of managed) if (!walls.some(w => w.id === o.wallId)) invalidOpenings.push({ openingId: o.id, reason: 'Opening references a missing wall' });
+    const overlaps = new Set<string>();
+    for (const wall of walls) {
+      const spans = spansOnWall(wall, openings, walls);
+      for (let i = 0; i < spans.length; i++) for (let j = i + 1; j < spans.length; j++) {
+        const a = spans[i], b = spans[j], key = [a.id, b.id].sort().join('|');
+        if (a.offset < b.offset + b.width - 0.025 && a.offset + a.width > b.offset + 0.025 && a.bottom < b.top && a.top > b.bottom && !overlaps.has(key)) {
+          overlaps.add(key); invalidOpenings.push({ openingId: a.id, reason: `Overlaps opening ${b.id}` });
+        }
+      }
+    }
+    return { success: issues.length === 0 && invalidOpenings.length === 0, issues, invalidOpenings,
+      wallPieceCount: resolveWallPieces(this.data).length };
   }
 
   public placeWindow(input: {
@@ -2021,7 +2142,9 @@ class SceneStore {
       doors: data.doors ? [...data.doors] : [],
       windows: data.windows ? [...data.windows] : [],
       customWalls: data.customWalls ? [...data.customWalls] : [],
-      globalCeilingHeight: data.globalCeilingHeight ?? 9.5
+      globalCeilingHeight: data.globalCeilingHeight ?? 9.5,
+      floorPlan: data.floorPlan,
+      validation: data.validation
     };
     historyManager.clear();
     this.notify();
@@ -2047,7 +2170,9 @@ class SceneStore {
         wallColor: r.wallColor || '#f8fafc',
         wallThickness: 0.5,
         locked: false,
-        connections: r.connections || []
+        connections: r.connections || [],
+        explicitWalls: true,
+        footprint: r.polygon.map(p => ({ x: p.x - center.x, z: p.y - center.y }))
       };
     });
 

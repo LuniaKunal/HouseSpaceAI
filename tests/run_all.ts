@@ -11,6 +11,17 @@ interface TestSuite {
 }
 
 const TEST_SUITES: TestSuite[] = [
+  { name: 'Walls & Openings', file: 'test_architecture.ts', description: 'Shared human/WebMCP architecture, wall cuts, doors, persistence and collision rules' },
+  {
+    name: 'Furniture Collision Prevention & Layout Repair',
+    file: 'test_furniture_collisions.ts',
+    description: 'Verifies wall clearance, overlapping furniture, crowded sample rooms, locks and undoable repairs'
+  },
+  {
+    name: 'Photo Design & WebMCP Tools',
+    file: 'test_photo_design.ts',
+    description: 'Verifies photo isolation, settings revisions, immutable briefs, image validation and charge consent'
+  },
   {
     name: 'Room Creation & Auto-Snap Gateway Fix',
     file: 'test_room_creation_fix.ts',
@@ -80,8 +91,8 @@ async function runAll() {
     process.stdout.write(`▶ Running: ${suite.name} (${suite.file})... `);
     const start = Date.now();
 
-    const proc = spawnSync('npx', ['tsx', fullPath], {
-      shell: true,
+    const proc = spawnSync(process.execPath, ['--import', 'tsx', fullPath], {
+      shell: false,
       encoding: 'utf8',
       env: process.env
     });

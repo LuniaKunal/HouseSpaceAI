@@ -20,6 +20,7 @@ export const MarketingNav: React.FC<MarketingNavProps> = ({ current }) => (
     <nav aria-label="Main navigation">
       {current === 'home' ? <a href="#capabilities">Capabilities</a> : <a href="/" onClick={event => navigate(event, 'landing')}>Home</a>}
       <a href="/pricing" className={current === 'pricing' ? 'active' : ''} onClick={event => navigate(event, 'pricing')}>Pricing</a>
+      <a href="/photos" onClick={event => navigate(event, 'photos')}>Photo design</a>
       <a className="nav-cta" href="/projects" onClick={event => navigate(event, 'dashboard')}>Open studio <ArrowRight size={15} /></a>
     </nav>
   </header>

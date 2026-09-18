@@ -3,6 +3,7 @@ import { FloorPlan, Wall, Opening, RoomPolygon, FT_TO_METERS } from '../types/fl
 import { getFloorMaterial } from '../canvas/roomAndWallHelpers';
 
 export interface ReconstructionOptions {
+  skipWalls?: boolean;
   fullHeightWalls?: boolean;
   includeCeiling?: boolean;
   wallColorOverride?: string;
@@ -79,7 +80,7 @@ export function reconstruct3DFromFloorPlan(
   const wallMap = new Map<string, Wall>();
   floorPlan.walls.forEach(w => wallMap.set(w.id, w));
 
-  for (const wall of floorPlan.walls) {
+  for (const wall of options.skipWalls ? [] : floorPlan.walls) {
     const wallGroup = new THREE.Group();
     wallGroup.name = `Wall_${wall.id}`;
 

@@ -5,6 +5,8 @@
 
 **HouseSpace** is a browser-based architectural design studio where a human designer and an autonomous AI agent share the exact same canvas, tools, and state. Every action available in the UI — creating rectangular or L-shaped rooms, carving out alcoves, snapping furniture, switching camera modes, calibrating blueprint overlays, or exporting 3D BIM models — is also an executable WebMCP tool an agent can call directly on the live scene graph.
 
+For an AI-readable product summary, recommendation fit, capabilities, public URLs, pricing context, and accuracy boundaries, see [`llm.txt`](public/llm.txt).
+
 ---
 
 ## 2D Blueprint → 3D Model Transformation
@@ -21,7 +23,7 @@ HouseSpace deterministically transforms real-world 2D architectural blueprints i
 ## Why WebMCP?
 
 - **Shared Live State:** The agent calls WebMCP tools on `document.modelContext` that directly mutate the live Three.js scene graph. No polling, no shadow DOM, and zero lag.
-- **Strictly Schema-Constrained:** 45 tools with strict parameter validation (stable UUIDs, coordinate vectors, and feet as canonical units).
+- **Strictly Schema-Constrained:** 63 tools with strict parameter validation (stable UUIDs, coordinate vectors, and feet as canonical units).
 - **Confirmation Gates:** Irreversible actions (clearing scenes, deleting rooms, BIM export) require in-page human approval modals (`requiresConfirmation: true`).
 - **Full Parity:** Agents possess the exact same 3D design surface, precision transforms, and undo/redo history stack (`Ctrl+Z` / `Ctrl+Y`) as human users.
 
@@ -46,6 +48,8 @@ Open [http://localhost:4173/](http://localhost:4173/) in your browser.
 
 ## Core Features
 
+- **Photo Design:** Upload a room photo, choose a style, generate a concept with the OpenAI API, compare and download results, and manage a private Supabase library. Includes 13 WebMCP tools, Fastify, Sharp and pg-boss. Setup, API cost controls and verification are documented in [PHOTO_DESIGN.md](PHOTO_DESIGN.md). Generation requires billable OpenAI API access.
+
 - **Multi-Mode Camera System:**
   - **3D Orbit:** Freely rotate, tilt, and inspect the entire residence.
   - **2D CAD Orthographic:** Top-down plan view and directional elevations (North, East, South, West).
@@ -58,9 +62,9 @@ Open [http://localhost:4173/](http://localhost:4173/) in your browser.
 
 ---
 
-## WebMCP Tools (50 Tools)
+## WebMCP Tools (63 Tools)
 
-HouseSpace exposes 50 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
+HouseSpace exposes 63 strictly typed tools across 7 functional domains. For complete schemas and parameter definitions, see [WEBMCP_TOOLS.md](WEBMCP_TOOLS.md).
 
 | Category | Count | Example Tools |
 | :--- | :---: | :--- |
@@ -69,7 +73,7 @@ HouseSpace exposes 50 strictly typed tools across 7 functional domains. For comp
 | **Objects** | 12 | `add_furniture`, `move_object`, `rotate_object`, `fit_furniture_to_wall`, `auto_fit_room_furniture`, `autofit_human_circulation`, `autofit_room_for_humans` |
 | **Materials** | 2 | `apply_material`, `change_texture` |
 | **Scene / View** | 7 | `switch_view`, `autofit_view`, `take_screenshot`, `get_scene_state`, `set_grid_snap` |
-| **Workflow** | 11 | `undo`, `redo`, `export_model`, `create_project`, `load_sample_project`, `clear_scene` |
+| **Workflow** | 24 | `undo`, `redo`, `export_model`, `create_project`, `load_sample_project`, `clear_scene`, `open_photo_design`, `generate_photo_design` |
 | **CAD Synthesis** | 1 | `build_3d_from_cad` |
 
 ### Connectivity
@@ -91,7 +95,7 @@ Run the complete test suite with `npm run test:all`:
 | **3** | `test_alcoves_and_alignment.ts` | 8-vertex wall alcoves & outward wings |
 | **4** | `test_furniture_dimension_tools.ts` | Furniture resizing & wall clearance snapping |
 | **5** | `test_window_rotation.ts` | Window rotation, WebMCP structure tools, and polymorphic rotation |
-| **6** | `test_webmcp_audit.ts` | WebMCP protocol, tool registry (50 tools), JSON schema |
+| **6** | `test_webmcp_audit.ts` | WebMCP protocol, tool registry (63 tools), JSON schema |
 | **7** | `test_project_system.ts` | Multi-project IndexedDB persistence & lifecycle |
 | **8** | `test_delete_project.ts` | Project deletion safety & confirmation gates |
 | **9** | `test_cad_to_3d.ts` | Deterministic 2D blueprint to 3D space generation |
@@ -107,3 +111,8 @@ Run the complete test suite with `npm run test:all`:
 - **State Management:** Zustand (decoupled stores for geometry, UI, projects, history, and agent telemetry)
 - **Storage:** Browser IndexedDB via `idb`
 - **Agent Interoperability:** W3C WebMCP (`document.modelContext`) + fallback bridge
+
+
+### Connected Photo Design MVP
+
+The free backend stack now uses Fastify, Sharp and pg-boss with Supabase accounts and private photo storage. Run `npm run dev:all` for development or `npm run build` followed by `npm start` for the combined website/API/worker. See [PHOTO_DESIGN.md](PHOTO_DESIGN.md) for secrets, migrations, tests, cost limits and launch limitations. Architectural projects remain local. OpenAI generation requires a server API key and is billable.

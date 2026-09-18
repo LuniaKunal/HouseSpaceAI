@@ -52,6 +52,17 @@ export interface Room {
   locked: boolean;
   connections: string[]; // room IDs connected to this room
   colorTag?: string;
+  /** Explicit wall-free spans. Naming a room never implicitly opens its walls. */
+  openConnections?: OpenConnection[];
+  architectureVersion?: 1;
+  explicitWalls?: boolean;
+}
+
+export interface OpenConnection {
+  id: string;
+  wallId: string;
+  offset: number; // distance from wall start, feet
+  width: number;
 }
 
 export interface WallSegment {
@@ -73,6 +84,11 @@ export interface DoorOpening {
   height: number; // in feet
   doorType: DoorType;
   rotation: number; // in degrees (yaw)
+  offset?: number;
+  hinge?: 'left' | 'right';
+  swing?: 'inward' | 'outward';
+  managed?: boolean;
+  interiorSide?: 1 | -1;
 }
 
 export interface WindowOpening {
@@ -162,4 +178,3 @@ export interface SceneStateSnapshot {
 
 export const FT_TO_M = 0.3048;
 export const M_TO_FT = 3.28084;
-

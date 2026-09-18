@@ -162,8 +162,8 @@ async function runWindowRotationTests() {
   console.log('\n8. Checking total tool registry count and structure category...');
   const totalToolCount = Object.keys(ALL_TOOLS).length;
   console.log(`   Total registered WebMCP tools: ${totalToolCount}`);
-  if (totalToolCount !== 50) {
-    throw new Error(`Expected exactly 50 WebMCP tools, but found ${totalToolCount}`);
+  for (const name of ['place_window', 'rotate_window', 'place_door', 'list_space_boundaries', 'set_space_boundary', 'update_door', 'remove_opening', 'validate_layout']) {
+    if (!ALL_TOOLS[name]) throw new Error(`Required structure tool missing: ${name}`);
   }
   if (!ALL_TOOLS['rotate_window']) {
     throw new Error('rotate_window tool is not in ALL_TOOLS registry!');

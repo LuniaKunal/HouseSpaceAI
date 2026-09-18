@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FurnitureObject, FT_TO_M } from '../types/scene';
+import { drapedCover, finishFurniture, foliage, insetSink, roundedPart, seam, surfaceMaterial } from './furnitureRealism';
 
 /**
  * Creates rich, multi-part procedural 3D meshes for every furniture catalog item & architectural fixture.
@@ -15,65 +16,37 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
   const hexColor = item.color ? parseInt(item.color.replace('#', '0x'), 16) : 0x475569;
 
   // Base materials
-  const mainMat = new THREE.MeshStandardMaterial({
-    color: hexColor,
-    roughness: 0.55,
-    metalness: 0.1
-  });
+  const mainMat = surfaceMaterial(item.material.includes('wood') ? 'wood' : item.material.includes('marble') ? 'stone' : 'fabric', hexColor);
 
-  const woodMat = new THREE.MeshStandardMaterial({
-    color: 0x5c3a21,
-    roughness: 0.45,
-    metalness: 0.05
-  });
+  const woodMat = surfaceMaterial('wood', 0x79543a);
 
-  const lightWoodMat = new THREE.MeshStandardMaterial({
-    color: 0xb48b57,
-    roughness: 0.5,
-    metalness: 0.05
-  });
+  const lightWoodMat = surfaceMaterial('wood', 0xc6a878);
 
-  const cushionMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(hexColor).clone().offsetHSL(0, -0.05, 0.1),
-    roughness: 0.8
-  });
+  const cushionMat = surfaceMaterial('fabric', new THREE.Color(hexColor).offsetHSL(0, -0.08, 0.06));
 
-  const whiteFabricMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.85,
-    metalness: 0.02
-  });
+  const whiteFabricMat = surfaceMaterial('fabric', 0xf1ece2);
+  const ceramicMat = surfaceMaterial('ceramic', 0xf4f0e9);
 
-  const marbleMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.18,
-    metalness: 0.08
-  });
+  const marbleMat = surfaceMaterial('stone', 0xeeeae3);
 
-  const brassMat = new THREE.MeshStandardMaterial({
-    color: 0xd4af37,
-    roughness: 0.3,
-    metalness: 0.85
-  });
+  const brassMat = surfaceMaterial('metal', 0xc5a572);
 
-  const chromeMat = new THREE.MeshStandardMaterial({
-    color: 0xe2e8f0,
-    roughness: 0.15,
-    metalness: 0.95
-  });
+  const chromeMat = surfaceMaterial('metal', 0xd5d9dc);
 
   const glassMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.8,
     roughness: 0.08,
-    transmission: 0.85
+    transmission: 0.65,
+    thickness: 0.02,
+    ior: 1.5
   });
 
   const darkMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.2 });
   const screenMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-  const plantMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
-  const darkPlantMat = new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.65 });
+  const plantMat = surfaceMaterial('leaf', 0x53734a);
+  const darkPlantMat = surfaceMaterial('leaf', 0x304e35);
   const potMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.7 });
   const goldAltarMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.25, metalness: 0.9 });
 
@@ -81,52 +54,32 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
     // ----------------------------------------------------
     // 1. SOFAS & SEATING
     // ----------------------------------------------------
+    case 'sofa_sectional':
     case 'sofa_4seater': {
-      // 4-Seater Luxury Sofa Base
-      const base = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.98, dimY * 0.42, dimZ * 0.85), whiteFabricMat);
-      base.position.set(0, dimY * 0.21, 0);
-      base.castShadow = true;
-      group.add(base);
-
-      // Backrest
-      const back = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.98, dimY * 0.58, dimZ * 0.22), whiteFabricMat);
-      back.position.set(0, dimY * 0.71, -dimZ * 0.35);
-      back.castShadow = true;
-      group.add(back);
-
-      // Armrests
-      const armL = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.08, dimY * 0.48, dimZ * 0.85), whiteFabricMat);
-      armL.position.set(-dimX * 0.45, dimY * 0.48, 0);
-      armL.castShadow = true;
-      group.add(armL);
-      const armR = armL.clone();
-      armR.position.set(dimX * 0.45, dimY * 0.48, 0);
-      group.add(armR);
-
-      // 4 Individual Seat Cushions
-      const cW = (dimX * 0.8) / 4;
-      for (let i = 0; i < 4; i++) {
-        const cX = -dimX * 0.3 + i * (dimX * 0.2);
-        const cushion = new THREE.Mesh(new THREE.BoxGeometry(cW * 0.95, dimY * 0.14, dimZ * 0.6), whiteFabricMat);
-        cushion.position.set(cX, dimY * 0.48, dimZ * 0.05);
-        cushion.castShadow = true;
-        group.add(cushion);
-
-        // Accent throw pillow
-        if (i === 0 || i === 3) {
-          const pillow = new THREE.Mesh(new THREE.BoxGeometry(cW * 0.8, dimY * 0.28, dimZ * 0.15), mainMat);
-          pillow.position.set(cX, dimY * 0.65, -dimZ * 0.2);
-          pillow.rotation.x = -0.15;
-          group.add(pillow);
-        }
+      const fullDepth = dimZ;
+      const seatDepth = item.type === 'sofa_sectional' ? dimZ * 0.52 : dimZ;
+      // Build a complete upholstered module, with a longer chaise on sectionals.
+      const modules = item.type === 'sofa_sectional' ? 3 : 4;
+      const moduleW = dimX * 0.82 / modules;
+      for (let i = 0; i < modules; i++) {
+        const x = -dimX * 0.41 + moduleW * (i + 0.5);
+        const depth = item.type === 'sofa_sectional' && i === modules - 1 ? fullDepth * 0.88 : seatDepth * 0.68;
+        const z = -fullDepth * 0.36 + depth / 2;
+        roundedPart(group, [moduleW - 0.012, dimY * 0.23, depth], [x, dimY * 0.24, z], mainMat, 0.055);
+        const cushion = roundedPart(group, [moduleW - 0.024, dimY * 0.19, depth * 0.97], [x, dimY * 0.43, z], cushionMat, 0.075);
+        seam(cushion, moduleW - 0.046, depth * 0.95, dimY * 0.035, whiteFabricMat);
+        const back = roundedPart(group, [moduleW - 0.02, dimY * 0.5, seatDepth * 0.19], [x, dimY * 0.71, -fullDepth * 0.4], mainMat, 0.065);
+        back.rotation.x = 0.09;
       }
-
-      // Wooden Plinth Base
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.96, 0.04, dimZ * 0.8), woodMat);
-      plinth.position.set(0, 0.02, 0);
-      group.add(plinth);
+      for (const side of [-1, 1]) {
+        roundedPart(group, [dimX * 0.08, dimY * 0.52, seatDepth * 0.9], [side * dimX * 0.46, dimY * 0.44, -fullDepth * 0.4 + seatDepth * 0.37], mainMat, 0.045);
+        const pillow = roundedPart(group, [moduleW * 0.65, dimY * 0.34, 0.14], [side * dimX * 0.31, dimY * 0.66, -fullDepth * 0.22], whiteFabricMat, 0.065);
+        pillow.rotation.set(-0.2, side * 0.22, side * 0.12);
+        for (const z of [-0.35, 0.3]) roundedPart(group, [0.045, dimY * 0.15, 0.045], [side * dimX * 0.42, dimY * 0.075, z * seatDepth], woodMat, 0.006);
+      }
       break;
     }
+
 
     case 'sofa_3seater_lounger': {
       // 3-Seater Cyan Lounger
@@ -256,8 +209,15 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
           back.castShadow = true;
           chairGroup.add(back);
 
+          for (const lx of [-0.17, 0.17]) for (const lz of [-0.17, 0.17]) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.012, dimY * 0.5, 10), woodMat);
+            leg.position.set(lx, dimY * 0.25, lz);
+            chairGroup.add(leg);
+          }
+
           chairGroup.position.set(i * dimX * 0.32, 0, side * (dimZ * 0.68));
-          chairGroup.rotation.y = side === 1 ? Math.PI : 0;
+          // Backrests face outwards on both sides of the table.
+          back.position.z = side * 0.2;
           group.add(chairGroup);
         }
       }
@@ -282,9 +242,8 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
       group.add(mattress);
 
       // Folded Luxury Duvet / Coverlet
-      const duvet = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.94, dimY * 0.1, dimZ * 0.62), cushionMat);
-      duvet.position.set(0, dimY * 0.52, dimZ * 0.14);
-      group.add(duvet);
+      drapedCover(group, dimX * 0.97, dimZ * 0.65, dimY * 0.55, dimZ * 0.14, cushionMat);
+      roundedPart(group, [dimX * 0.93, dimY * 0.045, dimZ * 0.12], [0, dimY * 0.57, -dimZ * 0.12], whiteFabricMat, 0.022);
 
       // Pillows
       for (const px of [-0.25, 0.25]) {
@@ -299,6 +258,9 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
       headboard.position.set(0, dimY * 0.5, -dimZ * 0.45);
       headboard.castShadow = true;
       group.add(headboard);
+      for (let panel = 0; panel < 6; panel++) {
+        roundedPart(group, [dimX / 6 - 0.018, dimY * 0.76, dimZ * 0.07], [-dimX / 2 + dimX / 6 * (panel + 0.5), dimY * 0.59, -dimZ * 0.37], mainMat, 0.04);
+      }
       break;
     }
 
@@ -337,7 +299,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
       group.add(wardrobe);
 
       // Sliding door tracks & panels
-      const panelMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.1 });
+      const panelMat = surfaceMaterial('wood', hexColor);
       for (const px of [-0.25, 0.25]) {
         const panel = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.48, dimY * 0.94, 0.02), panelMat);
         panel.position.set(dimX * px, dimY * 0.5, dimZ * 0.51);
@@ -438,30 +400,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
     }
 
     case 'kitchen_counter_sink': {
-      // 27" Deep Counter with Cooking Sink & Water Ledge
-      const counter = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY * 0.88, dimZ), darkMat);
-      counter.position.set(0, dimY * 0.44, 0);
-      counter.castShadow = true;
-      group.add(counter);
-
-      const counterTop = new THREE.Mesh(new THREE.BoxGeometry(dimX * 1.02, 0.05, dimZ * 1.02), marbleMat);
-      counterTop.position.set(0, dimY * 0.9, 0);
-      group.add(counterTop);
-
-      // Stainless Double Sink Basin
-      const sink = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.4, 0.15, dimZ * 0.6), chromeMat);
-      sink.position.set(-dimX * 0.15, dimY * 0.85, 0);
-      group.add(sink);
-
-      // Gooseneck Chrome Faucet
-      const faucet = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.35, 12), chromeMat);
-      faucet.position.set(-dimX * 0.15, dimY * 1.08, -dimZ * 0.25);
-      group.add(faucet);
-
-      // Water purifier ledge on right
-      const ledge = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.25, 0.45, dimZ * 0.4), darkMat);
-      ledge.position.set(dimX * 0.32, dimY * 1.15, -dimZ * 0.25);
-      group.add(ledge);
+      insetSink(group, dimX, dimY, dimZ, marbleMat, chromeMat, darkMat);
       break;
     }
 
@@ -516,16 +455,18 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
 
     case 'store_pantry_rack': {
       // Metal wire / wood storage shelving
-      const rack = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY, dimZ), darkMat);
-      rack.position.set(0, dimY * 0.5, 0);
-      rack.castShadow = true;
-      group.add(rack);
+      for (const x of [-0.47, 0.47]) for (const z of [-0.45, 0.45]) {
+        roundedPart(group, [0.035, dimY, 0.035], [dimX * x, dimY * 0.5, dimZ * z], darkMat, 0.004);
+      }
+      for (let shelf = 0; shelf < 5; shelf++) {
+        roundedPart(group, [dimX * 0.96, 0.035, dimZ * 0.94], [0, dimY * (0.06 + shelf * 0.225), 0], lightWoodMat, 0.005);
+      }
       break;
     }
 
     case 'utility_washing_machine': {
       // Front-Load Washing Machine
-      const body = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY, dimZ), whiteFabricMat);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY, dimZ), ceramicMat);
       body.position.set(0, dimY * 0.5, 0);
       body.castShadow = true;
       group.add(body);
@@ -544,15 +485,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
     }
 
     case 'utility_counter_sink': {
-      // 27" Deep Platform & Deep Utility Sink
-      const counter = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY * 0.88, dimZ), darkMat);
-      counter.position.set(0, dimY * 0.44, 0);
-      counter.castShadow = true;
-      group.add(counter);
-
-      const sink = new THREE.Mesh(new THREE.BoxGeometry(dimX * 0.7, 0.25, dimZ * 0.7), chromeMat);
-      sink.position.set(0, dimY * 0.82, 0);
-      group.add(sink);
+      insetSink(group, dimX, dimY, dimZ, marbleMat, chromeMat, darkMat);
       break;
     }
 
@@ -587,14 +520,17 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
     // ----------------------------------------------------
     case 'bathroom_wc_commode': {
       // Modern Wall-Hung WC Commode
-      const bowl = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY * 0.45, dimZ * 0.7), whiteFabricMat);
+      const bowl = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), ceramicMat);
+      bowl.scale.set(dimX * 0.49, dimY * 0.24, dimZ * 0.4);
       bowl.position.set(0, dimY * 0.35, dimZ * 0.1);
       bowl.castShadow = true;
       group.add(bowl);
 
-      const tank = new THREE.Mesh(new THREE.BoxGeometry(dimX * 1.1, dimY * 0.5, dimZ * 0.3), whiteFabricMat);
+      const tank = new THREE.Mesh(new THREE.BoxGeometry(dimX, dimY * 0.5, dimZ * 0.3), ceramicMat);
       tank.position.set(0, dimY * 0.72, -dimZ * 0.35);
       group.add(tank);
+      const lid = roundedPart(group, [dimX * 0.92, 0.045, dimZ * 0.69], [0, dimY * 0.57, dimZ * 0.1], ceramicMat, 0.1);
+      lid.name = 'Porcelain seat lid';
 
       // Dual Flush Plate
       const flush = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.02), chromeMat);
@@ -616,7 +552,8 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
       group.add(counterTop);
 
       // Ceramic Washbasin Basin
-      const basin = new THREE.Mesh(new THREE.CylinderGeometry(dimX * 0.3, dimX * 0.24, 0.12, 20), whiteFabricMat);
+      const basinProfile = [new THREE.Vector2(0, 0), new THREE.Vector2(dimX * 0.2, 0), new THREE.Vector2(dimX * 0.27, 0.03), new THREE.Vector2(dimX * 0.3, 0.12), new THREE.Vector2(dimX * 0.28, 0.12), new THREE.Vector2(dimX * 0.24, 0.04), new THREE.Vector2(0, 0.025)];
+      const basin = new THREE.Mesh(new THREE.LatheGeometry(basinProfile, 40), ceramicMat);
       basin.position.set(0, dimY * 0.82, 0);
       group.add(basin);
 
@@ -716,14 +653,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
         const scale = 0.8 + (i % 4) * 0.15;
 
         // Stem & Foliage clusters
-        const foliage = new THREE.Mesh(
-          new THREE.SphereGeometry(dimZ * 0.32 * scale, 8, 8),
-          i % 2 === 0 ? plantMat : darkPlantMat
-        );
-        foliage.scale.set(1, 1.4, 1);
-        foliage.position.set(pX, dimY * (0.45 + (i % 3) * 0.1), pZ);
-        foliage.castShadow = true;
-        group.add(foliage);
+        foliage(group, pX, dimY * 0.26, pZ, dimY * 0.56 * scale, dimZ * 0.4, i % 2 === 0 ? plantMat : darkPlantMat, i);
 
         // Ground accent uplight spot
         if (i % 3 === 0) {
@@ -743,11 +673,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
         pot.castShadow = true;
         group.add(pot);
 
-        const bush = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), plantMat);
-        bush.scale.set(1, 1.3, 1);
-        bush.position.set(i * (dimX * 0.2), dimY * 0.55, 0);
-        bush.castShadow = true;
-        group.add(bush);
+        foliage(group, i * dimX * 0.2, dimY * 0.4, 0, dimY * 0.55, 0.25, i % 2 ? plantMat : darkPlantMat, i);
       }
       break;
     }
@@ -777,7 +703,7 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
 
     case 'lamp_floor': {
       // Standing Brass Floor Lamp
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.04, 16), brassMat);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(dimX * 0.39, dimX * 0.48, 0.04, 32), brassMat);
       base.position.set(0, 0.02, 0);
       group.add(base);
 
@@ -786,11 +712,12 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
       group.add(pole);
 
       const shade = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.2, 0.25, 0.35, 16),
-        new THREE.MeshStandardMaterial({ color: 0xfffbeb, emissive: 0xfef08a, emissiveIntensity: 0.5, roughness: 0.3 })
+        new THREE.CylinderGeometry(dimX * 0.43, dimX * 0.5, dimY * 0.22, 32, 1, true),
+        whiteFabricMat
       );
       shade.position.set(0, dimY * 0.8, 0);
       shade.castShadow = true;
+      whiteFabricMat.side = THREE.DoubleSide;
       group.add(shade);
       break;
     }
@@ -806,5 +733,46 @@ export function createFurnitureMeshGroup(item: FurnitureObject): THREE.Group {
     }
   }
 
+  // Joinery and shadow gaps distinguish cabinet fronts from their carcasses.
+  const cabinetHeights: Record<string, number> = {
+    storage_low_ht: 1, shoe_unit_foyer: 1, dumb_waiter_counter: 1,
+    kitchen_counter_hob: 0.88, kitchen_counter_sink: 0.88, utility_counter_sink: 0.88,
+    tv_unit_grand: 0.35, tv_console_bedroom: 0.4, nightstand_modern: 0.8,
+    consol_low_ht: 0.75,
+  };
+  if (item.type in cabinetHeights) {
+    const h = dimY * cabinetHeights[item.type];
+    const count = Math.max(2, Math.ceil(dimX / 0.65));
+    const w = dimX * 0.96 / count;
+    for (let i = 0; i < count; i++) {
+      const x = -dimX * 0.48 + (i + 0.5) * w;
+      roundedPart(group, [w - 0.009, h * 0.82, 0.024], [x, h * 0.52, dimZ * 0.505], item.type.includes('kitchen') ? lightWoodMat : woodMat, 0.004);
+      roundedPart(group, [w * 0.32, 0.012, 0.021], [x, h * 0.84, dimZ * 0.53], brassMat, 0.005);
+    }
+    roundedPart(group, [dimX * 0.91, h * 0.065, 0.012], [0, h * 0.06, dimZ * 0.501], darkMat, 0.002);
+  }
+  if (item.type === 'refrigerator_french_door') {
+    for (const x of [-0.25, 0.25]) roundedPart(group, [dimX * 0.485, dimY * 0.66, 0.025], [dimX * x, dimY * 0.65, dimZ * 0.502], chromeMat, 0.012);
+    roundedPart(group, [dimX * 0.97, dimY * 0.28, 0.025], [0, dimY * 0.17, dimZ * 0.502], chromeMat, 0.012);
+    roundedPart(group, [dimX * 0.2, dimY * 0.16, 0.016], [-dimX * 0.25, dimY * 0.59, dimZ * 0.525], darkMat, 0.012);
+  }
+  if (item.type === 'study_table_desk') {
+    for (const x of [-0.19, 0.19]) for (const z of [-0.19, 0.19]) roundedPart(group, [0.025, dimY * 0.49, 0.025], [x, dimY * 0.245, dimZ * 0.4 + z], darkMat, 0.005);
+    roundedPart(group, [dimX * 0.12, 0.02, 0.12], [0, dimY * 0.985, -dimZ * 0.2], darkMat, 0.005);
+    roundedPart(group, [0.025, dimY * 0.13, 0.025], [0, dimY * 1.05, -dimZ * 0.2], chromeMat, 0.005);
+  }
+  if (item.type === 'utility_washing_machine') {
+    roundedPart(group, [dimX * 0.91, dimY * 0.12, 0.028], [0, dimY * 0.88, dimZ * 0.51], ceramicMat, 0.008);
+    roundedPart(group, [dimX * 0.27, dimY * 0.06, 0.01], [dimX * 0.24, dimY * 0.88, dimZ * 0.53], screenMat, 0.004);
+    const dial = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.018, 24), chromeMat);
+    dial.rotation.x = Math.PI / 2; dial.position.set(0, dimY * 0.88, dimZ * 0.54); group.add(dial);
+  }
+  if (item.type === 'bathroom_shower_cubicle') {
+    roundedPart(group, [0.018, dimY * 0.95, dimZ * 0.95], [dimX * 0.49, dimY * 0.5, 0], glassMat, 0.002);
+    roundedPart(group, [0.014, dimY * 0.94, 0.014], [dimX * 0.49, dimY * 0.49, dimZ * 0.48], chromeMat, 0.003);
+    roundedPart(group, [0.015, 0.25, 0.035], [dimX * 0.32, dimY * 0.49, dimZ * 0.49], chromeMat, 0.005);
+    roundedPart(group, [0.14, 0.007, 0.14], [0, 0.044, 0], chromeMat, 0.012);
+  }
+  finishFurniture(group);
   return group;
 }

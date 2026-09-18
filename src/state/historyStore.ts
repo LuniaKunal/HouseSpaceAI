@@ -1,4 +1,5 @@
 import { Room, FurnitureObject, ConnectionGate, DoorOpening, WindowOpening, WallSegment } from '../types/scene';
+import { FloorPlan, GeometryValidation } from '../types/floorPlan';
 
 export interface SceneHistorySnapshot {
   rooms: Room[];
@@ -8,6 +9,8 @@ export interface SceneHistorySnapshot {
   windows: WindowOpening[];
   walls: WallSegment[];
   ceilingHeight: number;
+  floorPlan?: FloorPlan;
+  validation?: GeometryValidation;
 }
 
 class HistoryManager {

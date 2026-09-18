@@ -382,6 +382,7 @@ export const Header: React.FC = () => {
           <Bot size={13} className="text-emerald-400" />
         </button>
 
+        <button onClick={() => uiStore.setActiveView('photos')} className="px-3 py-1.5 text-xs font-medium rounded-xl border border-white/20">Photo design</button>
         {/* Export Dropdown */}
         <div className="relative">
           <button

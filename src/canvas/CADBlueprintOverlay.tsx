@@ -5,6 +5,7 @@ import { uiStore, UIState } from '../state/uiStore';
 import { projectStore, ProjectStoreState } from '../state/projectStore';
 import { triggerCadAutoBuildIfConnected } from '../webmcp/tools/cadTools';
 import { getRoomWorldPolygon } from '../geometry/roomGeometry';
+import { hasArchitectureEdits, resolveWallPieces } from '../geometry/architecture';
 import {
   ZoomIn,
   ZoomOut,
@@ -605,7 +606,11 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
 
           {/* 2. ARCHITECTURAL WALLS */}
           {overlayMode !== 'blueprint' && (
-            sceneData.floorPlan && sceneData.floorPlan.walls.length > 0 ? (
+            hasArchitectureEdits(sceneData) ? resolveWallPieces(sceneData).filter(p => p.base < 3).map((p, i) => (
+              <line key={`resolved-${i}`} x1={toSvgX(p.start.x)} y1={toSvgY(p.start.z)} x2={toSvgX(p.end.x)} y2={toSvgY(p.end.z)}
+                stroke={uiState.selectedId === p.id ? '#10b981' : isDark ? '#60a5fa' : '#1e293b'} strokeWidth={p.thickness * scaleFt}
+                onClick={() => { uiStore.setSelected(p.id, 'wall'); uiStore.setActiveSidebarTab('openings'); }} />
+            )) : sceneData.floorPlan && sceneData.floorPlan.walls.length > 0 ? (
               sceneData.floorPlan.walls.map(wall => (
                 <line
                   key={`fp-wall-${wall.id}`}
@@ -688,6 +693,16 @@ export const CADBlueprintOverlay: React.FC<Props> = ({ className }) => {
             const dy = toSvgY(door.position.z);
             const radius = door.width * scaleFt;
             const strokeColor = isDark ? '#93c5fd' : '#475569';
+
+            if (door.managed) {
+              const sign = door.hinge === 'right' ? -1 : 1, swing = (door.swing === 'outward' ? -1 : 1) * (door.interiorSide ?? 1);
+              const hx = -sign * radius / 2;
+              return <g key={door.id} transform={`translate(${dx}, ${dy}) rotate(${-door.rotation})`} pointerEvents="none">
+                <path d={`M ${hx + sign * radius} 0 A ${radius} ${radius} 0 0 ${sign * swing > 0 ? 1 : 0} ${hx} ${swing * radius}`}
+                  fill="none" stroke={strokeColor} strokeWidth="1" strokeDasharray="3 2" />
+                <line x1={hx} y1="0" x2={hx} y2={swing * radius} stroke={strokeColor} strokeWidth="2" />
+              </g>;
+            }
 
             return (
               <g key={door.id} transform={`translate(${dx}, ${dy}) rotate(${door.rotation})`} pointerEvents="none">
