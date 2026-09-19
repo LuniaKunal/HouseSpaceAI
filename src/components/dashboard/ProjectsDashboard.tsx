@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { projectStore, ProjectStoreState } from '../../state/projectStore';
 import { uiStore } from '../../state/uiStore';

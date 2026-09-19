@@ -35,10 +35,16 @@ HouseSpace deterministically transforms real-world 2D architectural blueprints i
 # Install dependencies
 npm install
 
-# Start local development server
+# Start Next.js local development server (port 4173)
 npm run dev
 
-# Run all 10 architectural and WebMCP test suites
+# Build for production (Next.js App Router static prerendering & bundling)
+npm run build
+
+# Start Next.js production server
+npm run start
+
+# Run all 11 architectural and WebMCP test suites
 npm run test:all
 ```
 
@@ -106,13 +112,16 @@ Run the complete test suite with `npm run test:all`:
 
 ## Architecture
 
-- **Frontend:** React 18 + TypeScript + Vite
+- **Frontend & Routing:** Next.js 14 (App Router) + React 18 + TypeScript + TailwindCSS
+  - Server-side prerendered marketing and pricing routes with native Next.js `Metadata` API and Google Search Console indexing.
+  - Dynamic client-only workspaces (`next/dynamic` with `ssr: false`) for WebGL Three.js canvas, photo design, and browser IndexedDB storage.
+  - Rewrites in `next.config.mjs` proxying `/api/photo-design` to the photo backend.
 - **3D Graphics:** Three.js (PBR materials, custom geometry extrusions, shadow maps)
-- **State Management:** Zustand (decoupled stores for geometry, UI, projects, history, and agent telemetry)
-- **Storage:** Browser IndexedDB via `idb`
+- **State Management:** Decoupled stores for geometry (`sceneStore`), UI (`uiStore`), projects (`projectStore`), history, and agent telemetry
+- **Storage:** Browser IndexedDB storage for offline, instant saving
 - **Agent Interoperability:** W3C WebMCP (`document.modelContext`) + fallback bridge
 
 
-### Connected Photo Design MVP
+### Connected Photo Design Stack
 
-The free backend stack now uses Fastify, Sharp and pg-boss with Supabase accounts and private photo storage. Run `npm run dev:all` for development or `npm run build` followed by `npm start` for the combined website/API/worker. See [PHOTO_DESIGN.md](PHOTO_DESIGN.md) for secrets, migrations, tests, cost limits and launch limitations. Architectural projects remain local. OpenAI generation requires a server API key and is billable.
+The backend uses Fastify, Sharp and pg-boss with Supabase accounts and private photo storage. Run `npm run dev:all` for simultaneous Next.js and backend development or `npm run build` followed by `npm start` for production. See [PHOTO_DESIGN.md](PHOTO_DESIGN.md) for secrets, migrations, tests, cost limits and launch limitations. Architectural projects remain local. OpenAI generation requires a server API key and is billable.

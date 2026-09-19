@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 const children = [
-  spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1'], { stdio: 'inherit' }),
+  spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '-H', '127.0.0.1', '-p', '4173'], { stdio: 'inherit' }),
   spawn(process.execPath, ['--env-file-if-exists=.env.local', 'server/photo-design.mjs'], { stdio: 'inherit' }),
 ];
 let stopping = false;

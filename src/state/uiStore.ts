@@ -12,7 +12,7 @@ export interface ToastMessage {
 export type ActiveSidebarTab = 'catalog' | 'spaces' | 'openings' | 'materials' | 'copilot' | 'none';
 export type ActiveView = 'landing' | 'dashboard' | 'pricing' | 'studio' | 'photos';
 
-const viewFromPath = (pathname: string): ActiveView => {
+export const viewFromPath = (pathname: string): ActiveView => {
   if (pathname === '/photos' || pathname.startsWith('/photos/')) return 'photos';
   if (pathname.startsWith('/pricing')) return 'pricing';
   if (pathname.startsWith('/projects')) return 'dashboard';
@@ -20,7 +20,7 @@ const viewFromPath = (pathname: string): ActiveView => {
   return 'landing';
 };
 
-const pathForView: Record<ActiveView, string> = {
+export const pathForView: Record<ActiveView, string> = {
   photos: '/photos',
   landing: '/',
   dashboard: '/projects',
@@ -61,6 +61,7 @@ export interface UIState {
 type UIListener = (state: UIState) => void;
 
 class UIStore {
+  private routerNavigate?: (path: string, options?: { replace?: boolean }) => void;
   private state: UIState = {
     activeView: typeof window === 'undefined' ? 'landing' : viewFromPath(window.location.pathname),
     selectedId: 'room-living',
@@ -87,12 +88,20 @@ class UIStore {
     return this.state;
   }
 
+  public setRouterNavigate(fn: ((path: string, options?: { replace?: boolean }) => void) | null) {
+    this.routerNavigate = fn || undefined;
+  }
+
   public setActiveView(view: ActiveView, options?: { replace?: boolean; fromHistory?: boolean }) {
     this.state = { ...this.state, activeView: view };
-    if (typeof window !== 'undefined' && !options?.fromHistory) {
+    if (!options?.fromHistory) {
       const path = pathForView[view];
-      if (window.location.pathname !== path) {
-        window.history[options?.replace ? 'replaceState' : 'pushState']({ view }, '', path);
+      if (this.routerNavigate) {
+        this.routerNavigate(path, options);
+      } else if (typeof window !== 'undefined') {
+        if (window.location.pathname !== path) {
+          window.history[options?.replace ? 'replaceState' : 'pushState']({ view }, '', path);
+        }
       }
     }
     this.notify();

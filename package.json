@@ -4,15 +4,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "next dev -p 4173",
+    "build": "next build",
+    "start": "next start -p 4173",
+    "preview": "next start -p 4173",
     "test": "tsx tests/test_room_creation_fix.ts",
     "test:all": "tsx tests/run_all.ts",
     "dev:photos": "node --env-file-if-exists=.env.local server/photo-design.mjs",
     "test:photos:server": "node --test --test-isolation=none tests/photo-server.test.mjs tests/photo-images.test.mjs tests/photo-jobs.test.mjs",
     "dev:all": "node server/dev.mjs",
-    "start": "node --env-file-if-exists=.env.local server/start.mjs",
+    "start:server": "node --env-file-if-exists=.env.local server/start.mjs",
     "db:migrate": "node --env-file=.env.local server/migrate.mjs",
     "test:photos:cloud": "node --env-file=.env.local --test --test-isolation=none tests/photo-supabase.test.mjs"
   },
@@ -24,6 +25,7 @@
     "clsx": "^2.1.1",
     "fastify": "^5.12.4",
     "lucide-react": "^0.475.0",
+    "next": "^14.2.24",
     "pg": "^8.23.0",
     "pg-boss": "^12.31.0",
     "react": "^18.3.1",
@@ -38,13 +40,11 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@types/three": "^0.173.0",
-    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.23.13",
-    "typescript": "^5.7.3",
-    "vite": "^6.1.0"
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=24.0.0"
